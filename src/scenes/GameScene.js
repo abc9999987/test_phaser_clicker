@@ -27,8 +27,10 @@ class GameScene extends Phaser.Scene {
         // 캐릭터 생성
         Character.create(this);
         
-        // 적 생성
-        Enemy.create(this, 200, 400);
+        // 적 생성 (반응형 위치)
+        const enemyX = this.scale.width * 0.25;
+        const enemyY = this.scale.height * 0.67;
+        Enemy.create(this, enemyX, enemyY);
         
         // UI 생성
         UIManager.create(this);

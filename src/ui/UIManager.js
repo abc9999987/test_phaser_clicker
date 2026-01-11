@@ -9,26 +9,36 @@ const UIManager = {
     
     // UI 생성
     create(scene) {
-        // UI 패널 배경
-        const uiPanel = scene.add.rectangle(400, 50, 750, 80, 0x000000, 0.6);
-        uiPanel.setOrigin(0.5, 0);
+        const scale = Responsive.getScale(scene);
+        const gameWidth = scene.scale.width;
+        const gameHeight = scene.scale.height;
         
-        // 코인 텍스트
-        this.coinText = scene.add.text(50, 30, `코인: ${GameState.coins}`, {
-            fontSize: '24px',
+        // UI 패널 배경 (반응형)
+        const panelWidth = gameWidth * 0.94;
+        const panelHeight = gameHeight * 0.13;
+        const uiPanel = scene.add.rectangle(gameWidth / 2, panelHeight / 2, panelWidth, panelHeight, 0x000000, 0.6);
+        uiPanel.setOrigin(0.5, 0.5);
+        
+        // 코인 텍스트 (반응형)
+        const coinFontSize = Responsive.getFontSize(scene, 24);
+        this.coinText = scene.add.text(gameWidth * 0.06, panelHeight * 0.4, `코인: ${GameState.coins}`, {
+            fontSize: coinFontSize,
             fill: '#ffd700',
             fontFamily: 'Arial'
         });
         
-        // 초당 발사 텍스트
-        this.autoFireText = scene.add.text(50, 60, `초당 발사: ${GameState.autoFireRate}회`, {
-            fontSize: '18px',
+        // 초당 발사 텍스트 (반응형)
+        const cpsFontSize = Responsive.getFontSize(scene, 18);
+        this.autoFireText = scene.add.text(gameWidth * 0.06, panelHeight * 0.75, `초당 발사: ${GameState.autoFireRate}회`, {
+            fontSize: cpsFontSize,
             fill: '#ffffff',
             fontFamily: 'Arial'
         });
         
-        // 클릭 강화 버튼
-        this.clickButton = scene.add.rectangle(650, 40, 120, 40, 0x4a90e2);
+        // 클릭 강화 버튼 (반응형)
+        const buttonWidth = gameWidth * 0.15;
+        const buttonHeight = gameHeight * 0.067;
+        this.clickButton = scene.add.rectangle(gameWidth * 0.81, panelHeight * 0.4, buttonWidth, buttonHeight, 0x4a90e2);
         this.clickButton.setInteractive({ useHandCursor: true });
         this.clickButton.on('pointerdown', () => {
             if (GameState.upgradeClick()) {
@@ -36,15 +46,16 @@ const UIManager = {
             }
         });
         
-        this.clickButtonText = scene.add.text(650, 40, '클릭 강화', {
-            fontSize: '14px',
+        const buttonFontSize = Responsive.getFontSize(scene, 14);
+        this.clickButtonText = scene.add.text(gameWidth * 0.81, panelHeight * 0.4, '클릭 강화', {
+            fontSize: buttonFontSize,
             fill: '#ffffff',
             fontFamily: 'Arial'
         });
         this.clickButtonText.setOrigin(0.5);
         
-        // 자동 발사 버튼
-        this.upgradeButton = scene.add.rectangle(650, 80, 120, 40, 0x50c878);
+        // 자동 발사 버튼 (반응형)
+        this.upgradeButton = scene.add.rectangle(gameWidth * 0.81, panelHeight * 0.75, buttonWidth, buttonHeight, 0x50c878);
         this.upgradeButton.setInteractive({ useHandCursor: true });
         this.upgradeButton.on('pointerdown', () => {
             if (GameState.upgradeAutoFire()) {
@@ -56,16 +67,17 @@ const UIManager = {
             }
         });
         
-        this.upgradeButtonText = scene.add.text(650, 80, '자동 발사', {
-            fontSize: '14px',
+        this.upgradeButtonText = scene.add.text(gameWidth * 0.81, panelHeight * 0.75, '자동 발사', {
+            fontSize: buttonFontSize,
             fill: '#ffffff',
             fontFamily: 'Arial'
         });
         this.upgradeButtonText.setOrigin(0.5);
         
-        // 안내 텍스트
-        const hintText = scene.add.text(400, 550, '캐릭터를 클릭하여 투사체를 발사하세요!', {
-            fontSize: '16px',
+        // 안내 텍스트 (반응형)
+        const hintFontSize = Responsive.getFontSize(scene, 16);
+        const hintText = scene.add.text(gameWidth / 2, gameHeight * 0.92, '캐릭터를 클릭하여 투사체를 발사하세요!', {
+            fontSize: hintFontSize,
             fill: '#ffffff',
             fontFamily: 'Arial'
         });

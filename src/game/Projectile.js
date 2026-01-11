@@ -108,9 +108,11 @@ const Projectile = {
             projectile.x += projectile.velocityX * deltaSeconds;
             projectile.y += projectile.velocityY * deltaSeconds;
             
-            // 화면 밖으로 나가면 풀로 반환
-            if (projectile.x < 0 || projectile.x > 800 || 
-                projectile.y < 0 || projectile.y > 600) {
+            // 화면 밖으로 나가면 풀로 반환 (반응형)
+            const gameWidth = scene.scale.width;
+            const gameHeight = scene.scale.height;
+            if (projectile.x < 0 || projectile.x > gameWidth || 
+                projectile.y < 0 || projectile.y > gameHeight) {
                 this.returnToPool(projectile);
             }
         }

@@ -3,9 +3,17 @@ const Enemy = {
     enemy: null,
     
     // 적 생성
-    create(scene, x, y) {
+    create(scene, baseX, baseY) {
+        const gameWidth = scene.scale.width;
+        const gameHeight = scene.scale.height;
+        const scale = Responsive.getScale(scene);
+        
+        // 위치를 비율로 변환
+        const x = (baseX / 800) * gameWidth;
+        const y = (baseY / 600) * gameHeight;
+        
         this.enemy = scene.add.image(x, y, 'enemy');
-        this.enemy.setScale(1.5);
+        this.enemy.setScale(1.5 * scale.min);
         return this.enemy;
     },
     

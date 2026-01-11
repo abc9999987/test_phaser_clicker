@@ -4,9 +4,13 @@ const Character = {
     
     // 캐릭터 생성
     create(scene) {
-        // 캐릭터 생성 (preload에서 이미 로드됨)
-        this.char = scene.add.image(600, 400, 'char');
-        this.char.setScale(0.12, 0.12);
+        const gameWidth = scene.scale.width;
+        const gameHeight = scene.scale.height;
+        const scale = Responsive.getScale(scene);
+        
+        // 캐릭터 생성 (preload에서 이미 로드됨, 반응형)
+        this.char = scene.add.image(gameWidth * 0.75, gameHeight * 0.67, 'char');
+        this.char.setScale(0.12 * scale.min, 0.12 * scale.min);
         this.char.setOrigin(0.5, 0.5);
         this.char.setInteractive({ useHandCursor: true });
         
@@ -48,7 +52,8 @@ const Character = {
     // 캐릭터 업데이트 (부드러운 움직임)
     update(scene) {
         if (this.char) {
-            this.char.y = 400 + Math.sin(scene.time.now / 1000) * 5;
+            const baseY = scene.scale.height * 0.67;
+            this.char.y = baseY + Math.sin(scene.time.now / 1000) * 5;
         }
     }
 };
