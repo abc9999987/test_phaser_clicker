@@ -3,7 +3,7 @@ node_modules/
 package-lock.json
 
 # Build outputs
-# dist/  # GitHub Pages 배포를 위해 주석 처리
+dist/  # GitHub Actions에서 자동 빌드하므로 제외
 *.tsbuildinfo
 
 # Environment variables
