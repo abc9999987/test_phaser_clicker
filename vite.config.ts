@@ -1,6 +1,7 @@
 import { defineConfig } from 'vite';
 
 export default defineConfig({
+  base: '/test_phaser_clicker/',
   build: {
     outDir: 'dist',
     rollupOptions: {
