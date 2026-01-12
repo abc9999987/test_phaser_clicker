@@ -1,15 +1,27 @@
+import Phaser from 'phaser';
+import { AssetLoader } from '../managers/AssetLoader';
+import { GameState } from '../managers/GameState';
+import { Projectile } from '../game/Projectile';
+import { Background } from '../game/Background';
+import { Character } from '../game/Character';
+import { Enemy } from '../game/Enemy';
+import { UIManager } from '../ui/UIManager';
+
 // 메인 게임 씬
-class GameScene extends Phaser.Scene {
+export class GameScene extends Phaser.Scene {
+    autoSaveTimer?: Phaser.Time.TimerEvent;
+    autoFireTimer?: Phaser.Time.TimerEvent;
+    
     constructor() {
         super({ key: 'GameScene' });
     }
     
-    preload() {
+    preload(): void {
         // 에셋 로드
         AssetLoader.preload(this);
     }
     
-    create() {
+    create(): void {
         // 저장된 게임 상태 로드
         GameState.load();
         
@@ -17,7 +29,7 @@ class GameScene extends Phaser.Scene {
         this.initializeGame();
     }
     
-    initializeGame() {
+    initializeGame(): void {
         // 투사체 풀 초기화
         Projectile.init(this);
         
@@ -46,9 +58,9 @@ class GameScene extends Phaser.Scene {
     }
     
     // 주기적 자동 저장 시작
-    startAutoSave() {
+    startAutoSave(): void {
         this.autoSaveTimer = this.time.addEvent({
-            delay: 10000, // 5초마다
+            delay: 10000, // 10초마다
             callback: () => {
                 GameState.save();
             },
@@ -57,7 +69,7 @@ class GameScene extends Phaser.Scene {
     }
     
     // 자동 발사 설정
-    setupAutoFire() {
+    setupAutoFire(): void {
         // 기존 타이머가 있으면 제거
         if (this.autoFireTimer) {
             this.autoFireTimer.remove();
@@ -77,7 +89,7 @@ class GameScene extends Phaser.Scene {
         }
     }
     
-    update(time, delta) {
+    update(_time: number, delta: number): void {
         // 캐릭터 업데이트
         Character.update(this);
         

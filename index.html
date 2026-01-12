@@ -8,44 +8,7 @@
   <meta http-equiv="Expires" content="0" />
   <title>AceRPG - Incremental (Prototype)</title>
   <link rel="stylesheet" href="styles/main.css?v=1.0" />
-  <script src="https://cdn.jsdelivr.net/npm/phaser@3.60.0/dist/phaser.min.js"></script>
-  <script>
-    // 캐시 버스팅을 위한 버전 번호 (코드 업데이트 시 이 값을 변경)
-    const APP_VERSION = '1.0.0';
-    const CACHE_BUST = '?v=' + APP_VERSION + '&t=' + Date.now();
-    
-    // 스크립트 동적 로드 함수
-    function loadScript(src) {
-      return new Promise((resolve, reject) => {
-        const script = document.createElement('script');
-        script.src = src + CACHE_BUST;
-        script.onload = resolve;
-        script.onerror = reject;
-        // head에 추가 (body가 준비되지 않아도 됨)
-        (document.head || document.getElementsByTagName('head')[0]).appendChild(script);
-      });
-    }
-    
-    // DOM이 준비된 후 스크립트 로드
-    document.addEventListener('DOMContentLoaded', async function() {
-      try {
-        await loadScript('src/config/gameConfig.js');
-        await loadScript('src/managers/GameState.js');
-        await loadScript('src/managers/AssetLoader.js');
-        await loadScript('src/utils/Effects.js');
-        await loadScript('src/utils/Responsive.js');
-        await loadScript('src/game/Background.js');
-        await loadScript('src/game/Character.js');
-        await loadScript('src/game/Enemy.js');
-        await loadScript('src/game/Projectile.js');
-        await loadScript('src/ui/UIManager.js');
-        await loadScript('src/scenes/GameScene.js');
-        await loadScript('src/main.js');
-      } catch (error) {
-        console.error('Failed to load script:', error);
-      }
-    });
-  </script>
+  <script type="module" src="/src/main.ts"></script>
 </head>
 <body>
   <div id="game-container"></div>

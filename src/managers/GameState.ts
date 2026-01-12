@@ -1,15 +1,24 @@
 // 게임 상태 관리
-const GameState = {
+interface SaveData {
+    coins: number;
+    coinsPerClick: number;
+    autoFireRate: number;
+    clickCount: number;
+    saveTime: number;
+}
+
+export const GameState = {
     coins: 0,
     coinsPerClick: 1,
     autoFireRate: 0,  // 초당 발사 횟수
     clickCount: 0,
     storageKey: 'acerpg_save', // localStorage 키
+    saveTimer: null as number | null,
     
     // 게임 상태 저장
-    save() {
+    save(): void {
         try {
-            const saveData = {
+            const saveData: SaveData = {
                 coins: this.coins,
                 coinsPerClick: this.coinsPerClick,
                 autoFireRate: this.autoFireRate,
@@ -24,11 +33,11 @@ const GameState = {
     },
     
     // 게임 상태 로드
-    load() {
+    load(): boolean {
         try {
             const savedData = localStorage.getItem(this.storageKey);
             if (savedData) {
-                const data = JSON.parse(savedData);
+                const data: SaveData = JSON.parse(savedData);
                 this.coins = data.coins || 0;
                 this.coinsPerClick = data.coinsPerClick || 1;
                 this.autoFireRate = data.autoFireRate || 0;
@@ -43,7 +52,7 @@ const GameState = {
     },
     
     // 저장 데이터 삭제 (초기화)
-    clear() {
+    clear(): void {
         try {
             localStorage.removeItem(this.storageKey);
             console.log('Game state cleared');
@@ -53,25 +62,24 @@ const GameState = {
     },
     
     // 코인 추가
-    addCoins(amount) {
+    addCoins(amount: number): void {
         this.coins += amount;
         // 자동 저장 (디바운싱 - 마지막 변경 후 1초 뒤에 저장)
         this.debouncedSave();
     },
     
     // 디바운싱된 저장 (너무 자주 저장하지 않도록)
-    saveTimer: null,
-    debouncedSave() {
-        if (this.saveTimer) {
+    debouncedSave(): void {
+        if (this.saveTimer !== null) {
             clearTimeout(this.saveTimer);
         }
-        this.saveTimer = setTimeout(() => {
+        this.saveTimer = window.setTimeout(() => {
             this.save();
         }, 1000); // 1초 후 저장
     },
     
     // 코인 차감
-    spendCoins(amount) {
+    spendCoins(amount: number): boolean {
         if (this.coins >= amount) {
             this.coins -= amount;
             this.save(); // 자동 저장
@@ -81,17 +89,17 @@ const GameState = {
     },
     
     // 클릭 강화 비용 계산
-    getClickUpgradeCost() {
+    getClickUpgradeCost(): number {
         return Math.floor(10 * Math.pow(1.5, this.coinsPerClick - 1));
     },
     
     // 자동 발사 강화 비용 계산
-    getAutoFireUpgradeCost() {
+    getAutoFireUpgradeCost(): number {
         return Math.floor(50 * Math.pow(2, this.autoFireRate));
     },
     
     // 클릭 강화 구매
-    upgradeClick() {
+    upgradeClick(): boolean {
         const cost = this.getClickUpgradeCost();
         if (this.spendCoins(cost)) {
             this.coinsPerClick++;
@@ -102,7 +110,7 @@ const GameState = {
     },
     
     // 자동 발사 강화 구매
-    upgradeAutoFire() {
+    upgradeAutoFire(): boolean {
         const cost = this.getAutoFireUpgradeCost();
         if (this.spendCoins(cost)) {
             this.autoFireRate++;

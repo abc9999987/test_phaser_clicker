@@ -1,9 +1,16 @@
+import Phaser from 'phaser';
+import { Responsive } from '../utils/Responsive';
+import { Effects } from '../utils/Effects';
+import { Enemy } from './Enemy';
+import { Projectile } from './Projectile';
+import { GameState } from '../managers/GameState';
+
 // 캐릭터 생성 및 관리
-const Character = {
-    char: null,
+export const Character = {
+    char: null as Phaser.GameObjects.Image | null,
     
     // 캐릭터 생성
-    create(scene) {
+    create(scene: Phaser.Scene): Phaser.GameObjects.Image {
         const gameWidth = scene.scale.width;
         const gameHeight = scene.scale.height;
         const scale = Responsive.getScale(scene);
@@ -23,7 +30,9 @@ const Character = {
     },
     
     // 캐릭터 클릭 핸들러
-    onCharacterClick(scene) {
+    onCharacterClick(scene: Phaser.Scene): void {
+        if (!this.char) return;
+        
         // 클릭 애니메이션
         Effects.playClickAnimation(scene, this.char);
         
@@ -32,25 +41,25 @@ const Character = {
     },
     
     // 투사체 발사
-    fireProjectile(scene, type = 'manual') {
-        if (Enemy.enemy) {
-            const projectile = Projectile.create(
-                scene, 
-                this.char.x, 
-                this.char.y, 
-                Enemy.enemy.x, 
-                Enemy.enemy.y,
-                type
-            );
-            // 투사체 데미지를 현재 클릭 강화 수준으로 설정
-            if (projectile) {
-                projectile.damage = GameState.coinsPerClick;
-            }
+    fireProjectile(scene: Phaser.Scene, type: 'manual' | 'auto' = 'manual'): void {
+        if (!this.char || !Enemy.enemy) return;
+        
+        const projectile = Projectile.create(
+            scene, 
+            this.char.x, 
+            this.char.y, 
+            Enemy.enemy.x, 
+            Enemy.enemy.y,
+            type
+        );
+        // 투사체 데미지를 현재 클릭 강화 수준으로 설정
+        if (projectile) {
+            projectile.damage = GameState.coinsPerClick;
         }
     },
     
     // 캐릭터 업데이트 (부드러운 움직임)
-    update(scene) {
+    update(scene: Phaser.Scene): void {
         if (this.char) {
             const baseY = scene.scale.height * 0.67;
             this.char.y = baseY + Math.sin(scene.time.now / 1000) * 5;
