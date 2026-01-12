@@ -1,11 +1,13 @@
+import Phaser from 'phaser';
+
 // Phaser 게임 설정 (반응형)
-const GameConfig = {
+export const GameConfig: Phaser.Types.Core.GameConfig = {
     type: Phaser.AUTO,
     width: 800,
     height: 600,
     parent: 'game-container',
     backgroundColor: '#7ec8ff',
-    scene: null, // GameScene에서 설정됨
+    scene: undefined, // GameScene에서 설정됨
     scale: {
         mode: Phaser.Scale.FIT,
         autoCenter: Phaser.Scale.CENTER_BOTH,

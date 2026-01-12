@@ -1,10 +1,22 @@
+import Phaser from 'phaser';
+import { GameState } from '../managers/GameState';
+
+// 투사체 타입 정의
+interface Projectile extends Phaser.GameObjects.Arc {
+    velocityX: number;
+    velocityY: number;
+    damage: number;
+    projectileType: 'manual' | 'auto';
+    isProjectile: boolean;
+}
+
 // 투사체 관리 (오브젝트 풀링 방식 - 수동/자동 분리)
-const Projectile = {
-    manualPool: [],        // 수동 발사용 풀 (노란색)
-    autoPool: [],          // 자동 발사용 풀 (초록색)
-    active: [],            // 활성화된 투사체들
-    poolSize: 30,          // 각 풀 크기
-    scene: null,
+export const Projectile = {
+    manualPool: [] as Projectile[],
+    autoPool: [] as Projectile[],
+    active: [] as Projectile[],
+    poolSize: 30,
+    scene: null as Phaser.Scene | null,
     
     // 색상 정의
     colors: {
@@ -13,7 +25,7 @@ const Projectile = {
     },
     
     // 풀 초기화
-    init(scene) {
+    init(scene: Phaser.Scene): void {
         this.scene = scene;
         this.manualPool = [];
         this.autoPool = [];
@@ -21,7 +33,7 @@ const Projectile = {
         
         // 수동 발사용 풀 생성 (노란색)
         for (let i = 0; i < this.poolSize; i++) {
-            const projectile = scene.add.circle(0, 0, 5, this.colors.manual);
+            const projectile = scene.add.circle(0, 0, 5, this.colors.manual) as Projectile;
             projectile.setDepth(10);
             projectile.setVisible(false);
             projectile.setActive(false);
@@ -32,7 +44,7 @@ const Projectile = {
         
         // 자동 발사용 풀 생성 (초록색)
         for (let i = 0; i < this.poolSize; i++) {
-            const projectile = scene.add.circle(0, 0, 5, this.colors.auto);
+            const projectile = scene.add.circle(0, 0, 5, this.colors.auto) as Projectile;
             projectile.setDepth(10);
             projectile.setVisible(false);
             projectile.setActive(false);
@@ -43,7 +55,7 @@ const Projectile = {
     },
     
     // 풀에서 투사체 가져오기
-    getFromPool(type) {
+    getFromPool(type: 'manual' | 'auto'): Projectile {
         const pool = type === 'auto' ? this.autoPool : this.manualPool;
         
         // 사용 가능한 투사체 찾기
@@ -54,8 +66,11 @@ const Projectile = {
             }
         }
         // 풀이 부족하면 새로 생성 (동적 확장)
+        if (!this.scene) {
+            throw new Error('Scene not initialized');
+        }
         const color = type === 'auto' ? this.colors.auto : this.colors.manual;
-        const projectile = this.scene.add.circle(0, 0, 5, color);
+        const projectile = this.scene.add.circle(0, 0, 5, color) as Projectile;
         projectile.setDepth(10);
         projectile.isProjectile = true;
         projectile.projectileType = type;
@@ -64,7 +79,7 @@ const Projectile = {
     },
     
     // 투사체 생성 (풀에서 재사용)
-    create(scene, startX, startY, targetX, targetY, type = 'manual') {
+    create(_scene: Phaser.Scene, startX: number, startY: number, targetX: number, targetY: number, type: 'manual' | 'auto' = 'manual'): Projectile | null {
         const projectile = this.getFromPool(type);
         
         // 투사체 활성화
@@ -75,7 +90,6 @@ const Projectile = {
         // 목표 지점까지의 거리와 각도 계산
         const dx = targetX - startX;
         const dy = targetY - startY;
-        const distance = Math.sqrt(dx * dx + dy * dy);
         const angle = Math.atan2(dy, dx);
         
         // 속도 설정
@@ -92,7 +106,7 @@ const Projectile = {
     },
     
     // 투사체 업데이트
-    update(scene, delta) {
+    update(scene: Phaser.Scene, delta: number): void {
         const deltaSeconds = delta / 1000;
         
         for (let i = this.active.length - 1; i >= 0; i--) {
@@ -119,7 +133,7 @@ const Projectile = {
     },
     
     // 투사체를 풀로 반환
-    returnToPool(projectile) {
+    returnToPool(projectile: Projectile): void {
         const index = this.active.indexOf(projectile);
         if (index > -1) {
             this.active.splice(index, 1);
@@ -135,12 +149,12 @@ const Projectile = {
     },
     
     // 투사체 제거 (풀로 반환)
-    remove(projectile) {
+    remove(projectile: Projectile): void {
         this.returnToPool(projectile);
     },
     
     // 모든 투사체 제거
-    clear() {
+    clear(): void {
         // 모든 활성 투사체를 풀로 반환
         for (let i = this.active.length - 1; i >= 0; i--) {
             this.returnToPool(this.active[i]);
@@ -148,7 +162,7 @@ const Projectile = {
     },
     
     // 풀 정리 (씬 종료 시)
-    destroy() {
+    destroy(): void {
         this.clear();
         
         // 수동 발사 풀 정리

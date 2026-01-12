@@ -1,15 +1,18 @@
+import Phaser from 'phaser';
+import { Responsive } from '../utils/Responsive';
+import { GameState } from '../managers/GameState';
+
 // UI 관리자
-const UIManager = {
-    coinText: null,
-    autoFireText: null,
-    clickButton: null,
-    upgradeButton: null,
-    clickButtonText: null,
-    upgradeButtonText: null,
+export const UIManager = {
+    coinText: null as Phaser.GameObjects.Text | null,
+    autoFireText: null as Phaser.GameObjects.Text | null,
+    clickButton: null as Phaser.GameObjects.Rectangle | null,
+    upgradeButton: null as Phaser.GameObjects.Rectangle | null,
+    clickButtonText: null as Phaser.GameObjects.Text | null,
+    upgradeButtonText: null as Phaser.GameObjects.Text | null,
     
     // UI 생성
-    create(scene) {
-        const scale = Responsive.getScale(scene);
+    create(scene: Phaser.Scene): void {
         const gameWidth = scene.scale.width;
         const gameHeight = scene.scale.height;
         
@@ -23,7 +26,7 @@ const UIManager = {
         const coinFontSize = Responsive.getFontSize(scene, 24);
         this.coinText = scene.add.text(gameWidth * 0.06, panelHeight * 0.4, `코인: ${GameState.coins}`, {
             fontSize: coinFontSize,
-            fill: '#ffd700',
+            color: '#ffd700',
             fontFamily: 'Arial'
         });
         
@@ -31,7 +34,7 @@ const UIManager = {
         const cpsFontSize = Responsive.getFontSize(scene, 18);
         this.autoFireText = scene.add.text(gameWidth * 0.06, panelHeight * 0.75, `초당 발사: ${GameState.autoFireRate}회`, {
             fontSize: cpsFontSize,
-            fill: '#ffffff',
+            color: '#ffffff',
             fontFamily: 'Arial'
         });
         
@@ -49,7 +52,7 @@ const UIManager = {
         const buttonFontSize = Responsive.getFontSize(scene, 14);
         this.clickButtonText = scene.add.text(gameWidth * 0.81, panelHeight * 0.4, '클릭 강화', {
             fontSize: buttonFontSize,
-            fill: '#ffffff',
+            color: '#ffffff',
             fontFamily: 'Arial'
         });
         this.clickButtonText.setOrigin(0.5);
@@ -61,15 +64,15 @@ const UIManager = {
             if (GameState.upgradeAutoFire()) {
                 this.update();
                 // 자동 발사 타이머 재설정
-                if (scene.setupAutoFire) {
-                    scene.setupAutoFire();
+                if ((scene as any).setupAutoFire) {
+                    (scene as any).setupAutoFire();
                 }
             }
         });
         
         this.upgradeButtonText = scene.add.text(gameWidth * 0.81, panelHeight * 0.75, '자동 발사', {
             fontSize: buttonFontSize,
-            fill: '#ffffff',
+            color: '#ffffff',
             fontFamily: 'Arial'
         });
         this.upgradeButtonText.setOrigin(0.5);
@@ -78,7 +81,7 @@ const UIManager = {
         const hintFontSize = Responsive.getFontSize(scene, 16);
         const hintText = scene.add.text(gameWidth / 2, gameHeight * 0.92, '캐릭터를 클릭하여 투사체를 발사하세요!', {
             fontSize: hintFontSize,
-            fill: '#ffffff',
+            color: '#ffffff',
             fontFamily: 'Arial'
         });
         hintText.setOrigin(0.5);
@@ -88,7 +91,7 @@ const UIManager = {
     },
     
     // UI 업데이트
-    update() {
+    update(): void {
         if (this.coinText) {
             this.coinText.setText(`코인: ${Math.floor(GameState.coins)}`);
         }

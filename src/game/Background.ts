@@ -1,7 +1,10 @@
+import Phaser from 'phaser';
+import { Responsive } from '../utils/Responsive';
+
 // 배경 생성
-const Background = {
+export const Background = {
     // 배경 객체들 생성
-    create(scene) {
+    create(scene: Phaser.Scene): { sky: Phaser.GameObjects.Image; ground: Phaser.GameObjects.Image } {
         const gameWidth = scene.scale.width;
         const gameHeight = scene.scale.height;
         const scale = Responsive.getScale(scene);
