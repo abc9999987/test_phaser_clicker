@@ -103,14 +103,14 @@ export const Enemy = {
         if (!this.enemy || !projectile || this.isDefeated) return false; // 처치된 상태면 충돌 무시
         
         // 간단한 원형 충돌 감지
-        const dx = (projectile as any).x - this.enemy.x;
-        const dy = (projectile as any).y - this.enemy.y;
+        const dx = projectile.x - this.enemy.x;
+        const dy = projectile.y - this.enemy.y;
         const distance = Math.sqrt(dx * dx + dy * dy);
         
         // enemy 반지름 (스케일 고려)
         const enemyRadius = (this.enemy.width * this.enemy.scaleX) / 2;
-        // projectile 반지름
-        const projectileRadius = (projectile as any).radius || 5;
+        // projectile 반지름 (이미지 크기 기준)
+        const projectileRadius = (projectile.width * projectile.scaleX) / 2 || 10;
         
         return distance < (enemyRadius + projectileRadius);
     },
@@ -156,8 +156,8 @@ export const Enemy = {
         // 보스 처치 여부 확인 (처치 전 상태)
         const wasBoss = this.isBoss;
         
-        // 스테이지별 골드 지급 (적 체력과 동일)
-        const goldReward = GameState.getEnemyGoldReward();
+        // 스테이지별 골드 지급 (적 체력과 동일) * 1.2
+        const goldReward = GameState.getEnemyGoldReward() * 1.2;
         GameState.addCoins(goldReward);
         
         // 스테이지 진행 처리

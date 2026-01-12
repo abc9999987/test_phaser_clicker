@@ -16,6 +16,7 @@ export const AssetLoader = {
         
         // PNG 이미지 로드
         scene.load.image('char', 'assets/character/snow_raccoon_dog.png');
+        scene.load.image('weapon', 'assets/weapon/wp1.png');
     },
     
     // 스프라이트 애니메이션 로드

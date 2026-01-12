@@ -2,7 +2,7 @@ import Phaser from 'phaser';
 import { GameState } from '../managers/GameState';
 
 // 투사체 타입 정의
-interface Projectile extends Phaser.GameObjects.Arc {
+interface Projectile extends Phaser.GameObjects.Image {
     velocityX: number;
     velocityY: number;
     damage: number;
@@ -31,9 +31,12 @@ export const Projectile = {
         this.autoPool = [];
         this.active = [];
         
-        // 수동 발사용 풀 생성 (노란색)
+        // 수동 발사용 풀 생성 (무기 이미지 사용)
         for (let i = 0; i < this.poolSize; i++) {
-            const projectile = scene.add.circle(0, 0, 5, this.colors.manual) as Projectile;
+            const projectile = scene.add.image(0, 0, 'weapon') as Projectile;
+            projectile.setScale(0.15); // 적절한 크기로 조정
+            projectile.setOrigin(0.5, 0.5);
+            projectile.setFlipX(true); // x축 기준으로 뒤집기
             projectile.setDepth(10);
             projectile.setVisible(false);
             projectile.setActive(false);
@@ -42,9 +45,12 @@ export const Projectile = {
             this.manualPool.push(projectile);
         }
         
-        // 자동 발사용 풀 생성 (초록색)
+        // 자동 발사용 풀 생성 (무기 이미지 사용)
         for (let i = 0; i < this.poolSize; i++) {
-            const projectile = scene.add.circle(0, 0, 5, this.colors.auto) as Projectile;
+            const projectile = scene.add.image(0, 0, 'weapon') as Projectile;
+            projectile.setScale(0.15); // 적절한 크기로 조정
+            projectile.setOrigin(0.5, 0.5);
+            projectile.setFlipX(true); // x축 기준으로 뒤집기
             projectile.setDepth(10);
             projectile.setVisible(false);
             projectile.setActive(false);
@@ -69,8 +75,10 @@ export const Projectile = {
         if (!this.scene) {
             throw new Error('Scene not initialized');
         }
-        const color = type === 'auto' ? this.colors.auto : this.colors.manual;
-        const projectile = this.scene.add.circle(0, 0, 5, color) as Projectile;
+        const projectile = this.scene.add.image(0, 0, 'weapon') as Projectile;
+        projectile.setScale(0.15);
+        projectile.setOrigin(0.5, 0.5);
+        projectile.setFlipX(true); // x축 기준으로 뒤집기
         projectile.setDepth(10);
         projectile.isProjectile = true;
         projectile.projectileType = type;
@@ -94,6 +102,9 @@ export const Projectile = {
         
         // 속도 설정
         const speed = 400; // 픽셀/초
+        
+        // 투사체 회전 설정 (발사 방향으로)
+        projectile.setRotation(angle);
         
         // 투사체 데이터 저장
         projectile.velocityX = Math.cos(angle) * speed;

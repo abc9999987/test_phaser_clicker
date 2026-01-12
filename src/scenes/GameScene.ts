@@ -42,7 +42,7 @@ export class GameScene extends Phaser.Scene {
         Character.create(this);
         
         // 적 생성 (위쪽 절반 영역에 배치)
-        const enemyX = this.scale.width * 0.25;
+        const enemyX = this.scale.width * 0.15;
         const enemyY = this.scale.height * 0.33;
         Enemy.create(this, enemyX, enemyY);
         

@@ -16,7 +16,7 @@ export const Character = {
         const scale = Responsive.getScale(scene);
         
         // 캐릭터 생성 (위쪽 절반 영역에 배치)
-        this.char = scene.add.image(gameWidth * 0.75, gameHeight * 0.33, 'char');
+        this.char = scene.add.image(gameWidth * 0.85, gameHeight * 0.33, 'char');
         this.char.setScale(0.1 * scale.uniform);
         this.char.setOrigin(0.5, 0.5);
         this.char.setInteractive({ useHandCursor: true });
@@ -44,12 +44,26 @@ export const Character = {
     fireProjectile(scene: Phaser.Scene, type: 'manual' | 'auto' = 'manual'): void {
         if (!this.char || !Enemy.enemy) return;
         
+        // 발사 위치에 랜덤 오프셋 추가 (±10 픽셀 범위)
+        const randomOffsetX = (Math.random() - 0.5) * 20; // -10 ~ +10
+        const randomOffsetY = (Math.random() - 0.5) * 20; // -10 ~ +10
+        
+        const startX = this.char.x + randomOffsetX;
+        const startY = this.char.y + randomOffsetY;
+        
+        // 적 위치에도 약간의 랜덤 오프셋 추가 (더 자연스러운 발사)
+        const targetOffsetX = (Math.random() - 0.5) * 15; // -7.5 ~ +7.5
+        const targetOffsetY = (Math.random() - 0.5) * 15; // -7.5 ~ +7.5
+        
+        const targetX = Enemy.enemy.x + targetOffsetX;
+        const targetY = Enemy.enemy.y + targetOffsetY;
+        
         const projectile = Projectile.create(
             scene, 
-            this.char.x, 
-            this.char.y, 
-            Enemy.enemy.x, 
-            Enemy.enemy.y,
+            startX, 
+            startY, 
+            targetX, 
+            targetY,
             type
         );
         // 투사체 데미지를 현재 공격력으로 설정
