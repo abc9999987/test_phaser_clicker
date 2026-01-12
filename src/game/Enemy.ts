@@ -2,17 +2,8 @@ import Phaser from 'phaser';
 import { Responsive } from '../utils/Responsive';
 import { Effects } from '../utils/Effects';
 import { GameState } from '../managers/GameState';
-import { Projectile } from './Projectile';
+import { Projectile, ProjectileType } from './Projectile';
 import { UIManager } from '../ui/UIManager';
-
-// 투사체 타입 (Projectile에서 정의된 것과 동일)
-interface Projectile extends Phaser.GameObjects.Arc {
-    velocityX: number;
-    velocityY: number;
-    damage: number;
-    projectileType: 'manual' | 'auto';
-    isProjectile: boolean;
-}
 
 // 적 관리
 export const Enemy = {
@@ -99,7 +90,7 @@ export const Enemy = {
     },
     
     // 투사체와의 충돌 감지
-    checkCollision(projectile: Projectile): boolean {
+    checkCollision(projectile: ProjectileType): boolean {
         if (!this.enemy || !projectile || this.isDefeated) return false; // 처치된 상태면 충돌 무시
         
         // 간단한 원형 충돌 감지
@@ -116,7 +107,7 @@ export const Enemy = {
     },
     
     // 적이 맞았을 때 처리
-    onHit(scene: Phaser.Scene, projectile: Projectile): void {
+    onHit(scene: Phaser.Scene, projectile: ProjectileType): void {
         if (!this.enemy || this.isDefeated) return; // 이미 처치된 상태면 무시
         
         // 공격력만큼 HP 감소

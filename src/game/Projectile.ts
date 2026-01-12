@@ -2,7 +2,7 @@ import Phaser from 'phaser';
 import { GameState } from '../managers/GameState';
 
 // 투사체 타입 정의
-interface Projectile extends Phaser.GameObjects.Image {
+export interface ProjectileType extends Phaser.GameObjects.Image {
     velocityX: number;
     velocityY: number;
     damage: number;
@@ -12,9 +12,9 @@ interface Projectile extends Phaser.GameObjects.Image {
 
 // 투사체 관리 (오브젝트 풀링 방식 - 수동/자동 분리)
 export const Projectile = {
-    manualPool: [] as Projectile[],
-    autoPool: [] as Projectile[],
-    active: [] as Projectile[],
+    manualPool: [] as ProjectileType[],
+    autoPool: [] as ProjectileType[],
+    active: [] as ProjectileType[],
     poolSize: 30,
     scene: null as Phaser.Scene | null,
     
@@ -33,7 +33,7 @@ export const Projectile = {
         
         // 수동 발사용 풀 생성 (무기 이미지 사용)
         for (let i = 0; i < this.poolSize; i++) {
-            const projectile = scene.add.image(0, 0, 'weapon') as Projectile;
+            const projectile = scene.add.image(0, 0, 'weapon') as ProjectileType;
             projectile.setScale(0.15); // 적절한 크기로 조정
             projectile.setOrigin(0.5, 0.5);
             projectile.setFlipX(true); // x축 기준으로 뒤집기
@@ -47,7 +47,7 @@ export const Projectile = {
         
         // 자동 발사용 풀 생성 (무기 이미지 사용)
         for (let i = 0; i < this.poolSize; i++) {
-            const projectile = scene.add.image(0, 0, 'weapon') as Projectile;
+            const projectile = scene.add.image(0, 0, 'weapon') as ProjectileType;
             projectile.setScale(0.15); // 적절한 크기로 조정
             projectile.setOrigin(0.5, 0.5);
             projectile.setFlipX(true); // x축 기준으로 뒤집기
@@ -61,7 +61,7 @@ export const Projectile = {
     },
     
     // 풀에서 투사체 가져오기
-    getFromPool(type: 'manual' | 'auto'): Projectile {
+    getFromPool(type: 'manual' | 'auto'): ProjectileType {
         const pool = type === 'auto' ? this.autoPool : this.manualPool;
         
         // 사용 가능한 투사체 찾기
@@ -75,7 +75,7 @@ export const Projectile = {
         if (!this.scene) {
             throw new Error('Scene not initialized');
         }
-        const projectile = this.scene.add.image(0, 0, 'weapon') as Projectile;
+        const projectile = this.scene.add.image(0, 0, 'weapon') as ProjectileType;
         projectile.setScale(0.15);
         projectile.setOrigin(0.5, 0.5);
         projectile.setFlipX(true); // x축 기준으로 뒤집기
@@ -87,7 +87,7 @@ export const Projectile = {
     },
     
     // 투사체 생성 (풀에서 재사용)
-    create(_scene: Phaser.Scene, startX: number, startY: number, targetX: number, targetY: number, type: 'manual' | 'auto' = 'manual'): Projectile | null {
+    create(_scene: Phaser.Scene, startX: number, startY: number, targetX: number, targetY: number, type: 'manual' | 'auto' = 'manual'): ProjectileType | null {
         const projectile = this.getFromPool(type);
         
         // 투사체 활성화
@@ -144,7 +144,7 @@ export const Projectile = {
     },
     
     // 투사체를 풀로 반환
-    returnToPool(projectile: Projectile): void {
+    returnToPool(projectile: ProjectileType): void {
         const index = this.active.indexOf(projectile);
         if (index > -1) {
             this.active.splice(index, 1);
@@ -160,7 +160,7 @@ export const Projectile = {
     },
     
     // 투사체 제거 (풀로 반환)
-    remove(projectile: Projectile): void {
+    remove(projectile: ProjectileType): void {
         this.returnToPool(projectile);
     },
     
