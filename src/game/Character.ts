@@ -17,7 +17,7 @@ export const Character = {
         
         // 캐릭터 생성 (위쪽 절반 영역에 배치)
         this.char = scene.add.image(gameWidth * 0.75, gameHeight * 0.33, 'char');
-        this.char.setScale(0.06 * scale.uniform);
+        this.char.setScale(0.1 * scale.uniform);
         this.char.setOrigin(0.5, 0.5);
         this.char.setInteractive({ useHandCursor: true });
         
@@ -62,7 +62,7 @@ export const Character = {
     update(scene: Phaser.Scene): void {
         if (this.char) {
             const baseY = scene.scale.height * 0.33; // 위쪽 절반 기준
-            this.char.y = baseY + Math.sin(scene.time.now / 1000) * 5;
+            this.char.y = baseY - Math.sin(scene.time.now / 1000) * 5;
         }
     }
 };
