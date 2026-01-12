@@ -1,9 +1,9 @@
 # Dependencies
 node_modules/
-package-lock.json
+# package-lock.json  # GitHub Actions를 위해 포함 필요
 
 # Build outputs
-dist/  # GitHub Actions에서 자동 빌드하므로 제외
+dist/
 *.tsbuildinfo
 
 # Environment variables
