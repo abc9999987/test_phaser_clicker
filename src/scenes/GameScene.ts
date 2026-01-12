@@ -11,6 +11,8 @@ import { UIManager } from '../ui/UIManager';
 export class GameScene extends Phaser.Scene {
     autoSaveTimer?: Phaser.Time.TimerEvent;
     autoFireTimer?: Phaser.Time.TimerEvent;
+    bossTimer?: Phaser.Time.TimerEvent;
+    bossTimerStartTime?: number;
     
     constructor() {
         super({ key: 'GameScene' });
@@ -51,7 +53,7 @@ export class GameScene extends Phaser.Scene {
         this.setupAutoFire();
         
         // UI 업데이트 (로드된 상태 반영)
-        UIManager.update();
+        UIManager.update(this);
         
         // 주기적 자동 저장 시작
         this.startAutoSave();
@@ -101,6 +103,12 @@ export class GameScene extends Phaser.Scene {
             Enemy.updateHpBarPosition();
         }
         
+        // 보스 타이머 관리
+        this.updateBossTimer();
+        
+        // UI 업데이트 (타이머 표시용)
+        UIManager.update(this);
+        
         // 투사체와 enemy 충돌 감지
         // 배열을 복사하여 순회 (제거 시 인덱스 문제 방지)
         const projectilesToCheck = [...Projectile.active];
@@ -113,6 +121,80 @@ export class GameScene extends Phaser.Scene {
                 Enemy.onHit(this, projectile);
                 Projectile.remove(projectile);
             }
+        }
+    }
+    
+    // 보스 타이머 시작
+    startBossTimer(): void {
+        // 기존 타이머가 있으면 제거
+        if (this.bossTimer) {
+            this.bossTimer.remove();
+        }
+        
+        // 보스 스테이지일 때만 타이머 시작
+        if (GameState.isBossStage()) {
+            this.bossTimerStartTime = this.time.now;
+            this.bossTimer = this.time.addEvent({
+                delay: 15000, // 15초
+                callback: () => {
+                    this.onBossTimerExpired();
+                },
+                loop: false
+            });
+        }
+    }
+    
+    // 보스 타이머 업데이트 (UI 업데이트용)
+    updateBossTimer(): void {
+        // 보스 스테이지가 아니면 타이머 제거
+        if (!GameState.isBossStage()) {
+            if (this.bossTimer) {
+                this.bossTimer.remove();
+                this.bossTimer = undefined;
+                this.bossTimerStartTime = undefined;
+            }
+            return;
+        }
+        
+        // 보스 스테이지인데 타이머가 없으면 시작
+        if (!this.bossTimer && this.bossTimerStartTime === undefined) {
+            this.startBossTimer();
+        }
+    }
+    
+    // 보스 타이머 만료 시 처리
+    onBossTimerExpired(): void {
+        // 처치 카운트만 초기화
+        GameState.onBossTimerExpired();
+        
+        // UI 업데이트
+        UIManager.update(this);
+        
+        // 타이머 제거
+        if (this.bossTimer) {
+            this.bossTimer.remove();
+            this.bossTimer = undefined;
+            this.bossTimerStartTime = undefined;
+        }
+        
+        // 적 리스폰 (일반 적으로)
+        if (Enemy.enemy) {
+            Enemy.respawn(this);
+        }
+    }
+    
+    // 보스 처치 시 호출 (Enemy에서 호출)
+    onBossDefeated(): void {
+        // 타이머 제거
+        if (this.bossTimer) {
+            this.bossTimer.remove();
+            this.bossTimer = undefined;
+            this.bossTimerStartTime = undefined;
+        }
+        
+        // 다음 적이 보스면 타이머 시작 (스테이지가 올라갔을 수도 있음)
+        if (GameState.isBossStage()) {
+            this.startBossTimer();
         }
     }
 }

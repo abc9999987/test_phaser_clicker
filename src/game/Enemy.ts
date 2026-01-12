@@ -21,6 +21,7 @@ export const Enemy = {
     maxHp: 100,  // 최대 HP
     hpBar: null as Phaser.GameObjects.Graphics | null,
     isDefeated: false,  // 처치 상태 플래그 (중복 처치 방지)
+    isBoss: false,  // 보스 여부
     
     // 적 생성
     create(scene: Phaser.Scene, baseX: number, baseY: number): Phaser.GameObjects.Image {
@@ -33,7 +34,18 @@ export const Enemy = {
         const y = (baseY / 844) * gameHeight;
         
         this.enemy = scene.add.image(x, y, 'enemy');
-        this.enemy.setScale(1.5 * scale.uniform);
+        
+        // 보스 여부 확인
+        this.isBoss = GameState.isBossStage();
+        
+        // 보스면 크기 2배, 아니면 기본 크기
+        const baseScale = 0.75 * scale.uniform;
+        this.enemy.setScale(this.isBoss ? baseScale * 2 : baseScale);
+        
+        // 보스면 색상 변경 (빨간색 틴트)
+        if (this.isBoss) {
+            this.enemy.setTint(0xff4444);
+        }
         
         // 스테이지별 HP 설정
         this.maxHp = GameState.getEnemyHp();
@@ -59,8 +71,9 @@ export const Enemy = {
     updateHpBar(): void {
         if (!this.enemy || !this.hpBar) return;
         
-        const barWidth = 80;
-        const barHeight = 8;
+        // 보스면 HP 바 크기 증가
+        const barWidth = this.isBoss ? 120 : 80;
+        const barHeight = this.isBoss ? 10 : 8;
         const x = this.enemy.x - barWidth / 2;
         const y = this.enemy.y - (this.enemy.height * this.enemy.scaleY) / 2 - 20;
         
@@ -70,9 +83,9 @@ export const Enemy = {
         this.hpBar.fillStyle(0xff0000, 0.5);
         this.hpBar.fillRect(x, y, barWidth, barHeight);
         
-        // HP (초록색)
+        // HP (보스면 주황색, 일반은 초록색)
         const hpPercent = Math.max(0, Math.min(1, this.hp / this.maxHp));
-        this.hpBar.fillStyle(0x00ff00, 1);
+        this.hpBar.fillStyle(this.isBoss ? 0xff8800 : 0x00ff00, 1);
         this.hpBar.fillRect(x, y, barWidth * hpPercent, barHeight);
         
         // 테두리
@@ -140,6 +153,9 @@ export const Enemy = {
     onDefeated(scene: Phaser.Scene): void {
         if (!this.enemy) return;
         
+        // 보스 처치 여부 확인 (처치 전 상태)
+        const wasBoss = this.isBoss;
+        
         // 스테이지별 골드 지급 (적 체력과 동일)
         const goldReward = GameState.getEnemyGoldReward();
         GameState.addCoins(goldReward);
@@ -147,8 +163,13 @@ export const Enemy = {
         // 스테이지 진행 처리
         GameState.onEnemyDefeated();
         
+        // 보스 처치 시 타이머 제거 (GameScene에서 처리)
+        if (wasBoss && (scene as any).onBossDefeated) {
+            (scene as any).onBossDefeated();
+        }
+        
         // UI 업데이트
-        UIManager.update();
+        UIManager.update(scene);
         
         // 처치 효과
         scene.tweens.add({
@@ -172,24 +193,43 @@ export const Enemy = {
     respawn(scene: Phaser.Scene): void {
         if (!this.enemy) return;
         
+        // 보스 여부 확인
+        this.isBoss = GameState.isBossStage();
+        
         // 스테이지별 새로운 HP 설정
         this.maxHp = GameState.getEnemyHp();
         this.hp = this.maxHp;
         this.isDefeated = false;
         
+        // 보스면 색상 변경, 아니면 원래 색상
+        if (this.isBoss) {
+            this.enemy.setTint(0xff4444);
+        } else {
+            this.enemy.clearTint();
+        }
+        
         // 적 복귀 애니메이션
+        const scale = Responsive.getScale(scene);
+        const baseScale = 0.75 * scale.uniform;
+        const finalScale = this.isBoss ? baseScale * 2 : baseScale;
+        
         this.enemy.setAlpha(0);
         this.enemy.setScale(0);
         scene.tweens.add({
             targets: this.enemy,
             alpha: 1,
-            scaleX: 1.5 * Responsive.getScale(scene).uniform,
-            scaleY: 1.5 * Responsive.getScale(scene).uniform,
+            scaleX: finalScale,
+            scaleY: finalScale,
             duration: 300,
             ease: 'Back.easeOut'
         });
         
         // HP 바 업데이트
         this.updateHpBar();
+        
+        // 보스 스테이지면 타이머 시작 (GameScene에서 처리)
+        if (this.isBoss && (scene as any).startBossTimer) {
+            (scene as any).startBossTimer();
+        }
     }
 };

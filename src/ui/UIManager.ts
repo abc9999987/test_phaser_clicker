@@ -12,6 +12,7 @@ export const UIManager = {
     upgradeButtonText: null as Phaser.GameObjects.Text | null,
     stageText: null as Phaser.GameObjects.Text | null,
     killCountText: null as Phaser.GameObjects.Text | null,
+    bossTimerText: null as Phaser.GameObjects.Text | null,
     
     // UI 생성 (아래쪽 절반 영역에 배치)
     create(scene: Phaser.Scene): void {
@@ -41,6 +42,19 @@ export const UIManager = {
             fontFamily: 'Arial'
         });
         this.killCountText.setOrigin(0.5);
+        
+        // 보스 타이머 표시 (화면 상단, 보스 스테이지일 때만 표시)
+        const timerFontSize = Responsive.getFontSize(scene, 24);
+        this.bossTimerText = scene.add.text(gameWidth / 2, gameHeight * 0.02, '', {
+            fontSize: timerFontSize,
+            color: '#ff4444',
+            fontFamily: 'Arial',
+            font: `bold ${timerFontSize} Arial`,
+            stroke: '#000000',
+            strokeThickness: 3
+        });
+        this.bossTimerText.setOrigin(0.5);
+        this.bossTimerText.setVisible(false); // 기본적으로 숨김
         
         // 구분선 (위쪽 절반과 아래쪽 절반 구분)
         const dividerLine = scene.add.line(0, 0, 0, halfHeight, gameWidth, halfHeight, 0xffffff, 0.3);
@@ -151,7 +165,7 @@ export const UIManager = {
     },
     
     // UI 업데이트
-    update(): void {
+    update(scene?: Phaser.Scene): void {
         // 스테이지 표시 업데이트
         if (this.stageText) {
             this.stageText.setText(GameState.getStageString());
@@ -160,6 +174,25 @@ export const UIManager = {
         // 처치 카운트 표시 업데이트
         if (this.killCountText) {
             this.killCountText.setText(`다음 스테이지까지: ${GameState.killsInCurrentStage}/10 처치`);
+        }
+        
+        // 보스 타이머 업데이트
+        if (this.bossTimerText && scene) {
+            const isBossStage = GameState.isBossStage();
+            this.bossTimerText.setVisible(isBossStage);
+            
+            if (isBossStage && (scene as any).bossTimer && (scene as any).bossTimerStartTime !== undefined) {
+                const elapsed = scene.time.now - (scene as any).bossTimerStartTime;
+                const remaining = Math.max(0, 15000 - elapsed);
+                const seconds = Math.ceil(remaining / 1000);
+                
+                // 5초 이하면 빨간색, 아니면 주황색
+                const color = seconds <= 5 ? '#ff0000' : '#ff8800';
+                this.bossTimerText.setColor(color);
+                this.bossTimerText.setText(`보스 타이머: ${seconds}초`);
+            } else {
+                this.bossTimerText.setVisible(false);
+            }
         }
         
         if (this.coinText) {
