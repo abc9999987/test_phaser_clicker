@@ -161,7 +161,7 @@ export const GameState = {
     
     // 공격력 강화 비용 계산 (1.4로 조정)
     getAttackPowerUpgradeCost(): number {
-        return Math.floor(10 * Math.pow(1.4, this.attackPower - 1));
+        return Math.floor(10 * Math.pow(1.35, this.attackPower - 1));
     },
     
     // 공격 속도 강화 비용 계산 (더 비싸게 조정)
