@@ -39,9 +39,9 @@ export class GameScene extends Phaser.Scene {
         // 캐릭터 생성
         Character.create(this);
         
-        // 적 생성 (반응형 위치)
+        // 적 생성 (위쪽 절반 영역에 배치)
         const enemyX = this.scale.width * 0.25;
-        const enemyY = this.scale.height * 0.67;
+        const enemyY = this.scale.height * 0.33;
         Enemy.create(this, enemyX, enemyY);
         
         // UI 생성
@@ -75,9 +75,9 @@ export class GameScene extends Phaser.Scene {
             this.autoFireTimer.remove();
         }
         
-        // 자동 발사가 활성화되어 있으면 타이머 시작
-        if (GameState.autoFireRate > 0) {
-            const fireInterval = 1000 / GameState.autoFireRate; // 초당 N회 = 1000ms / N
+        // 공격 속도가 활성화되어 있으면 타이머 시작
+        if (GameState.attackSpeed > 0) {
+            const fireInterval = 1000 / GameState.attackSpeed; // 초당 N회 = 1000ms / N
             
             this.autoFireTimer = this.time.addEvent({
                 delay: fireInterval,
@@ -95,6 +95,11 @@ export class GameScene extends Phaser.Scene {
         
         // 투사체 업데이트
         Projectile.update(this, delta);
+        
+        // HP 바 위치 업데이트
+        if (Enemy.enemy && Enemy.hpBar) {
+            Enemy.updateHpBarPosition();
+        }
         
         // 투사체와 enemy 충돌 감지
         // 배열을 복사하여 순회 (제거 시 인덱스 문제 방지)

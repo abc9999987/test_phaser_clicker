@@ -10,81 +10,141 @@ export const UIManager = {
     upgradeButton: null as Phaser.GameObjects.Rectangle | null,
     clickButtonText: null as Phaser.GameObjects.Text | null,
     upgradeButtonText: null as Phaser.GameObjects.Text | null,
+    stageText: null as Phaser.GameObjects.Text | null,
+    killCountText: null as Phaser.GameObjects.Text | null,
     
-    // UI 생성
+    // UI 생성 (아래쪽 절반 영역에 배치)
     create(scene: Phaser.Scene): void {
         const gameWidth = scene.scale.width;
         const gameHeight = scene.scale.height;
+        const halfHeight = gameHeight * 0.5; // 화면 절반 지점
+        const uiAreaHeight = gameHeight * 0.5; // 아래쪽 절반 영역 높이
+        const uiAreaStartY = halfHeight; // UI 영역 시작 Y 위치
         
-        // UI 패널 배경 (반응형)
-        const panelWidth = gameWidth * 0.94;
-        const panelHeight = gameHeight * 0.13;
-        const uiPanel = scene.add.rectangle(gameWidth / 2, panelHeight / 2, panelWidth, panelHeight, 0x000000, 0.6);
-        uiPanel.setOrigin(0.5, 0.5);
+        // 스테이지 표시 (화면 위쪽 중앙)
+        const stageFontSize = Responsive.getFontSize(scene, 32);
+        this.stageText = scene.add.text(gameWidth / 2, gameHeight * 0.08, GameState.getStageString(), {
+            fontSize: stageFontSize,
+            color: '#ffffff',
+            fontFamily: 'Arial',
+            fontStyle: 'bold',
+            stroke: '#000000',
+            strokeThickness: 4
+        });
+        this.stageText.setOrigin(0.5);
         
-        // 코인 텍스트 (반응형)
-        const coinFontSize = Responsive.getFontSize(scene, 24);
-        this.coinText = scene.add.text(gameWidth * 0.06, panelHeight * 0.4, `코인: ${GameState.coins}`, {
-            fontSize: coinFontSize,
-            color: '#ffd700',
+        // 처치 카운트 표시 (스테이지 바로 아래)
+        const killCountFontSize = Responsive.getFontSize(scene, 18);
+        this.killCountText = scene.add.text(gameWidth / 2, gameHeight * 0.11, '', {
+            fontSize: killCountFontSize,
+            color: '#e8e8e8',
             fontFamily: 'Arial'
         });
+        this.killCountText.setOrigin(0.5);
         
-        // 초당 발사 텍스트 (반응형)
-        const cpsFontSize = Responsive.getFontSize(scene, 18);
-        this.autoFireText = scene.add.text(gameWidth * 0.06, panelHeight * 0.75, `초당 발사: ${GameState.autoFireRate}회`, {
-            fontSize: cpsFontSize,
+        // 구분선 (위쪽 절반과 아래쪽 절반 구분)
+        const dividerLine = scene.add.line(0, 0, 0, halfHeight, gameWidth, halfHeight, 0xffffff, 0.3);
+        dividerLine.setOrigin(0, 0);
+        dividerLine.setLineWidth(2);
+        
+        // UI 패널 배경 (아래쪽 절반 전체)
+        const uiPanel = scene.add.rectangle(gameWidth / 2, halfHeight + uiAreaHeight / 2, gameWidth * 0.98, uiAreaHeight * 0.95, 0x1a1a1a, 0.9);
+        uiPanel.setOrigin(0.5, 0.5);
+        
+        // 코인 텍스트 (아래쪽 절반 상단)
+        const coinFontSize = Responsive.getFontSize(scene, 28);
+        const coinY = uiAreaStartY + uiAreaHeight * 0.15;
+        this.coinText = scene.add.text(gameWidth * 0.05, coinY, `코인: ${GameState.coins}`, {
+            fontSize: coinFontSize,
+            color: '#ffd700',
+            fontFamily: 'Arial',
+            font: `bold ${coinFontSize} Arial`
+        });
+        
+        // 공격 속도 텍스트 (코인 아래)
+        const attackSpeedFontSize = Responsive.getFontSize(scene, 20);
+        const attackSpeedY = coinY + uiAreaHeight * 0.12;
+        this.autoFireText = scene.add.text(gameWidth * 0.05, attackSpeedY, `공격 속도: ${GameState.attackSpeed}/초`, {
+            fontSize: attackSpeedFontSize,
             color: '#ffffff',
             fontFamily: 'Arial'
         });
         
-        // 클릭 강화 버튼 (반응형)
-        const buttonWidth = gameWidth * 0.15;
-        const buttonHeight = gameHeight * 0.067;
-        this.clickButton = scene.add.rectangle(gameWidth * 0.81, panelHeight * 0.4, buttonWidth, buttonHeight, 0x4a90e2);
+        // 공격력 텍스트 (공격 속도 아래)
+        const attackPowerFontSize = Responsive.getFontSize(scene, 20);
+        const attackPowerY = attackSpeedY + uiAreaHeight * 0.12;
+        const attackPowerText = scene.add.text(gameWidth * 0.05, attackPowerY, `공격력: ${GameState.attackPower}`, {
+            fontSize: attackPowerFontSize,
+            color: '#ffffff',
+            fontFamily: 'Arial'
+        });
+        (this as any).attackPowerText = attackPowerText;
+        
+        // 공격력 강화 버튼 (아래쪽 절반 중앙 왼쪽)
+        const buttonWidth = gameWidth * 0.42;
+        const buttonHeight = uiAreaHeight * 0.12;
+        const buttonY = uiAreaStartY + uiAreaHeight * 0.5;
+        const leftButtonX = gameWidth * 0.25;
+        
+        this.clickButton = scene.add.rectangle(leftButtonX, buttonY, buttonWidth, buttonHeight, 0x4a90e2);
         this.clickButton.setInteractive({ useHandCursor: true });
         this.clickButton.on('pointerdown', () => {
-            if (GameState.upgradeClick()) {
+            if (GameState.upgradeAttackPower()) {
                 this.update();
             }
         });
         
-        const buttonFontSize = Responsive.getFontSize(scene, 14);
-        this.clickButtonText = scene.add.text(gameWidth * 0.81, panelHeight * 0.4, '클릭 강화', {
+        const buttonFontSize = Responsive.getFontSize(scene, 18);
+        this.clickButtonText = scene.add.text(leftButtonX, buttonY, '공격력 강화', {
             fontSize: buttonFontSize,
             color: '#ffffff',
-            fontFamily: 'Arial'
+            fontFamily: 'Arial',
+            font: `bold ${buttonFontSize} Arial`
         });
         this.clickButtonText.setOrigin(0.5);
         
-        // 자동 발사 버튼 (반응형)
-        this.upgradeButton = scene.add.rectangle(gameWidth * 0.81, panelHeight * 0.75, buttonWidth, buttonHeight, 0x50c878);
+        // 비용 표시 (버튼 아래)
+        const costFontSize = Responsive.getFontSize(scene, 14);
+        const clickCostText = scene.add.text(leftButtonX, buttonY + buttonHeight * 0.6, '', {
+            fontSize: costFontSize,
+            color: '#cccccc',
+            fontFamily: 'Arial'
+        });
+        clickCostText.setOrigin(0.5);
+        
+        // 공격 속도 강화 버튼 (아래쪽 절반 중앙 오른쪽)
+        const rightButtonX = gameWidth * 0.75;
+        this.upgradeButton = scene.add.rectangle(rightButtonX, buttonY, buttonWidth, buttonHeight, 0x50c878);
         this.upgradeButton.setInteractive({ useHandCursor: true });
         this.upgradeButton.on('pointerdown', () => {
-            if (GameState.upgradeAutoFire()) {
+            if (GameState.upgradeAttackSpeed()) {
                 this.update();
-                // 자동 발사 타이머 재설정
+                // 공격 속도 타이머 재설정
                 if ((scene as any).setupAutoFire) {
                     (scene as any).setupAutoFire();
                 }
             }
         });
         
-        this.upgradeButtonText = scene.add.text(gameWidth * 0.81, panelHeight * 0.75, '자동 발사', {
+        this.upgradeButtonText = scene.add.text(rightButtonX, buttonY, '공격 속도 강화', {
             fontSize: buttonFontSize,
             color: '#ffffff',
-            fontFamily: 'Arial'
+            fontFamily: 'Arial',
+            font: `bold ${buttonFontSize} Arial`
         });
         this.upgradeButtonText.setOrigin(0.5);
         
-        // 안내 텍스트 (반응형)
-        const hintFontSize = Responsive.getFontSize(scene, 16);
-        const hintText = scene.add.text(gameWidth / 2, gameHeight * 0.92, '캐릭터를 클릭하여 투사체를 발사하세요!', {
-            fontSize: hintFontSize,
-            color: '#ffffff',
+        // 비용 표시 (버튼 아래)
+        const autoCostText = scene.add.text(rightButtonX, buttonY + buttonHeight * 0.6, '', {
+            fontSize: costFontSize,
+            color: '#cccccc',
             fontFamily: 'Arial'
         });
-        hintText.setOrigin(0.5);
+        autoCostText.setOrigin(0.5);
+        
+        // 비용 텍스트 업데이트 함수 저장
+        (this as any).clickCostText = clickCostText;
+        (this as any).autoCostText = autoCostText;
         
         // 초기 UI 업데이트
         this.update();
@@ -92,27 +152,52 @@ export const UIManager = {
     
     // UI 업데이트
     update(): void {
+        // 스테이지 표시 업데이트
+        if (this.stageText) {
+            this.stageText.setText(GameState.getStageString());
+        }
+        
+        // 처치 카운트 표시 업데이트
+        if (this.killCountText) {
+            this.killCountText.setText(`다음 스테이지까지: ${GameState.killsInCurrentStage}/10 처치`);
+        }
+        
         if (this.coinText) {
             this.coinText.setText(`코인: ${Math.floor(GameState.coins)}`);
         }
         
         if (this.autoFireText) {
-            this.autoFireText.setText(`초당 발사: ${GameState.autoFireRate}회`);
+            this.autoFireText.setText(`공격 속도: ${GameState.attackSpeed}/초`);
         }
         
-        // 버튼 색상 업데이트 (구매 가능 여부)
+        // 공격력 텍스트 업데이트
+        if ((this as any).attackPowerText) {
+            (this as any).attackPowerText.setText(`공격력: ${GameState.attackPower}`);
+        }
+        
+        // 버튼 색상 및 비용 업데이트 (구매 가능 여부)
         if (this.clickButton) {
-            const clickCost = GameState.getClickUpgradeCost();
+            const attackPowerCost = GameState.getAttackPowerUpgradeCost();
             this.clickButton.setFillStyle(
-                GameState.coins >= clickCost ? 0x4a90e2 : 0x666666
+                GameState.coins >= attackPowerCost ? 0x4a90e2 : 0x666666
             );
+            
+            // 비용 텍스트 업데이트
+            if ((this as any).clickCostText) {
+                (this as any).clickCostText.setText(`비용: ${attackPowerCost} 코인`);
+            }
         }
         
         if (this.upgradeButton) {
-            const autoCost = GameState.getAutoFireUpgradeCost();
+            const attackSpeedCost = GameState.getAttackSpeedUpgradeCost();
             this.upgradeButton.setFillStyle(
-                GameState.coins >= autoCost ? 0x50c878 : 0x666666
+                GameState.coins >= attackSpeedCost ? 0x50c878 : 0x666666
             );
+            
+            // 비용 텍스트 업데이트
+            if ((this as any).autoCostText) {
+                (this as any).autoCostText.setText(`비용: ${attackSpeedCost} 코인`);
+            }
         }
     }
 };

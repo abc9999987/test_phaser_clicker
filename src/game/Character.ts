@@ -15,9 +15,9 @@ export const Character = {
         const gameHeight = scene.scale.height;
         const scale = Responsive.getScale(scene);
         
-        // 캐릭터 생성 (preload에서 이미 로드됨, 반응형)
-        this.char = scene.add.image(gameWidth * 0.75, gameHeight * 0.67, 'char');
-        this.char.setScale(0.12 * scale.min, 0.12 * scale.min);
+        // 캐릭터 생성 (위쪽 절반 영역에 배치)
+        this.char = scene.add.image(gameWidth * 0.75, gameHeight * 0.33, 'char');
+        this.char.setScale(0.12 * scale.uniform);
         this.char.setOrigin(0.5, 0.5);
         this.char.setInteractive({ useHandCursor: true });
         
@@ -52,16 +52,16 @@ export const Character = {
             Enemy.enemy.y,
             type
         );
-        // 투사체 데미지를 현재 클릭 강화 수준으로 설정
+        // 투사체 데미지를 현재 공격력으로 설정
         if (projectile) {
-            projectile.damage = GameState.coinsPerClick;
+            projectile.damage = GameState.attackPower;
         }
     },
     
     // 캐릭터 업데이트 (부드러운 움직임)
     update(scene: Phaser.Scene): void {
         if (this.char) {
-            const baseY = scene.scale.height * 0.67;
+            const baseY = scene.scale.height * 0.33; // 위쪽 절반 기준
             this.char.y = baseY + Math.sin(scene.time.now / 1000) * 5;
         }
     }
