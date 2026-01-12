@@ -3,7 +3,7 @@ node_modules/
 package-lock.json
 
 # Build outputs
-dist/
+# dist/  # GitHub Pages 배포를 위해 주석 처리
 *.tsbuildinfo
 
 # Environment variables
