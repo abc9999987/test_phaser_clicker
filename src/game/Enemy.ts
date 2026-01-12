@@ -2,7 +2,7 @@ import Phaser from 'phaser';
 import { Responsive } from '../utils/Responsive';
 import { Effects } from '../utils/Effects';
 import { GameState } from '../managers/GameState';
-import { Projectile, ProjectileType } from './Projectile';
+import { ProjectileType } from './Projectile';
 import { UIManager } from '../ui/UIManager';
 
 // 적 관리
