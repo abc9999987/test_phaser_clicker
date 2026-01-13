@@ -3,6 +3,7 @@ interface SaveData {
     coins: number;
     attackPower: number;
     attackSpeed: number;
+    critChance: number; // 치명타 확률 (%)
     clickCount: number;
     chapter: number;
     stage: number;
@@ -18,6 +19,7 @@ export const GameState = {
     coins: 0,
     attackPower: 1,  // 공격력
     attackSpeed: 0,  // 공격 속도 (초당 발사 횟수)
+    critChance: 0,  // 치명타 확률 (%)
     clickCount: 0,
     chapter: 1,  // 챕터 (1, 2, 3, ...)
     stage: 1,  // 스테이지 (1-20)
@@ -36,6 +38,7 @@ export const GameState = {
                 coins: this.coins,
                 attackPower: this.attackPower,
                 attackSpeed: this.attackSpeed,
+                critChance: this.critChance,
                 clickCount: this.clickCount,
                 chapter: this.chapter,
                 stage: this.stage,
@@ -62,6 +65,7 @@ export const GameState = {
                 this.coins = data.coins || 0;
                 this.attackPower = data.attackPower || 1;
                 this.attackSpeed = data.attackSpeed || 0;
+                this.critChance = data.critChance || 0;
                 this.clickCount = data.clickCount || 0;
                 this.chapter = data.chapter || 1;
                 this.stage = data.stage || 1;
@@ -215,6 +219,11 @@ export const GameState = {
         return Math.floor(75 * Math.pow(2.0, this.attackSpeed));
     },
     
+    // 치명타 확률 업그레이드 비용 계산
+    getCritChanceUpgradeCost(): number {
+        return Math.floor(75 * Math.pow(2.0, this.critChance));
+    },
+    
     // 공격력 강화 구매
     upgradeAttackPower(): boolean {
         const cost = this.getAttackPowerUpgradeCost();
@@ -236,6 +245,22 @@ export const GameState = {
         const cost = this.getAttackSpeedUpgradeCost();
         if (this.spendCoins(cost)) {
             this.attackSpeed++;
+            this.save(); // 자동 저장
+            return true;
+        }
+        return false;
+    },
+    
+    // 치명타 확률 강화 구매 (최대 100%)
+    upgradeCritChance(): boolean {
+        // 최대치 체크
+        if (this.critChance >= 100) {
+            return false;
+        }
+        
+        const cost = this.getCritChanceUpgradeCost();
+        if (this.spendCoins(cost)) {
+            this.critChance++;
             this.save(); // 자동 저장
             return true;
         }

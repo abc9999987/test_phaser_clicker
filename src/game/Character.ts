@@ -3,7 +3,6 @@ import { Responsive } from '../utils/Responsive';
 import { Effects } from '../utils/Effects';
 import { Enemy } from './Enemy';
 import { Projectile } from './Projectile';
-import { GameState } from '../managers/GameState';
 
 // 캐릭터 생성 및 관리
 export const Character = {
@@ -58,7 +57,8 @@ export const Character = {
         const targetX = Enemy.enemy.x + targetOffsetX;
         const targetY = Enemy.enemy.y + targetOffsetY;
         
-        const projectile = Projectile.create(
+        // 투사체 생성 (치명타 계산은 Projectile.create() 내부에서 처리됨)
+        Projectile.create(
             scene, 
             startX, 
             startY, 
@@ -66,10 +66,6 @@ export const Character = {
             targetY,
             type
         );
-        // 투사체 데미지를 현재 공격력으로 설정
-        if (projectile) {
-            projectile.damage = GameState.getAttackPowerValue();
-        }
     },
     
     // 캐릭터 업데이트 (부드러운 움직임)

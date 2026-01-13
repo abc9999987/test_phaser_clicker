@@ -37,6 +37,7 @@ export const UIManager = {
     skillAutoButtons: [] as Phaser.GameObjects.Rectangle[],
     skillAutoButtonBgs: [] as Phaser.GameObjects.Graphics[],
     skillAutoButtonTexts: [] as Phaser.GameObjects.Text[],
+    upgradeCards: [] as Phaser.GameObjects.Container[],
     
     // UI 생성 (아래쪽 절반 영역에 배치)
     create(scene: Phaser.Scene): void {
@@ -685,238 +686,315 @@ export const UIManager = {
         (this as any).attackPowerText = attackPowerText;
         contentContainer.add(attackPowerText);
         
+        // 치명타 확률 텍스트
+        const critChanceFontSize = Responsive.getFontSize(scene, 20);
+        const critChanceY = attackPowerY + uiAreaHeight * 0.12;
+        const critChanceText = scene.add.text(gameWidth * 0.1, critChanceY, `치명타 확률: ${GameState.critChance}%`, {
+            fontSize: critChanceFontSize,
+            color: '#e0e0e0',
+            fontFamily: 'Arial',
+            font: `500 ${critChanceFontSize} Arial`
+        });
+        (this as any).critChanceText = critChanceText;
+        contentContainer.add(critChanceText);
+        
         this.tabContents[0] = contentContainer;
+    },
+    
+    // 업그레이드 카드 생성 (공통 함수)
+    createUpgradeCard(
+        scene: Phaser.Scene,
+        x: number,
+        y: number,
+        width: number,
+        height: number,
+        labelText: string,
+        valueText: string,
+        costText: string,
+        buttonColor: number,
+        buttonHoverColor: number,
+        buttonBorderColor: number,
+        onUpgrade: () => boolean,
+        getCost: () => number,
+        canAfford: () => boolean,
+        isMaxLevel?: () => boolean
+    ): Phaser.GameObjects.Container {
+        const cardContainer = scene.add.container(x, y);
+        const cardRadius = 12;
+        const padding = 10;
+        const buttonRadius = 12;
+        const x1ButtonWidth = 50;
+        const x1ButtonHeight = 35;
+        
+        // 카드 배경
+        const cardBg = scene.add.graphics();
+        cardBg.fillStyle(0x2a2a3a, 0.95);
+        cardBg.fillRoundedRect(-width / 2, -height / 2, width, height, cardRadius);
+        cardBg.lineStyle(2, 0x4a4a5a, 0.8);
+        cardBg.strokeRoundedRect(-width / 2, -height / 2, width, height, cardRadius);
+        cardContainer.add(cardBg);
+        
+        const centerY = 0;
+        const startX = -width / 2 + padding;
+        const centerX = 0;
+        const buttonX = width / 2 - padding - x1ButtonWidth / 2;
+        
+        // 첫 번째 줄: 큰 글씨
+        const labelFontSize = Responsive.getFontSize(scene, 18);
+        const labelY = centerY - 8;
+        
+        // 왼쪽: 항목명
+        const label = scene.add.text(startX, labelY, labelText, {
+            fontSize: labelFontSize,
+            color: '#e0e0e0',
+            fontFamily: 'Arial',
+            font: `500 ${labelFontSize} Arial`
+        });
+        label.setOrigin(0, 0.5);
+        cardContainer.add(label);
+        
+        // 중앙: "비용"
+        const costLabel = scene.add.text(centerX, labelY, '비용', {
+            fontSize: labelFontSize,
+            color: '#e0e0e0',
+            fontFamily: 'Arial',
+            font: `500 ${labelFontSize} Arial`
+        });
+        costLabel.setOrigin(0.5, 0.5);
+        cardContainer.add(costLabel);
+        
+        // 두 번째 줄: 작은 글씨
+        const valueFontSize = Responsive.getFontSize(scene, 14);
+        const valueY = centerY + 8;
+        
+        // 왼쪽: 값 변화
+        const value = scene.add.text(startX, valueY, valueText, {
+            fontSize: valueFontSize,
+            color: '#e0e0e0',
+            fontFamily: 'Arial',
+            font: `500 ${valueFontSize} Arial`
+        });
+        value.setOrigin(0, 0.5);
+        cardContainer.add(value);
+        
+        // 중앙: 비용 숫자
+        const costValue = scene.add.text(centerX, valueY, costText, {
+            fontSize: valueFontSize,
+            color: '#e0e0e0',
+            fontFamily: 'Arial',
+            font: `500 ${valueFontSize} Arial`
+        });
+        costValue.setOrigin(0.5, 0.5);
+        cardContainer.add(costValue);
+        
+        // x1 버튼 배경
+        const buttonBg = scene.add.graphics();
+        const canAffordNow = isMaxLevel ? !isMaxLevel() && canAfford() : canAfford();
+        buttonBg.fillStyle(canAffordNow ? buttonColor : 0x555555, canAffordNow ? 1 : 0.8);
+        buttonBg.fillRoundedRect(buttonX - x1ButtonWidth / 2, centerY - x1ButtonHeight / 2, x1ButtonWidth, x1ButtonHeight, buttonRadius);
+        buttonBg.lineStyle(2, canAffordNow ? buttonBorderColor : 0x666666, canAffordNow ? 1 : 0.8);
+        buttonBg.strokeRoundedRect(buttonX - x1ButtonWidth / 2, centerY - x1ButtonHeight / 2, x1ButtonWidth, x1ButtonHeight, buttonRadius);
+        cardContainer.add(buttonBg);
+        
+        // x1 버튼 그림자
+        const buttonShadow = scene.add.graphics();
+        buttonShadow.fillStyle(0x000000, 0.2);
+        buttonShadow.fillRoundedRect(buttonX - x1ButtonWidth / 2 + 2, centerY - x1ButtonHeight / 2 + 2, x1ButtonWidth, x1ButtonHeight, buttonRadius);
+        buttonShadow.setDepth(-1);
+        cardContainer.add(buttonShadow);
+        
+        // x1 버튼 (상호작용용)
+        const button = scene.add.rectangle(buttonX, centerY, x1ButtonWidth, x1ButtonHeight, 0x000000, 0);
+        button.setInteractive({ useHandCursor: true });
+        button.on('pointerdown', () => {
+            if (onUpgrade()) {
+                // 업그레이드 후 UI 업데이트는 외부에서 처리
+            }
+        });
+        button.on('pointerover', () => {
+            buttonBg.clear();
+            const maxed = isMaxLevel ? isMaxLevel() : false;
+            if (!maxed) {
+                buttonBg.fillStyle(buttonHoverColor, 1);
+                buttonBg.lineStyle(2, buttonBorderColor, 1);
+            } else {
+                buttonBg.fillStyle(0x555555, 0.8);
+                buttonBg.lineStyle(2, 0x666666, 0.8);
+            }
+            buttonBg.fillRoundedRect(buttonX - x1ButtonWidth / 2, centerY - x1ButtonHeight / 2, x1ButtonWidth, x1ButtonHeight, buttonRadius);
+            buttonBg.strokeRoundedRect(buttonX - x1ButtonWidth / 2, centerY - x1ButtonHeight / 2, x1ButtonWidth, x1ButtonHeight, buttonRadius);
+        });
+        button.on('pointerout', () => {
+            buttonBg.clear();
+            const maxed = isMaxLevel ? isMaxLevel() : false;
+            const canAffordNow = !maxed && canAfford();
+            buttonBg.fillStyle(canAffordNow ? buttonColor : 0x555555, canAffordNow ? 1 : 0.8);
+            buttonBg.lineStyle(2, canAffordNow ? buttonBorderColor : 0x666666, canAffordNow ? 1 : 0.8);
+            buttonBg.fillRoundedRect(buttonX - x1ButtonWidth / 2, centerY - x1ButtonHeight / 2, x1ButtonWidth, x1ButtonHeight, buttonRadius);
+            buttonBg.strokeRoundedRect(buttonX - x1ButtonWidth / 2, centerY - x1ButtonHeight / 2, x1ButtonWidth, x1ButtonHeight, buttonRadius);
+        });
+        cardContainer.add(button);
+        
+        // x1 버튼 텍스트
+        const x1ButtonFontSize = Responsive.getFontSize(scene, 14);
+        const buttonText = scene.add.text(buttonX, centerY, 'x1', {
+            fontSize: x1ButtonFontSize,
+            color: '#ffffff',
+            fontFamily: 'Arial',
+            font: `600 ${x1ButtonFontSize} Arial`
+        });
+        buttonText.setOrigin(0.5);
+        cardContainer.add(buttonText);
+        
+        // 카드에 참조 저장 (업데이트용)
+        (cardContainer as any).upgradeCardData = {
+            label,
+            costLabel,
+            value,
+            costValue,
+            button,
+            buttonBg,
+            buttonText,
+            onUpgrade,
+            getCost,
+            canAfford,
+            isMaxLevel
+        };
+        
+        return cardContainer;
     },
     
     // Upgrade 탭 내용 생성
     createUpgradeTab(scene: Phaser.Scene, gameWidth: number, _gameHeight: number, _halfHeight: number, uiAreaHeight: number, uiAreaStartY: number): void {
         const contentContainer = scene.add.container(0, 0);
         
-        const baseY = uiAreaStartY + uiAreaHeight * 0.2;
-        const rowHeight = uiAreaHeight * 0.15;
-        const buttonRadius = 12;
-        const x1ButtonWidth = 50;
-        const x1ButtonHeight = 35;
+        // 카드 영역 설정
+        const cardStartY = uiAreaStartY + uiAreaHeight * 0.15;
+        const cardWidth = gameWidth * 0.95;
+        const cardHeight = uiAreaHeight * 0.12;
+        const cardSpacing = uiAreaHeight * 0.02;
+        const cardX = gameWidth / 2;
         
-        // 공격력 강화 행
-        const attackPowerY = baseY;
-        const attackPowerStartX = gameWidth * 0.1;
-        const attackPowerButtonX = gameWidth * 0.85;
+        // 기존 카드 제거
+        this.upgradeCards.forEach(card => card.destroy());
+        this.upgradeCards = [];
         
-        // 공격력 강화 전체 텍스트 (공격력 (8 -> 9) 비용: 123456)
-        const attackPowerFontSize = Responsive.getFontSize(scene, 18);
-        const clickFullText = scene.add.text(attackPowerStartX, attackPowerY, '', {
-            fontSize: attackPowerFontSize,
-            color: '#e0e0e0',
-            fontFamily: 'Arial',
-            font: `500 ${attackPowerFontSize} Arial`
-        });
-        clickFullText.setOrigin(0, 0.5);
-        contentContainer.add(clickFullText);
-        (this as any).clickFullText = clickFullText;
+        // 1. 공격력 강화 카드
+        const attackPowerCardY = cardStartY;
+        const attackPowerCurrent = GameState.attackPower;
+        const attackPowerNext = attackPowerCurrent + 1;
+        const attackPowerCost = GameState.getAttackPowerUpgradeCost();
         
-        // x1 버튼 배경
-        const leftButtonBg = scene.add.graphics();
-        leftButtonBg.fillStyle(0x4a90e2, 1);
-        leftButtonBg.fillRoundedRect(attackPowerButtonX - x1ButtonWidth / 2, attackPowerY - x1ButtonHeight / 2, x1ButtonWidth, x1ButtonHeight, buttonRadius);
-        leftButtonBg.lineStyle(2, 0x6ab0ff, 1);
-        leftButtonBg.strokeRoundedRect(attackPowerButtonX - x1ButtonWidth / 2, attackPowerY - x1ButtonHeight / 2, x1ButtonWidth, x1ButtonHeight, buttonRadius);
-        contentContainer.add(leftButtonBg);
+        const attackPowerCard = this.createUpgradeCard(
+            scene,
+            cardX,
+            attackPowerCardY,
+            cardWidth,
+            cardHeight,
+            '공격력',
+            `(${attackPowerCurrent} -> ${attackPowerNext})`,
+            `${attackPowerCost}`,
+            0x4a90e2, // 버튼 색상
+            0x5a9fff, // 호버 색상
+            0x6ab0ff, // 테두리 색상
+            () => GameState.upgradeAttackPower(),
+            () => GameState.getAttackPowerUpgradeCost(),
+            () => GameState.coins >= GameState.getAttackPowerUpgradeCost()
+        );
+        contentContainer.add(attackPowerCard);
+        this.upgradeCards.push(attackPowerCard);
+        (this as any).attackPowerCard = attackPowerCard;
         
-        // x1 버튼 그림자
-        const leftButtonShadow = scene.add.graphics();
-        leftButtonShadow.fillStyle(0x000000, 0.2);
-        leftButtonShadow.fillRoundedRect(attackPowerButtonX - x1ButtonWidth / 2 + 2, attackPowerY - x1ButtonHeight / 2 + 2, x1ButtonWidth, x1ButtonHeight, buttonRadius);
-        leftButtonShadow.setDepth(-1);
-        contentContainer.add(leftButtonShadow);
+        // 2. 공격속도 강화 카드
+        const attackSpeedCardY = cardStartY + cardHeight + cardSpacing;
+        const attackSpeedCurrent = GameState.attackSpeed;
+        const attackSpeedNext = attackSpeedCurrent + 1;
+        const attackSpeedCost = GameState.getAttackSpeedUpgradeCost();
+        const isAttackSpeedMax = attackSpeedCurrent >= 15;
         
-        // x1 버튼 (상호작용용)
-        this.clickButton = scene.add.rectangle(attackPowerButtonX, attackPowerY, x1ButtonWidth, x1ButtonHeight, 0x000000, 0);
-        this.clickButton.setInteractive({ useHandCursor: true });
-        this.clickButton.on('pointerdown', () => {
-            if (GameState.upgradeAttackPower()) {
-                this.update();
-            }
-        });
-        this.clickButton.on('pointerover', () => {
-            leftButtonBg.clear();
-            leftButtonBg.fillStyle(0x5a9fff, 1);
-            leftButtonBg.fillRoundedRect(attackPowerButtonX - x1ButtonWidth / 2, attackPowerY - x1ButtonHeight / 2, x1ButtonWidth, x1ButtonHeight, buttonRadius);
-            leftButtonBg.lineStyle(2, 0x7ab3ff, 1);
-            leftButtonBg.strokeRoundedRect(attackPowerButtonX - x1ButtonWidth / 2, attackPowerY - x1ButtonHeight / 2, x1ButtonWidth, x1ButtonHeight, buttonRadius);
-        });
-        this.clickButton.on('pointerout', () => {
-            leftButtonBg.clear();
-            const canAfford = GameState.coins >= GameState.getAttackPowerUpgradeCost();
-            leftButtonBg.fillStyle(canAfford ? 0x4a90e2 : 0x555555, canAfford ? 1 : 0.8);
-            leftButtonBg.fillRoundedRect(attackPowerButtonX - x1ButtonWidth / 2, attackPowerY - x1ButtonHeight / 2, x1ButtonWidth, x1ButtonHeight, buttonRadius);
-            leftButtonBg.lineStyle(2, canAfford ? 0x6ab0ff : 0x666666, canAfford ? 1 : 0.8);
-            leftButtonBg.strokeRoundedRect(attackPowerButtonX - x1ButtonWidth / 2, attackPowerY - x1ButtonHeight / 2, x1ButtonWidth, x1ButtonHeight, buttonRadius);
-        });
-        contentContainer.add(this.clickButton);
-        (this as any).leftButtonBg = leftButtonBg;
-        
-        // x1 버튼 텍스트
-        const x1ButtonFontSize = Responsive.getFontSize(scene, 14);
-        this.clickButtonText = scene.add.text(attackPowerButtonX, attackPowerY, 'x1', {
-            fontSize: x1ButtonFontSize,
-            color: '#ffffff',
-            fontFamily: 'Arial',
-            font: `600 ${x1ButtonFontSize} Arial`
-        });
-        this.clickButtonText.setOrigin(0.5);
-        contentContainer.add(this.clickButtonText);
-        
-        // 공격 속도 강화 행
-        const attackSpeedY = baseY + rowHeight;
-        const attackSpeedStartX = gameWidth * 0.1;
-        const attackSpeedButtonX = gameWidth * 0.85;
-        
-        // 공격 속도 강화 전체 텍스트 (공격속도 (8 -> 9) 비용: 123456)
-        const attackSpeedFontSize = Responsive.getFontSize(scene, 18);
-        const autoFullText = scene.add.text(attackSpeedStartX, attackSpeedY, '', {
-            fontSize: attackSpeedFontSize,
-            color: '#e0e0e0',
-            fontFamily: 'Arial',
-            font: `500 ${attackSpeedFontSize} Arial`
-        });
-        autoFullText.setOrigin(0, 0.5);
-        contentContainer.add(autoFullText);
-        (this as any).autoFullText = autoFullText;
-        
-        // x1 버튼 배경
-        const rightButtonBg = scene.add.graphics();
-        rightButtonBg.fillStyle(0x50c878, 1);
-        rightButtonBg.fillRoundedRect(attackSpeedButtonX - x1ButtonWidth / 2, attackSpeedY - x1ButtonHeight / 2, x1ButtonWidth, x1ButtonHeight, buttonRadius);
-        rightButtonBg.lineStyle(2, 0x6ad888, 1);
-        rightButtonBg.strokeRoundedRect(attackSpeedButtonX - x1ButtonWidth / 2, attackSpeedY - x1ButtonHeight / 2, x1ButtonWidth, x1ButtonHeight, buttonRadius);
-        contentContainer.add(rightButtonBg);
-        
-        // x1 버튼 그림자
-        const rightButtonShadow = scene.add.graphics();
-        rightButtonShadow.fillStyle(0x000000, 0.2);
-        rightButtonShadow.fillRoundedRect(attackSpeedButtonX - x1ButtonWidth / 2 + 2, attackSpeedY - x1ButtonHeight / 2 + 2, x1ButtonWidth, x1ButtonHeight, buttonRadius);
-        rightButtonShadow.setDepth(-1);
-        contentContainer.add(rightButtonShadow);
-        
-        // x1 버튼 (상호작용용)
-        this.upgradeButton = scene.add.rectangle(attackSpeedButtonX, attackSpeedY, x1ButtonWidth, x1ButtonHeight, 0x000000, 0);
-        this.upgradeButton.setInteractive({ useHandCursor: true });
-        this.upgradeButton.on('pointerdown', () => {
-            if (GameState.upgradeAttackSpeed()) {
-                this.update();
-                // 공격 속도 타이머 재설정
-                if ((scene as any).setupAutoFire) {
+        const attackSpeedCard = this.createUpgradeCard(
+            scene,
+            cardX,
+            attackSpeedCardY,
+            cardWidth,
+            cardHeight,
+            '공격속도',
+            isAttackSpeedMax ? `(${attackSpeedCurrent}/15) 최대 레벨` : `(${attackSpeedCurrent} -> ${attackSpeedNext})`,
+            isAttackSpeedMax ? '' : `${attackSpeedCost}`,
+            0x50c878, // 버튼 색상
+            0x60d888, // 호버 색상
+            0x6ad888, // 테두리 색상
+            () => {
+                const result = GameState.upgradeAttackSpeed();
+                if (result && (scene as any).setupAutoFire) {
                     (scene as any).setupAutoFire();
                 }
-            }
-        });
-        this.upgradeButton.on('pointerover', () => {
-            rightButtonBg.clear();
-            const isMaxLevel = GameState.attackSpeed >= 15;
-            if (!isMaxLevel) {
-                rightButtonBg.fillStyle(0x60d888, 1);
-                rightButtonBg.lineStyle(2, 0x7ae898, 1);
-            } else {
-                rightButtonBg.fillStyle(0x555555, 0.8);
-                rightButtonBg.lineStyle(2, 0x666666, 0.8);
-            }
-            rightButtonBg.fillRoundedRect(attackSpeedButtonX - x1ButtonWidth / 2, attackSpeedY - x1ButtonHeight / 2, x1ButtonWidth, x1ButtonHeight, buttonRadius);
-            rightButtonBg.strokeRoundedRect(attackSpeedButtonX - x1ButtonWidth / 2, attackSpeedY - x1ButtonHeight / 2, x1ButtonWidth, x1ButtonHeight, buttonRadius);
-        });
-        this.upgradeButton.on('pointerout', () => {
-            rightButtonBg.clear();
-            const isMaxLevel = GameState.attackSpeed >= 15;
-            const canAfford = !isMaxLevel && GameState.coins >= GameState.getAttackSpeedUpgradeCost();
-            rightButtonBg.fillStyle(canAfford ? 0x50c878 : 0x555555, canAfford ? 1 : 0.8);
-            rightButtonBg.fillRoundedRect(attackSpeedButtonX - x1ButtonWidth / 2, attackSpeedY - x1ButtonHeight / 2, x1ButtonWidth, x1ButtonHeight, buttonRadius);
-            rightButtonBg.lineStyle(2, canAfford ? 0x6ad888 : 0x666666, canAfford ? 1 : 0.8);
-            rightButtonBg.strokeRoundedRect(attackSpeedButtonX - x1ButtonWidth / 2, attackSpeedY - x1ButtonHeight / 2, x1ButtonWidth, x1ButtonHeight, buttonRadius);
-        });
-        contentContainer.add(this.upgradeButton);
-        (this as any).rightButtonBg = rightButtonBg;
+                return result;
+            },
+            () => GameState.getAttackSpeedUpgradeCost(),
+            () => GameState.coins >= GameState.getAttackSpeedUpgradeCost(),
+            () => GameState.attackSpeed >= 15
+        );
+        contentContainer.add(attackSpeedCard);
+        this.upgradeCards.push(attackSpeedCard);
+        (this as any).attackSpeedCard = attackSpeedCard;
         
-        // x1 버튼 텍스트
-        this.upgradeButtonText = scene.add.text(attackSpeedButtonX, attackSpeedY, 'x1', {
-            fontSize: x1ButtonFontSize,
-            color: '#ffffff',
-            fontFamily: 'Arial',
-            font: `600 ${x1ButtonFontSize} Arial`
-        });
-        this.upgradeButtonText.setOrigin(0.5);
-        contentContainer.add(this.upgradeButtonText);
-
-        // SP 구매 행
-        const spPurchaseY = baseY + rowHeight * 2;
-        const spPurchaseStartX = gameWidth * 0.1;
-        const spPurchaseButtonX = gameWidth * 0.85;
-
-        // SP 구매 전체 텍스트 (SP (0/5 -> 1/5) 비용: 100000)
-        const spPurchaseFontSize = Responsive.getFontSize(scene, 18);
-        const spFullText = scene.add.text(spPurchaseStartX, spPurchaseY, '', {
-            fontSize: spPurchaseFontSize,
-            color: '#e0e0e0',
-            fontFamily: 'Arial',
-            font: `500 ${spPurchaseFontSize} Arial`
-        });
-        spFullText.setOrigin(0, 0.5);
-        contentContainer.add(spFullText);
-        (this as any).spFullText = spFullText;
-
-        // x1 버튼 배경
-        const spButtonBg = scene.add.graphics();
-        spButtonBg.fillStyle(0xffd700, 1);
-        spButtonBg.fillRoundedRect(spPurchaseButtonX - x1ButtonWidth / 2, spPurchaseY - x1ButtonHeight / 2, x1ButtonWidth, x1ButtonHeight, buttonRadius);
-        spButtonBg.lineStyle(2, 0xffed4e, 1);
-        spButtonBg.strokeRoundedRect(spPurchaseButtonX - x1ButtonWidth / 2, spPurchaseY - x1ButtonHeight / 2, x1ButtonWidth, x1ButtonHeight, buttonRadius);
-        contentContainer.add(spButtonBg);
-
-        // x1 버튼 그림자
-        const spButtonShadow = scene.add.graphics();
-        spButtonShadow.fillStyle(0x000000, 0.2);
-        spButtonShadow.fillRoundedRect(spPurchaseButtonX - x1ButtonWidth / 2 + 2, spPurchaseY - x1ButtonHeight / 2 + 2, x1ButtonWidth, x1ButtonHeight, buttonRadius);
-        spButtonShadow.setDepth(-1);
-        contentContainer.add(spButtonShadow);
-
-        // x1 버튼 (상호작용용)
-        const spPurchaseButton = scene.add.rectangle(spPurchaseButtonX, spPurchaseY, x1ButtonWidth, x1ButtonHeight, 0x000000, 0);
-        spPurchaseButton.setInteractive({ useHandCursor: true });
-        spPurchaseButton.on('pointerdown', () => {
-            if (GameState.purchaseSp()) {
-                this.update();
-            }
-        });
-        spPurchaseButton.on('pointerover', () => {
-            spButtonBg.clear();
-            const canPurchase = GameState.spPurchaseCount < 5 && GameState.coins >= GameState.getSpPurchaseCost();
-            spButtonBg.fillStyle(canPurchase ? 0xffed4e : 0x555555, canPurchase ? 1 : 0.8);
-            spButtonBg.fillRoundedRect(spPurchaseButtonX - x1ButtonWidth / 2, spPurchaseY - x1ButtonHeight / 2, x1ButtonWidth, x1ButtonHeight, buttonRadius);
-            spButtonBg.lineStyle(2, canPurchase ? 0xfff066 : 0x666666, canPurchase ? 1 : 0.8);
-            spButtonBg.strokeRoundedRect(spPurchaseButtonX - x1ButtonWidth / 2, spPurchaseY - x1ButtonHeight / 2, x1ButtonWidth, x1ButtonHeight, buttonRadius);
-        });
-        spPurchaseButton.on('pointerout', () => {
-            spButtonBg.clear();
-            const canPurchase = GameState.spPurchaseCount < 5 && GameState.coins >= GameState.getSpPurchaseCost();
-            spButtonBg.fillStyle(canPurchase ? 0xffd700 : 0x555555, canPurchase ? 1 : 0.8);
-            spButtonBg.fillRoundedRect(spPurchaseButtonX - x1ButtonWidth / 2, spPurchaseY - x1ButtonHeight / 2, x1ButtonWidth, x1ButtonHeight, buttonRadius);
-            spButtonBg.lineStyle(2, canPurchase ? 0xffed4e : 0x666666, canPurchase ? 1 : 0.8);
-            spButtonBg.strokeRoundedRect(spPurchaseButtonX - x1ButtonWidth / 2, spPurchaseY - x1ButtonHeight / 2, x1ButtonWidth, x1ButtonHeight, buttonRadius);
-        });
-        contentContainer.add(spPurchaseButton);
-        (this as any).spPurchaseButton = spPurchaseButton;
-        (this as any).spButtonBg = spButtonBg;
-
-        // x1 버튼 텍스트
-        const spButtonText = scene.add.text(spPurchaseButtonX, spPurchaseY, 'x1', {
-            fontSize: x1ButtonFontSize,
-            color: '#ffffff',
-            fontFamily: 'Arial',
-            font: `600 ${x1ButtonFontSize} Arial`
-        });
-        spButtonText.setOrigin(0.5);
-        contentContainer.add(spButtonText);
-        (this as any).spButtonText = spButtonText;
-
+        // 3. 치명타 확률 강화 카드
+        const critChanceCardY = cardStartY + (cardHeight + cardSpacing) * 2;
+        const critChanceCurrent = GameState.critChance;
+        const critChanceNext = critChanceCurrent + 1;
+        const critChanceCost = GameState.getCritChanceUpgradeCost();
+        const isCritChanceMax = critChanceCurrent >= 100;
+        
+        const critChanceCard = this.createUpgradeCard(
+            scene,
+            cardX,
+            critChanceCardY,
+            cardWidth,
+            cardHeight,
+            '치명타확률',
+            isCritChanceMax ? `(${critChanceCurrent}%) 최대 레벨` : `(${critChanceCurrent}% -> ${critChanceNext}%)`,
+            isCritChanceMax ? '' : `${critChanceCost}`,
+            0x50c878, // 버튼 색상
+            0x60d888, // 호버 색상
+            0x6ad888, // 테두리 색상
+            () => GameState.upgradeCritChance(),
+            () => GameState.getCritChanceUpgradeCost(),
+            () => GameState.coins >= GameState.getCritChanceUpgradeCost(),
+            () => GameState.critChance >= 100
+        );
+        contentContainer.add(critChanceCard);
+        this.upgradeCards.push(critChanceCard);
+        (this as any).critChanceCard = critChanceCard;
+        
+        // 4. SP 구매 카드
+        const spPurchaseCardY = cardStartY + (cardHeight + cardSpacing) * 3;
+        const spPurchaseCurrent = GameState.spPurchaseCount;
+        const spPurchaseNext = spPurchaseCurrent + 1;
+        const spPurchaseCost = GameState.getSpPurchaseCost();
+        const isSpPurchaseMax = spPurchaseCurrent >= 5;
+        
+        const spPurchaseCard = this.createUpgradeCard(
+            scene,
+            cardX,
+            spPurchaseCardY,
+            cardWidth,
+            cardHeight,
+            'SP 구매',
+            isSpPurchaseMax ? `(${spPurchaseCurrent}/5) 최대 구매 완료` : `(${spPurchaseCurrent}/5 -> ${spPurchaseNext}/5)`,
+            isSpPurchaseMax ? '' : `${spPurchaseCost}`,
+            0xffd700, // 버튼 색상
+            0xffed4e, // 호버 색상
+            0xffed4e, // 테두리 색상
+            () => GameState.purchaseSp(),
+            () => GameState.getSpPurchaseCost(),
+            () => GameState.coins >= GameState.getSpPurchaseCost(),
+            () => GameState.spPurchaseCount >= 5
+        );
+        contentContainer.add(spPurchaseCard);
+        this.upgradeCards.push(spPurchaseCard);
+        (this as any).spPurchaseCard = spPurchaseCard;
+        
         this.tabContents[1] = contentContainer; // Upgrade 탭은 인덱스 1
     },
     
@@ -1045,107 +1123,147 @@ export const UIManager = {
             (this as any).attackPowerText.setText(`공격력: ${GameState.getAttackPowerValue()}`);
         }
         
-        // 버튼 색상 및 비용 업데이트 (구매 가능 여부) - Upgrade 탭일 때만
+        // 치명타 확률 텍스트 업데이트 (Stats 탭에만 표시)
+        if ((this as any).critChanceText && this.activeTabIndex === 0) {
+            (this as any).critChanceText.setText(`치명타 확률: ${GameState.critChance}%`);
+        }
+        
+        // 카드 업데이트 (구매 가능 여부 및 값) - Upgrade 탭일 때만
         if (this.activeTabIndex === 1) {
-            if (this.clickButton && (this as any).leftButtonBg) {
-                const attackPowerCost = GameState.getAttackPowerUpgradeCost();
-                const canAfford = GameState.coins >= attackPowerCost;
-                const leftButtonBg = (this as any).leftButtonBg;
-                const buttonWidth = this.clickButton.width;
-                const buttonHeight = this.clickButton.height;
-                const buttonX = this.clickButton.x;
-                const buttonY = this.clickButton.y;
-                const buttonRadius = 12;
-                
-                leftButtonBg.clear();
-                if (canAfford) {
-                    leftButtonBg.fillStyle(0x4a90e2, 1);
-                    leftButtonBg.lineStyle(2, 0x6ab0ff, 1);
-                } else {
-                    leftButtonBg.fillStyle(0x555555, 0.8);
-                    leftButtonBg.lineStyle(2, 0x666666, 0.8);
-                }
-                leftButtonBg.fillRoundedRect(buttonX - buttonWidth / 2, buttonY - buttonHeight / 2, buttonWidth, buttonHeight, buttonRadius);
-                leftButtonBg.strokeRoundedRect(buttonX - buttonWidth / 2, buttonY - buttonHeight / 2, buttonWidth, buttonHeight, buttonRadius);
-                
-                // 전체 텍스트 업데이트 (공격력 (8 -> 9) 비용: 123456)
-                if ((this as any).clickFullText) {
+            // 공격력 카드 업데이트
+            if ((this as any).attackPowerCard) {
+                const cardData = (this as any).attackPowerCard.upgradeCardData;
+                if (cardData) {
                     const currentStat = GameState.attackPower;
                     const nextStat = currentStat + 1;
-                    (this as any).clickFullText.setText(`공격력 (${currentStat} -> ${nextStat}) 비용: ${attackPowerCost}`);
-                    (this as any).clickFullText.setColor(canAfford ? '#e0e0e0' : '#999999');
+                    const cost = cardData.getCost();
+                    const canAfford = cardData.canAfford();
+                    
+                    cardData.value.setText(`(${currentStat} -> ${nextStat})`);
+                    cardData.value.setColor(canAfford ? '#e0e0e0' : '#999999');
+                    cardData.costValue.setText(`${cost}`);
+                    cardData.costValue.setColor(canAfford ? '#e0e0e0' : '#999999');
+                    
+                    // 버튼 색상 업데이트
+                    const buttonX = cardData.button.x;
+                    const buttonY = cardData.button.y;
+                    const buttonWidth = cardData.button.width;
+                    const buttonHeight = cardData.button.height;
+                    const buttonRadius = 12;
+                    
+                    cardData.buttonBg.clear();
+                    cardData.buttonBg.fillStyle(canAfford ? 0x4a90e2 : 0x555555, canAfford ? 1 : 0.8);
+                    cardData.buttonBg.fillRoundedRect(buttonX - buttonWidth / 2, buttonY - buttonHeight / 2, buttonWidth, buttonHeight, buttonRadius);
+                    cardData.buttonBg.lineStyle(2, canAfford ? 0x6ab0ff : 0x666666, canAfford ? 1 : 0.8);
+                    cardData.buttonBg.strokeRoundedRect(buttonX - buttonWidth / 2, buttonY - buttonHeight / 2, buttonWidth, buttonHeight, buttonRadius);
                 }
             }
             
-            if (this.upgradeButton && (this as any).rightButtonBg) {
-                const currentStat = GameState.attackSpeed;
-                const isMaxLevel = currentStat >= 15;
-                const attackSpeedCost = GameState.getAttackSpeedUpgradeCost();
-                const canAfford = !isMaxLevel && GameState.coins >= attackSpeedCost;
-                const rightButtonBg = (this as any).rightButtonBg;
-                const buttonWidth = this.upgradeButton.width;
-                const buttonHeight = this.upgradeButton.height;
-                const buttonX = this.upgradeButton.x;
-                const buttonY = this.upgradeButton.y;
-                const buttonRadius = 12;
-                
-                rightButtonBg.clear();
-                if (canAfford) {
-                    rightButtonBg.fillStyle(0x50c878, 1);
-                    rightButtonBg.lineStyle(2, 0x6ad888, 1);
-                } else {
-                    rightButtonBg.fillStyle(0x555555, 0.8);
-                    rightButtonBg.lineStyle(2, 0x666666, 0.8);
-                }
-                rightButtonBg.fillRoundedRect(buttonX - buttonWidth / 2, buttonY - buttonHeight / 2, buttonWidth, buttonHeight, buttonRadius);
-                rightButtonBg.strokeRoundedRect(buttonX - buttonWidth / 2, buttonY - buttonHeight / 2, buttonWidth, buttonHeight, buttonRadius);
-                
-                // 전체 텍스트 업데이트
-                if ((this as any).autoFullText) {
+            // 공격속도 카드 업데이트
+            if ((this as any).attackSpeedCard) {
+                const cardData = (this as any).attackSpeedCard.upgradeCardData;
+                if (cardData) {
+                    const currentStat = GameState.attackSpeed;
+                    const isMaxLevel = cardData.isMaxLevel ? cardData.isMaxLevel() : false;
+                    const cost = cardData.getCost();
+                    const canAfford = !isMaxLevel && cardData.canAfford();
+                    
                     if (isMaxLevel) {
-                        (this as any).autoFullText.setText(`공격속도 (${currentStat}/15) 최대 레벨`);
-                        (this as any).autoFullText.setColor('#999999');
+                        cardData.value.setText(`(${currentStat}/15) 최대 레벨`);
+                        cardData.value.setColor('#999999');
+                        cardData.costValue.setText('');
                     } else {
                         const nextStat = currentStat + 1;
-                        (this as any).autoFullText.setText(`공격속도 (${currentStat} -> ${nextStat}) 비용: ${attackSpeedCost}`);
-                        (this as any).autoFullText.setColor(canAfford ? '#e0e0e0' : '#999999');
+                        cardData.value.setText(`(${currentStat} -> ${nextStat})`);
+                        cardData.value.setColor(canAfford ? '#e0e0e0' : '#999999');
+                        cardData.costValue.setText(`${cost}`);
+                        cardData.costValue.setColor(canAfford ? '#e0e0e0' : '#999999');
                     }
+                    
+                    // 버튼 색상 업데이트
+                    const buttonX = cardData.button.x;
+                    const buttonY = cardData.button.y;
+                    const buttonWidth = cardData.button.width;
+                    const buttonHeight = cardData.button.height;
+                    const buttonRadius = 12;
+                    
+                    cardData.buttonBg.clear();
+                    cardData.buttonBg.fillStyle(canAfford ? 0x50c878 : 0x555555, canAfford ? 1 : 0.8);
+                    cardData.buttonBg.fillRoundedRect(buttonX - buttonWidth / 2, buttonY - buttonHeight / 2, buttonWidth, buttonHeight, buttonRadius);
+                    cardData.buttonBg.lineStyle(2, canAfford ? 0x6ad888 : 0x666666, canAfford ? 1 : 0.8);
+                    cardData.buttonBg.strokeRoundedRect(buttonX - buttonWidth / 2, buttonY - buttonHeight / 2, buttonWidth, buttonHeight, buttonRadius);
                 }
             }
-
-            // SP 구매 버튼 업데이트
-            if ((this as any).spPurchaseButton && (this as any).spButtonBg) {
-                const spCost = GameState.getSpPurchaseCost();
-                const canPurchase = GameState.spPurchaseCount < 5 && GameState.coins >= spCost;
-                const spButtonBg = (this as any).spButtonBg;
-                const buttonWidth = (this as any).spPurchaseButton.width;
-                const buttonHeight = (this as any).spPurchaseButton.height;
-                const buttonX = (this as any).spPurchaseButton.x;
-                const buttonY = (this as any).spPurchaseButton.y;
-                const buttonRadius = 12;
-
-                spButtonBg.clear();
-                if (canPurchase) {
-                    spButtonBg.fillStyle(0xffd700, 1);
-                    spButtonBg.lineStyle(2, 0xffed4e, 1);
-                } else {
-                    spButtonBg.fillStyle(0x555555, 0.8);
-                    spButtonBg.lineStyle(2, 0x666666, 0.8);
-                }
-                spButtonBg.fillRoundedRect(buttonX - buttonWidth / 2, buttonY - buttonHeight / 2, buttonWidth, buttonHeight, buttonRadius);
-                spButtonBg.strokeRoundedRect(buttonX - buttonWidth / 2, buttonY - buttonHeight / 2, buttonWidth, buttonHeight, buttonRadius);
-
-                // 전체 텍스트 업데이트 (SP (0/5 -> 1/5) 비용: 100000)
-                if ((this as any).spFullText) {
-                    const currentCount = GameState.spPurchaseCount;
-                    const nextCount = currentCount + 1;
-                    if (currentCount >= 5) {
-                        (this as any).spFullText.setText(`SP (${currentCount}/5) 최대 구매 완료`);
-                        (this as any).spFullText.setColor('#999999');
+            
+            // 치명타 확률 카드 업데이트
+            if ((this as any).critChanceCard) {
+                const cardData = (this as any).critChanceCard.upgradeCardData;
+                if (cardData) {
+                    const currentStat = GameState.critChance;
+                    const isMaxLevel = cardData.isMaxLevel ? cardData.isMaxLevel() : false;
+                    const cost = cardData.getCost();
+                    const canAfford = !isMaxLevel && cardData.canAfford();
+                    
+                    if (isMaxLevel) {
+                        cardData.value.setText(`(${currentStat}%) 최대 레벨`);
+                        cardData.value.setColor('#999999');
+                        cardData.costValue.setText('');
                     } else {
-                        (this as any).spFullText.setText(`SP (${currentCount}/5 -> ${nextCount}/5) 비용: ${spCost}`);
-                        (this as any).spFullText.setColor(canPurchase ? '#e0e0e0' : '#999999');
+                        const nextStat = currentStat + 1;
+                        cardData.value.setText(`(${currentStat}% -> ${nextStat}%)`);
+                        cardData.value.setColor(canAfford ? '#e0e0e0' : '#999999');
+                        cardData.costValue.setText(`${cost}`);
+                        cardData.costValue.setColor(canAfford ? '#e0e0e0' : '#999999');
                     }
+                    
+                    // 버튼 색상 업데이트
+                    const buttonX = cardData.button.x;
+                    const buttonY = cardData.button.y;
+                    const buttonWidth = cardData.button.width;
+                    const buttonHeight = cardData.button.height;
+                    const buttonRadius = 12;
+                    
+                    cardData.buttonBg.clear();
+                    cardData.buttonBg.fillStyle(canAfford ? 0x50c878 : 0x555555, canAfford ? 1 : 0.8);
+                    cardData.buttonBg.fillRoundedRect(buttonX - buttonWidth / 2, buttonY - buttonHeight / 2, buttonWidth, buttonHeight, buttonRadius);
+                    cardData.buttonBg.lineStyle(2, canAfford ? 0x6ad888 : 0x666666, canAfford ? 1 : 0.8);
+                    cardData.buttonBg.strokeRoundedRect(buttonX - buttonWidth / 2, buttonY - buttonHeight / 2, buttonWidth, buttonHeight, buttonRadius);
+                }
+            }
+            
+            // SP 구매 카드 업데이트
+            if ((this as any).spPurchaseCard) {
+                const cardData = (this as any).spPurchaseCard.upgradeCardData;
+                if (cardData) {
+                    const currentCount = GameState.spPurchaseCount;
+                    const isMaxLevel = cardData.isMaxLevel ? cardData.isMaxLevel() : false;
+                    const cost = cardData.getCost();
+                    const canPurchase = !isMaxLevel && cardData.canAfford();
+                    
+                    if (isMaxLevel) {
+                        cardData.value.setText(`(${currentCount}/5) 최대 구매 완료`);
+                        cardData.value.setColor('#999999');
+                        cardData.costValue.setText('');
+                    } else {
+                        const nextCount = currentCount + 1;
+                        cardData.value.setText(`(${currentCount}/5 -> ${nextCount}/5)`);
+                        cardData.value.setColor(canPurchase ? '#e0e0e0' : '#999999');
+                        cardData.costValue.setText(`${cost}`);
+                        cardData.costValue.setColor(canPurchase ? '#e0e0e0' : '#999999');
+                    }
+                    
+                    // 버튼 색상 업데이트
+                    const buttonX = cardData.button.x;
+                    const buttonY = cardData.button.y;
+                    const buttonWidth = cardData.button.width;
+                    const buttonHeight = cardData.button.height;
+                    const buttonRadius = 12;
+                    
+                    cardData.buttonBg.clear();
+                    cardData.buttonBg.fillStyle(canPurchase ? 0xffd700 : 0x555555, canPurchase ? 1 : 0.8);
+                    cardData.buttonBg.fillRoundedRect(buttonX - buttonWidth / 2, buttonY - buttonHeight / 2, buttonWidth, buttonHeight, buttonRadius);
+                    cardData.buttonBg.lineStyle(2, canPurchase ? 0xffed4e : 0x666666, canPurchase ? 1 : 0.8);
+                    cardData.buttonBg.strokeRoundedRect(buttonX - buttonWidth / 2, buttonY - buttonHeight / 2, buttonWidth, buttonHeight, buttonRadius);
                 }
             }
         }

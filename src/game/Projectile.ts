@@ -8,6 +8,7 @@ export interface ProjectileType extends Phaser.GameObjects.Image {
     damage: number;
     projectileType: 'manual' | 'auto';
     isProjectile: boolean;
+    isCrit: boolean; // 치명타 여부
 }
 
 // 투사체 관리 (오브젝트 풀링 방식 - 수동/자동 분리)
@@ -41,6 +42,7 @@ export const Projectile = {
             projectile.setVisible(false);
             projectile.setActive(false);
             projectile.isProjectile = true;
+            projectile.isCrit = false;
             projectile.projectileType = 'manual';
             this.manualPool.push(projectile);
         }
@@ -55,6 +57,7 @@ export const Projectile = {
             projectile.setVisible(false);
             projectile.setActive(false);
             projectile.isProjectile = true;
+            projectile.isCrit = false;
             projectile.projectileType = 'auto';
             this.autoPool.push(projectile);
         }
@@ -81,6 +84,7 @@ export const Projectile = {
         projectile.setFlipX(true); // x축 기준으로 뒤집기
         projectile.setDepth(10);
         projectile.isProjectile = true;
+        projectile.isCrit = false;
         projectile.projectileType = type;
         pool.push(projectile);
         return projectile;
@@ -109,7 +113,13 @@ export const Projectile = {
         // 투사체 데이터 저장
         projectile.velocityX = Math.cos(angle) * speed;
         projectile.velocityY = Math.sin(angle) * speed;
-        projectile.damage = GameState.getAttackPowerValue();
+        
+        // 치명타 계산
+        const critChance = GameState.critChance;
+        const isCrit = Math.random() * 100 < critChance;
+        const baseDamage = GameState.getAttackPowerValue();
+        projectile.damage = isCrit ? Math.round(baseDamage * 1.5) : baseDamage;
+        projectile.isCrit = isCrit;
         projectile.projectileType = type;
         
         this.active.push(projectile);
