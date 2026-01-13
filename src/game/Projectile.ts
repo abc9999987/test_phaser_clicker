@@ -109,7 +109,7 @@ export const Projectile = {
         // 투사체 데이터 저장
         projectile.velocityX = Math.cos(angle) * speed;
         projectile.velocityY = Math.sin(angle) * speed;
-        projectile.damage = GameState.attackPower;
+        projectile.damage = GameState.getAttackPowerValue();
         projectile.projectileType = type;
         
         this.active.push(projectile);

@@ -80,7 +80,7 @@ export const SkillManager = {
         }
 
         // 데미지 계산: 유저 공격력 * 배수
-        const damage = GameState.attackPower * config.damageMultiplier;
+        const damage = GameState.getAttackPowerValue() * config.damageMultiplier;
 
         // 적에게 데미지 적용
         Enemy.applyDamage(scene, damage);

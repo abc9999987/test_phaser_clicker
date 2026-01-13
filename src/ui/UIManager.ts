@@ -229,12 +229,12 @@ export const UIManager = {
         this.skillSpText.setOrigin(0.5);
         contentContainer.add(this.skillSpText);
 
-        // 스킬 카드 영역 (가로 배치)
-        const skillCardsY = spY + uiAreaHeight * 0.15;
+        // 스킬 카드 영역 (세로 배치)
+        const skillCardStartY = spY + uiAreaHeight * 0.15;
         const skillCardWidth = gameWidth * 0.95;
         const skillCardHeight = uiAreaHeight * 0.15; // 한 줄 레이아웃에 맞게 높이 축소
-        const skillCardSpacing = gameWidth * 0.05;
-        const startX = (gameWidth - (SkillConfigs.length * skillCardWidth + (SkillConfigs.length - 1) * skillCardSpacing)) / 2 + skillCardWidth / 2;
+        const skillCardSpacing = uiAreaHeight * 0.02; // 세로 간격
+        const cardX = gameWidth / 2; // 카드는 중앙 정렬
 
         // 스킬 배열 초기화
         this.skillLearnButtons = [];
@@ -242,10 +242,10 @@ export const UIManager = {
         this.skillLearnButtonTexts = [];
         this.skillCards = [];
 
-        // 각 스킬에 대해 카드 생성
+        // 각 스킬에 대해 카드 생성 (세로로 배치)
         SkillConfigs.forEach((skillConfig, index) => {
-            const cardX = startX + index * (skillCardWidth + skillCardSpacing);
-            const skillCard = this.createSkillCard(scene, skillConfig, cardX, skillCardsY, skillCardWidth, skillCardHeight);
+            const cardY = skillCardStartY + index * (skillCardHeight + skillCardSpacing);
+            const skillCard = this.createSkillCard(scene, skillConfig, cardX, cardY, skillCardWidth, skillCardHeight);
             contentContainer.add(skillCard);
             this.skillCards.push(skillCard);
         });
@@ -477,7 +477,7 @@ export const UIManager = {
         // 공격력 텍스트
         const attackPowerFontSize = Responsive.getFontSize(scene, 20);
         const attackPowerY = attackSpeedY + uiAreaHeight * 0.12;
-        const attackPowerText = scene.add.text(gameWidth * 0.1, attackPowerY, `공격력: ${GameState.attackPower}`, {
+        const attackPowerText = scene.add.text(gameWidth * 0.1, attackPowerY, `공격력: ${GameState.getAttackPowerValue()}`, {
             fontSize: attackPowerFontSize,
             color: '#e0e0e0',
             fontFamily: 'Arial',
@@ -614,14 +614,21 @@ export const UIManager = {
         });
         this.upgradeButton.on('pointerover', () => {
             rightButtonBg.clear();
-            rightButtonBg.fillStyle(0x60d888, 1);
+            const isMaxLevel = GameState.attackSpeed >= 15;
+            if (!isMaxLevel) {
+                rightButtonBg.fillStyle(0x60d888, 1);
+                rightButtonBg.lineStyle(2, 0x7ae898, 1);
+            } else {
+                rightButtonBg.fillStyle(0x555555, 0.8);
+                rightButtonBg.lineStyle(2, 0x666666, 0.8);
+            }
             rightButtonBg.fillRoundedRect(attackSpeedButtonX - x1ButtonWidth / 2, attackSpeedY - x1ButtonHeight / 2, x1ButtonWidth, x1ButtonHeight, buttonRadius);
-            rightButtonBg.lineStyle(2, 0x7ae898, 1);
             rightButtonBg.strokeRoundedRect(attackSpeedButtonX - x1ButtonWidth / 2, attackSpeedY - x1ButtonHeight / 2, x1ButtonWidth, x1ButtonHeight, buttonRadius);
         });
         this.upgradeButton.on('pointerout', () => {
             rightButtonBg.clear();
-            const canAfford = GameState.coins >= GameState.getAttackSpeedUpgradeCost();
+            const isMaxLevel = GameState.attackSpeed >= 15;
+            const canAfford = !isMaxLevel && GameState.coins >= GameState.getAttackSpeedUpgradeCost();
             rightButtonBg.fillStyle(canAfford ? 0x50c878 : 0x555555, canAfford ? 1 : 0.8);
             rightButtonBg.fillRoundedRect(attackSpeedButtonX - x1ButtonWidth / 2, attackSpeedY - x1ButtonHeight / 2, x1ButtonWidth, x1ButtonHeight, buttonRadius);
             rightButtonBg.lineStyle(2, canAfford ? 0x6ad888 : 0x666666, canAfford ? 1 : 0.8);
@@ -639,7 +646,78 @@ export const UIManager = {
         });
         this.upgradeButtonText.setOrigin(0.5);
         contentContainer.add(this.upgradeButtonText);
-        
+
+        // SP 구매 행
+        const spPurchaseY = baseY + rowHeight * 2;
+        const spPurchaseStartX = gameWidth * 0.1;
+        const spPurchaseButtonX = gameWidth * 0.85;
+
+        // SP 구매 전체 텍스트 (SP (0/5 -> 1/5) 비용: 100000)
+        const spPurchaseFontSize = Responsive.getFontSize(scene, 18);
+        const spFullText = scene.add.text(spPurchaseStartX, spPurchaseY, '', {
+            fontSize: spPurchaseFontSize,
+            color: '#e0e0e0',
+            fontFamily: 'Arial',
+            font: `500 ${spPurchaseFontSize} Arial`
+        });
+        spFullText.setOrigin(0, 0.5);
+        contentContainer.add(spFullText);
+        (this as any).spFullText = spFullText;
+
+        // x1 버튼 배경
+        const spButtonBg = scene.add.graphics();
+        spButtonBg.fillStyle(0xffd700, 1);
+        spButtonBg.fillRoundedRect(spPurchaseButtonX - x1ButtonWidth / 2, spPurchaseY - x1ButtonHeight / 2, x1ButtonWidth, x1ButtonHeight, buttonRadius);
+        spButtonBg.lineStyle(2, 0xffed4e, 1);
+        spButtonBg.strokeRoundedRect(spPurchaseButtonX - x1ButtonWidth / 2, spPurchaseY - x1ButtonHeight / 2, x1ButtonWidth, x1ButtonHeight, buttonRadius);
+        contentContainer.add(spButtonBg);
+
+        // x1 버튼 그림자
+        const spButtonShadow = scene.add.graphics();
+        spButtonShadow.fillStyle(0x000000, 0.2);
+        spButtonShadow.fillRoundedRect(spPurchaseButtonX - x1ButtonWidth / 2 + 2, spPurchaseY - x1ButtonHeight / 2 + 2, x1ButtonWidth, x1ButtonHeight, buttonRadius);
+        spButtonShadow.setDepth(-1);
+        contentContainer.add(spButtonShadow);
+
+        // x1 버튼 (상호작용용)
+        const spPurchaseButton = scene.add.rectangle(spPurchaseButtonX, spPurchaseY, x1ButtonWidth, x1ButtonHeight, 0x000000, 0);
+        spPurchaseButton.setInteractive({ useHandCursor: true });
+        spPurchaseButton.on('pointerdown', () => {
+            if (GameState.purchaseSp()) {
+                this.update();
+            }
+        });
+        spPurchaseButton.on('pointerover', () => {
+            spButtonBg.clear();
+            const canPurchase = GameState.spPurchaseCount < 5 && GameState.coins >= GameState.getSpPurchaseCost();
+            spButtonBg.fillStyle(canPurchase ? 0xffed4e : 0x555555, canPurchase ? 1 : 0.8);
+            spButtonBg.fillRoundedRect(spPurchaseButtonX - x1ButtonWidth / 2, spPurchaseY - x1ButtonHeight / 2, x1ButtonWidth, x1ButtonHeight, buttonRadius);
+            spButtonBg.lineStyle(2, canPurchase ? 0xfff066 : 0x666666, canPurchase ? 1 : 0.8);
+            spButtonBg.strokeRoundedRect(spPurchaseButtonX - x1ButtonWidth / 2, spPurchaseY - x1ButtonHeight / 2, x1ButtonWidth, x1ButtonHeight, buttonRadius);
+        });
+        spPurchaseButton.on('pointerout', () => {
+            spButtonBg.clear();
+            const canPurchase = GameState.spPurchaseCount < 5 && GameState.coins >= GameState.getSpPurchaseCost();
+            spButtonBg.fillStyle(canPurchase ? 0xffd700 : 0x555555, canPurchase ? 1 : 0.8);
+            spButtonBg.fillRoundedRect(spPurchaseButtonX - x1ButtonWidth / 2, spPurchaseY - x1ButtonHeight / 2, x1ButtonWidth, x1ButtonHeight, buttonRadius);
+            spButtonBg.lineStyle(2, canPurchase ? 0xffed4e : 0x666666, canPurchase ? 1 : 0.8);
+            spButtonBg.strokeRoundedRect(spPurchaseButtonX - x1ButtonWidth / 2, spPurchaseY - x1ButtonHeight / 2, x1ButtonWidth, x1ButtonHeight, buttonRadius);
+        });
+        contentContainer.add(spPurchaseButton);
+        (this as any).spPurchaseButton = spPurchaseButton;
+        (this as any).spButtonBg = spButtonBg;
+
+        // x1 버튼 텍스트
+        const spButtonText = scene.add.text(spPurchaseButtonX, spPurchaseY, 'x1', {
+            fontSize: x1ButtonFontSize,
+            color: '#ffffff',
+            fontFamily: 'Arial',
+            font: `600 ${x1ButtonFontSize} Arial`
+        });
+        spButtonText.setOrigin(0.5);
+        contentContainer.add(spButtonText);
+        (this as any).spButtonText = spButtonText;
+
         this.tabContents[1] = contentContainer; // Upgrade 탭은 인덱스 1
     },
     
@@ -765,7 +843,7 @@ export const UIManager = {
         
         // 공격력 텍스트 업데이트 (Stats 탭에만 표시)
         if ((this as any).attackPowerText && this.activeTabIndex === 0) {
-            (this as any).attackPowerText.setText(`공격력: ${GameState.attackPower}`);
+            (this as any).attackPowerText.setText(`공격력: ${GameState.getAttackPowerValue()}`);
         }
         
         // 버튼 색상 및 비용 업데이트 (구매 가능 여부) - Upgrade 탭일 때만
@@ -801,8 +879,10 @@ export const UIManager = {
             }
             
             if (this.upgradeButton && (this as any).rightButtonBg) {
+                const currentStat = GameState.attackSpeed;
+                const isMaxLevel = currentStat >= 15;
                 const attackSpeedCost = GameState.getAttackSpeedUpgradeCost();
-                const canAfford = GameState.coins >= attackSpeedCost;
+                const canAfford = !isMaxLevel && GameState.coins >= attackSpeedCost;
                 const rightButtonBg = (this as any).rightButtonBg;
                 const buttonWidth = this.upgradeButton.width;
                 const buttonHeight = this.upgradeButton.height;
@@ -821,12 +901,52 @@ export const UIManager = {
                 rightButtonBg.fillRoundedRect(buttonX - buttonWidth / 2, buttonY - buttonHeight / 2, buttonWidth, buttonHeight, buttonRadius);
                 rightButtonBg.strokeRoundedRect(buttonX - buttonWidth / 2, buttonY - buttonHeight / 2, buttonWidth, buttonHeight, buttonRadius);
                 
-                // 전체 텍스트 업데이트 (공격속도 (8 -> 9) 비용: 123456)
+                // 전체 텍스트 업데이트
                 if ((this as any).autoFullText) {
-                    const currentStat = GameState.attackSpeed;
-                    const nextStat = currentStat + 1;
-                    (this as any).autoFullText.setText(`공격속도 (${currentStat} -> ${nextStat}) 비용: ${attackSpeedCost}`);
-                    (this as any).autoFullText.setColor(canAfford ? '#e0e0e0' : '#999999');
+                    if (isMaxLevel) {
+                        (this as any).autoFullText.setText(`공격속도 (${currentStat}/15) 최대 레벨`);
+                        (this as any).autoFullText.setColor('#999999');
+                    } else {
+                        const nextStat = currentStat + 1;
+                        (this as any).autoFullText.setText(`공격속도 (${currentStat} -> ${nextStat}) 비용: ${attackSpeedCost}`);
+                        (this as any).autoFullText.setColor(canAfford ? '#e0e0e0' : '#999999');
+                    }
+                }
+            }
+
+            // SP 구매 버튼 업데이트
+            if ((this as any).spPurchaseButton && (this as any).spButtonBg) {
+                const spCost = GameState.getSpPurchaseCost();
+                const canPurchase = GameState.spPurchaseCount < 5 && GameState.coins >= spCost;
+                const spButtonBg = (this as any).spButtonBg;
+                const buttonWidth = (this as any).spPurchaseButton.width;
+                const buttonHeight = (this as any).spPurchaseButton.height;
+                const buttonX = (this as any).spPurchaseButton.x;
+                const buttonY = (this as any).spPurchaseButton.y;
+                const buttonRadius = 12;
+
+                spButtonBg.clear();
+                if (canPurchase) {
+                    spButtonBg.fillStyle(0xffd700, 1);
+                    spButtonBg.lineStyle(2, 0xffed4e, 1);
+                } else {
+                    spButtonBg.fillStyle(0x555555, 0.8);
+                    spButtonBg.lineStyle(2, 0x666666, 0.8);
+                }
+                spButtonBg.fillRoundedRect(buttonX - buttonWidth / 2, buttonY - buttonHeight / 2, buttonWidth, buttonHeight, buttonRadius);
+                spButtonBg.strokeRoundedRect(buttonX - buttonWidth / 2, buttonY - buttonHeight / 2, buttonWidth, buttonHeight, buttonRadius);
+
+                // 전체 텍스트 업데이트 (SP (0/5 -> 1/5) 비용: 100000)
+                if ((this as any).spFullText) {
+                    const currentCount = GameState.spPurchaseCount;
+                    const nextCount = currentCount + 1;
+                    if (currentCount >= 5) {
+                        (this as any).spFullText.setText(`SP (${currentCount}/5) 최대 구매 완료`);
+                        (this as any).spFullText.setColor('#999999');
+                    } else {
+                        (this as any).spFullText.setText(`SP (${currentCount}/5 -> ${nextCount}/5) 비용: ${spCost}`);
+                        (this as any).spFullText.setColor(canPurchase ? '#e0e0e0' : '#999999');
+                    }
                 }
             }
         }

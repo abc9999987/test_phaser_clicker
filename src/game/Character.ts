@@ -68,7 +68,7 @@ export const Character = {
         );
         // 투사체 데미지를 현재 공격력으로 설정
         if (projectile) {
-            projectile.damage = GameState.attackPower;
+            projectile.damage = GameState.getAttackPowerValue();
         }
     },
     

@@ -110,7 +110,7 @@ export const Enemy = {
     onHit(scene: Phaser.Scene, projectile: ProjectileType): void {
         if (!this.enemy || this.isDefeated) return; // 이미 처치된 상태면 무시
 
-        const damage = projectile.damage || GameState.attackPower;
+        const damage = projectile.damage || GameState.getAttackPowerValue();
         this.applyDamage(scene, damage);
     },
 

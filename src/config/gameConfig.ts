@@ -13,7 +13,7 @@ export interface SkillConfig {
 export const SkillConfigs: SkillConfig[] = [
     {
         id: 'big_k_fish_bread',
-        name: 'BigKFishBread',
+        name: '붕어빵테오',
         cooldown: 10,
         damageMultiplier: 1.2,
         spCost: 1  // 습득에 필요한 SP

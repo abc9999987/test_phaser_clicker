@@ -10,6 +10,7 @@ interface SaveData {
     saveTime: number;
     sp: number;
     learnedSkills: string[];
+    spPurchaseCount: number;
 }
 
 export const GameState = {
@@ -22,6 +23,7 @@ export const GameState = {
     killsInCurrentStage: 0,  // 현재 스테이지에서 처치한 적 수
     sp: 0,  // Skill Point
     learnedSkills: [] as string[],  // 습득한 스킬 ID 목록
+    spPurchaseCount: 0,  // SP 구매 횟수 (최대 5)
     storageKey: 'test_clicker_save', // localStorage 키
     saveTimer: null as number | null,
     
@@ -38,7 +40,8 @@ export const GameState = {
                 killsInCurrentStage: this.killsInCurrentStage,
                 saveTime: Date.now(),
                 sp: this.sp,
-                learnedSkills: this.learnedSkills
+                learnedSkills: this.learnedSkills,
+                spPurchaseCount: this.spPurchaseCount
             };
             localStorage.setItem(this.storageKey, JSON.stringify(saveData));
             console.log('Game state saved');
@@ -62,6 +65,7 @@ export const GameState = {
                 this.killsInCurrentStage = data.killsInCurrentStage || 0;
                 this.sp = data.sp || 0;
                 this.learnedSkills = data.learnedSkills || [];
+                this.spPurchaseCount = data.spPurchaseCount || 0;
                 console.log('Game state loaded');
                 return true;
             }
@@ -167,6 +171,24 @@ export const GameState = {
         this.save();
     },
     
+    // 공격력 실제 값 계산 (레벨에 따른 공격력)
+    getAttackPowerValue(): number {
+        const level = this.attackPower - 1; // attackPower는 1부터 시작하므로 0부터 시작하도록 변환
+        const section = Math.floor(level / 10);
+        const position = level % 10;
+        const increment = section + 1;
+        
+        // 시작값 계산
+        let startValue = 1; // 구간 0
+        for (let s = 1; s <= section; s++) {
+            const prevIncrement = s; // 이전 구간의 증가량
+            const prevLastValue = startValue + 9 * prevIncrement; // 이전 구간의 마지막 값
+            startValue = prevLastValue + (s + 1); // 현재 구간 시작값 = 이전 마지막 + (section+1)
+        }
+        
+        return startValue + position * increment;
+    },
+    
     // 공격력 강화 비용 계산 (1.4로 조정)
     getAttackPowerUpgradeCost(): number {
         return Math.floor(10 * Math.pow(1.35, this.attackPower - 1));
@@ -188,8 +210,13 @@ export const GameState = {
         return false;
     },
     
-    // 공격 속도 강화 구매
+    // 공격 속도 강화 구매 (최대 15)
     upgradeAttackSpeed(): boolean {
+        // 최대치 체크
+        if (this.attackSpeed >= 15) {
+            return false;
+        }
+        
         const cost = this.getAttackSpeedUpgradeCost();
         if (this.spendCoins(cost)) {
             this.attackSpeed++;
@@ -241,6 +268,28 @@ export const GameState = {
     learnSkill(skillId: string): boolean {
         if (!this.isSkillLearned(skillId)) {
             this.learnedSkills.push(skillId);
+            this.save();
+            return true;
+        }
+        return false;
+    },
+    
+    // SP 구매 비용 계산 (초기 10만원, 10배씩 증가)
+    getSpPurchaseCost(): number {
+        return Math.floor(100000 * Math.pow(10, this.spPurchaseCount));
+    },
+    
+    // SP 구매 (최대 5개까지만)
+    purchaseSp(): boolean {
+        // 최대 5개까지만 구매 가능
+        if (this.spPurchaseCount >= 5) {
+            return false;
+        }
+        
+        const cost = this.getSpPurchaseCost();
+        if (this.spendCoins(cost)) {
+            this.spPurchaseCount++;
+            this.sp++;
             this.save();
             return true;
         }
