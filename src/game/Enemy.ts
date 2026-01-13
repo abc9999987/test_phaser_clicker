@@ -106,17 +106,24 @@ export const Enemy = {
         return distance < (enemyRadius + projectileRadius);
     },
     
-    // 적이 맞았을 때 처리
+    // 적이 맞았을 때 처리 (투사체 기준)
     onHit(scene: Phaser.Scene, projectile: ProjectileType): void {
         if (!this.enemy || this.isDefeated) return; // 이미 처치된 상태면 무시
-        
-        // 공격력만큼 HP 감소
+
         const damage = projectile.damage || GameState.attackPower;
+        this.applyDamage(scene, damage);
+    },
+
+    // 외부에서 직접 데미지를 줄 때 사용 (스킬 등)
+    applyDamage(scene: Phaser.Scene, damage: number): void {
+        if (!this.enemy || this.isDefeated) return;
+
+        // HP 감소
         this.hp -= damage;
-        
+
         // HP 바 업데이트
         this.updateHpBar();
-        
+
         // HP가 0 이하가 되면 처치
         if (this.hp <= 0) {
             this.hp = 0;
@@ -124,9 +131,9 @@ export const Enemy = {
             this.onDefeated(scene);
             return;
         }
-        
+
         GameState.clickCount++;
-        
+
         // 적이 맞았을 때 효과 (빨간색 깜빡임)
         scene.tweens.add({
             targets: this.enemy,
@@ -135,7 +142,7 @@ export const Enemy = {
             yoyo: true,
             ease: 'Power2'
         });
-        
+
         // 데미지 파티클 효과 (빨간색, - 형식)
         Effects.createDamageParticle(scene, this.enemy.x, this.enemy.y, damage);
     },

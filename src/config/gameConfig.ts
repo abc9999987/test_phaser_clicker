@@ -1,5 +1,25 @@
 import Phaser from 'phaser';
 
+// 스킬 설정 타입
+export interface SkillConfig {
+    id: string;
+    name: string;
+    cooldown: number; // 초 단위
+    damageMultiplier: number; // 유저 공격력 배수
+    spCost: number; // 습득에 필요한 SP
+}
+
+// 스킬 설정 목록
+export const SkillConfigs: SkillConfig[] = [
+    {
+        id: 'big_k_fish_bread',
+        name: 'BigKFishBread',
+        cooldown: 10,
+        damageMultiplier: 1.2,
+        spCost: 1  // 습득에 필요한 SP
+    }
+];
+
 // Phaser 게임 설정 (모바일 세로 해상도, 반응형)
 export const GameConfig: Phaser.Types.Core.GameConfig = {
     type: Phaser.AUTO,

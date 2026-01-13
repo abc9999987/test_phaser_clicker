@@ -1,6 +1,8 @@
 import Phaser from 'phaser';
 import { Responsive } from '../utils/Responsive';
 import { GameState } from '../managers/GameState';
+import { SkillManager } from '../managers/SkillManager';
+import { SkillConfigs } from '../config/gameConfig';
 
 // UI 관리자
 export const UIManager = {
@@ -17,6 +19,18 @@ export const UIManager = {
     tabTexts: [] as Phaser.GameObjects.Text[],
     tabContents: [] as Phaser.GameObjects.Container[],
     activeTabIndex: 0,
+    skillButton: null as Phaser.GameObjects.Rectangle | null,
+    skillButtonText: null as Phaser.GameObjects.Text | null,
+    skillCooldownText: null as Phaser.GameObjects.Text | null,
+    skillLearnButtons: [] as Phaser.GameObjects.Rectangle[],
+    skillLearnButtonBgs: [] as Phaser.GameObjects.Graphics[],
+    skillLearnButtonTexts: [] as Phaser.GameObjects.Text[],
+    skillCards: [] as Phaser.GameObjects.Container[],
+    skillSpText: null as Phaser.GameObjects.Text | null,
+    skillUseButton: null as Phaser.GameObjects.Rectangle | null,
+    skillUseButtonBg: null as Phaser.GameObjects.Graphics | null,
+    skillUseButtonText: null as Phaser.GameObjects.Text | null,
+    skillUseCooldownText: null as Phaser.GameObjects.Text | null,
     
     // UI 생성 (아래쪽 절반 영역에 배치)
     create(scene: Phaser.Scene): void {
@@ -89,8 +103,11 @@ export const UIManager = {
         // 두 번째 탭 (Upgrade) 내용 생성
         this.createUpgradeTab(scene, gameWidth, gameHeight, halfHeight, uiAreaHeight, uiAreaStartY);
         
+        // 세 번째 탭 (Skill) 내용 생성
+        this.createSkillTab(scene, gameWidth, gameHeight, halfHeight, uiAreaHeight, uiAreaStartY, 2);
+
         // 나머지 탭 (Lock) 내용 생성
-        for (let i = 2; i < 5; i++) {
+        for (let i = 3; i < 5; i++) {
             this.createLockTab(scene, gameWidth, gameHeight, halfHeight, uiAreaHeight, uiAreaStartY, i);
         }
         
@@ -112,7 +129,7 @@ export const UIManager = {
         this.tabTexts = [];
         this.tabContents = [];
         
-        const tabLabels = ['Stats', 'Upgrade', 'Lock', 'Lock', 'Lock'];
+        const tabLabels = ['Stats', 'Upgrade', 'Skill', 'Lock', 'Lock'];
         const tabFontSize = Responsive.getFontSize(scene, 12);
         
         for (let i = 0; i < tabCount; i++) {
@@ -179,6 +196,254 @@ export const UIManager = {
             this.tabs.push({ bg: tabBg, shadow: shadow, interactive: tab, text: tabText } as any);
             this.tabTexts.push(tabText);
             this.tabContents.push(null as any); // 나중에 설정
+        }
+    },
+    
+    // Skill 탭 내용 생성
+    createSkillTab(scene: Phaser.Scene, gameWidth: number, _gameHeight: number, _halfHeight: number, uiAreaHeight: number, uiAreaStartY: number, tabIndex: number): void {
+        const contentContainer = scene.add.container(0, 0);
+
+        // 타이틀
+        const titleFontSize = Responsive.getFontSize(scene, 22);
+        const titleY = uiAreaStartY + uiAreaHeight * 0.08;
+        const titleText = scene.add.text(gameWidth / 2, titleY, '스킬', {
+            fontSize: titleFontSize,
+            color: '#ffffff',
+            fontFamily: 'Arial',
+            font: `600 ${titleFontSize} Arial`
+        });
+        titleText.setOrigin(0.5);
+        contentContainer.add(titleText);
+
+        // SP 표시
+        const spFontSize = Responsive.getFontSize(scene, 20);
+        const spY = titleY + uiAreaHeight * 0.1;
+        this.skillSpText = scene.add.text(gameWidth / 2, spY, `SP: ${GameState.sp}`, {
+            fontSize: spFontSize,
+            color: '#ffd700',
+            fontFamily: 'Arial',
+            font: `600 ${spFontSize} Arial`,
+            stroke: '#b8860b',
+            strokeThickness: 1
+        });
+        this.skillSpText.setOrigin(0.5);
+        contentContainer.add(this.skillSpText);
+
+        // 스킬 카드 영역 (가로 배치)
+        const skillCardsY = spY + uiAreaHeight * 0.15;
+        const skillCardWidth = gameWidth * 0.95;
+        const skillCardHeight = uiAreaHeight * 0.15; // 한 줄 레이아웃에 맞게 높이 축소
+        const skillCardSpacing = gameWidth * 0.05;
+        const startX = (gameWidth - (SkillConfigs.length * skillCardWidth + (SkillConfigs.length - 1) * skillCardSpacing)) / 2 + skillCardWidth / 2;
+
+        // 스킬 배열 초기화
+        this.skillLearnButtons = [];
+        this.skillLearnButtonBgs = [];
+        this.skillLearnButtonTexts = [];
+        this.skillCards = [];
+
+        // 각 스킬에 대해 카드 생성
+        SkillConfigs.forEach((skillConfig, index) => {
+            const cardX = startX + index * (skillCardWidth + skillCardSpacing);
+            const skillCard = this.createSkillCard(scene, skillConfig, cardX, skillCardsY, skillCardWidth, skillCardHeight);
+            contentContainer.add(skillCard);
+            this.skillCards.push(skillCard);
+        });
+
+        this.tabContents[tabIndex] = contentContainer;
+    },
+    
+    // 개별 스킬 카드 생성
+    createSkillCard(scene: Phaser.Scene, skillConfig: any, x: number, y: number, width: number, height: number): Phaser.GameObjects.Container {
+        const cardContainer = scene.add.container(x, y);
+        const cardRadius = 12;
+        const padding = 10;
+        const isLearned = GameState.isSkillLearned(skillConfig.id);
+
+        // 카드 배경
+        const cardBg = scene.add.graphics();
+        cardBg.fillStyle(0x2a2a3a, 0.95);
+        cardBg.fillRoundedRect(-width / 2, -height / 2, width, height, cardRadius);
+        cardBg.lineStyle(2, 0x4a4a5a, 0.8);
+        cardBg.strokeRoundedRect(-width / 2, -height / 2, width, height, cardRadius);
+        cardContainer.add(cardBg);
+
+        // 한 줄 레이아웃: Name / descText / statusText / 습득 버튼 (가로 일렬 배치)
+        const centerY = 0;
+        const itemSpacing = padding * 1.5; // 요소 간 간격
+        
+        // 1. nameText (왼쪽)
+        const nameFontSize = Responsive.getFontSize(scene, 14);
+        const nameX = -width / 2 + padding;
+        const nameText = scene.add.text(nameX, centerY, skillConfig.name, {
+            fontSize: nameFontSize,
+            color: '#ffffff',
+            fontFamily: 'Arial',
+            font: `600 ${nameFontSize} Arial`
+        });
+        nameText.setOrigin(0, 0.5);
+        cardContainer.add(nameText);
+
+        // 2. descText (nameText 다음)
+        const descFontSize = Responsive.getFontSize(scene, 10);
+        const nameTextWidth = nameText.width;
+        const descX = nameX + nameTextWidth + itemSpacing;
+        const descText = scene.add.text(descX, centerY, `×${skillConfig.damageMultiplier} | ${skillConfig.cooldown}초`, {
+            fontSize: descFontSize,
+            color: '#b0b0b0',
+            fontFamily: 'Arial',
+            font: `400 ${descFontSize} Arial`
+        });
+        descText.setOrigin(0, 0.5);
+        cardContainer.add(descText);
+
+        // 3. statusText (descText 다음)
+        const statusFontSize = Responsive.getFontSize(scene, 12);
+        const descTextWidth = descText.width;
+        const statusX = descX + descTextWidth + itemSpacing;
+        const statusText = scene.add.text(statusX, centerY, isLearned ? '✓ 습득 완료' : `SP ${skillConfig.spCost}`, {
+            fontSize: statusFontSize,
+            color: isLearned ? '#4ade80' : '#ffd700',
+            fontFamily: 'Arial',
+            font: `500 ${statusFontSize} Arial`
+        });
+        statusText.setOrigin(0, 0.5);
+        cardContainer.add(statusText);
+
+        // 4. 습득 버튼 (카드 오른쪽 끝에 배치)
+        if (!isLearned) {
+            const buttonWidth = width * 0.2;
+            const buttonHeight = height * 0.5;
+            const buttonRadius = 8;
+            // 버튼을 카드 오른쪽 끝에서 padding만큼 떨어진 위치에 배치
+            const buttonX = width / 2 - padding - buttonWidth / 2;
+            const buttonY = centerY;
+
+            const buttonBg = scene.add.graphics();
+            const canLearn = GameState.sp >= skillConfig.spCost;
+            buttonBg.fillStyle(canLearn ? 0x50c878 : 0x555555, canLearn ? 1 : 0.8);
+            buttonBg.fillRoundedRect(buttonX - buttonWidth / 2, buttonY - buttonHeight / 2, buttonWidth, buttonHeight, buttonRadius);
+            buttonBg.lineStyle(2, canLearn ? 0x6ad888 : 0x666666, canLearn ? 1 : 0.8);
+            buttonBg.strokeRoundedRect(buttonX - buttonWidth / 2, buttonY - buttonHeight / 2, buttonWidth, buttonHeight, buttonRadius);
+            cardContainer.add(buttonBg);
+            this.skillLearnButtonBgs.push(buttonBg);
+
+            const learnButton = scene.add.rectangle(buttonX, buttonY, buttonWidth, buttonHeight, 0x000000, 0);
+            learnButton.setInteractive({ useHandCursor: true });
+            
+            const skillId = skillConfig.id;
+            learnButton.on('pointerdown', () => {
+                if ((scene as any).learnSkill) {
+                    (scene as any).learnSkill(skillId);
+                }
+            });
+
+            learnButton.on('pointerover', () => {
+                if (canLearn) {
+                    buttonBg.clear();
+                    buttonBg.fillStyle(0x60d888, 1);
+                    buttonBg.fillRoundedRect(buttonX - buttonWidth / 2, buttonY - buttonHeight / 2, buttonWidth, buttonHeight, buttonRadius);
+                    buttonBg.lineStyle(2, 0x7ae898, 1);
+                    buttonBg.strokeRoundedRect(buttonX - buttonWidth / 2, buttonY - buttonHeight / 2, buttonWidth, buttonHeight, buttonRadius);
+                }
+            });
+
+            learnButton.on('pointerout', () => {
+                buttonBg.clear();
+                buttonBg.fillStyle(canLearn ? 0x50c878 : 0x555555, canLearn ? 1 : 0.8);
+                buttonBg.fillRoundedRect(buttonX - buttonWidth / 2, buttonY - buttonHeight / 2, buttonWidth, buttonHeight, buttonRadius);
+                buttonBg.lineStyle(2, canLearn ? 0x6ad888 : 0x666666, canLearn ? 1 : 0.8);
+                buttonBg.strokeRoundedRect(buttonX - buttonWidth / 2, buttonY - buttonHeight / 2, buttonWidth, buttonHeight, buttonRadius);
+            });
+
+            cardContainer.add(learnButton);
+            this.skillLearnButtons.push(learnButton);
+
+            const buttonTextFontSize = Responsive.getFontSize(scene, 11);
+            const buttonText = scene.add.text(buttonX, buttonY, '습득', {
+                fontSize: buttonTextFontSize,
+                color: canLearn ? '#ffffff' : '#999999',
+                fontFamily: 'Arial',
+                font: `600 ${buttonTextFontSize} Arial`
+            });
+            buttonText.setOrigin(0.5);
+            cardContainer.add(buttonText);
+            this.skillLearnButtonTexts.push(buttonText);
+        }
+
+        return cardContainer;
+    },
+    
+    // 화면 중앙에 습득한 스킬 사용 버튼 생성
+    createSkillUseButtons(scene: Phaser.Scene): void {
+        const gameWidth = scene.scale.width;
+        const gameHeight = scene.scale.height;
+        const centerY = gameHeight * 0.5; // 화면 중앙
+        
+        // BigKFishBread 스킬 사용 버튼
+        if (GameState.isSkillLearned('big_k_fish_bread')) {
+            const buttonWidth = gameWidth * 0.25;
+            const buttonHeight = gameHeight * 0.08;
+            const buttonRadius = 16;
+            const buttonX = gameWidth / 2;
+            const buttonY = centerY;
+            
+            this.skillUseButtonBg = scene.add.graphics();
+            this.skillUseButtonBg.fillStyle(0xff6b6b, 1);
+            this.skillUseButtonBg.fillRoundedRect(buttonX - buttonWidth / 2, buttonY - buttonHeight / 2, buttonWidth, buttonHeight, buttonRadius);
+            this.skillUseButtonBg.lineStyle(2, 0xff8e8e, 1);
+            this.skillUseButtonBg.strokeRoundedRect(buttonX - buttonWidth / 2, buttonY - buttonHeight / 2, buttonWidth, buttonHeight, buttonRadius);
+            this.skillUseButtonBg.setDepth(15);
+            
+            this.skillUseButton = scene.add.rectangle(buttonX, buttonY, buttonWidth, buttonHeight, 0x000000, 0);
+            this.skillUseButton.setInteractive({ useHandCursor: true });
+            this.skillUseButton.setDepth(16);
+            
+            this.skillUseButton.on('pointerdown', () => {
+                if ((scene as any).useSkill) {
+                    (scene as any).useSkill('big_k_fish_bread');
+                }
+            });
+            
+            this.skillUseButton.on('pointerover', () => {
+                if (this.skillUseButtonBg) {
+                    this.skillUseButtonBg.clear();
+                    this.skillUseButtonBg.fillStyle(0xff8e8e, 1);
+                    this.skillUseButtonBg.fillRoundedRect(buttonX - buttonWidth / 2, buttonY - buttonHeight / 2, buttonWidth, buttonHeight, buttonRadius);
+                    this.skillUseButtonBg.lineStyle(2, 0xffb3b3, 1);
+                    this.skillUseButtonBg.strokeRoundedRect(buttonX - buttonWidth / 2, buttonY - buttonHeight / 2, buttonWidth, buttonHeight, buttonRadius);
+                }
+            });
+            
+            this.skillUseButton.on('pointerout', () => {
+                if (this.skillUseButtonBg) {
+                    this.skillUseButtonBg.clear();
+                    this.skillUseButtonBg.fillStyle(0xff6b6b, 1);
+                    this.skillUseButtonBg.fillRoundedRect(buttonX - buttonWidth / 2, buttonY - buttonHeight / 2, buttonWidth, buttonHeight, buttonRadius);
+                    this.skillUseButtonBg.lineStyle(2, 0xff8e8e, 1);
+                    this.skillUseButtonBg.strokeRoundedRect(buttonX - buttonWidth / 2, buttonY - buttonHeight / 2, buttonWidth, buttonHeight, buttonRadius);
+                }
+            });
+            
+            const useButtonTextFontSize = Responsive.getFontSize(scene, 16);
+            this.skillUseButtonText = scene.add.text(buttonX, buttonY - buttonHeight * 0.2, 'BigKFishBread', {
+                fontSize: useButtonTextFontSize,
+                color: '#ffffff',
+                fontFamily: 'Arial',
+                font: `600 ${useButtonTextFontSize} Arial`
+            });
+            this.skillUseButtonText.setOrigin(0.5);
+            this.skillUseButtonText.setDepth(16);
+            
+            const cooldownFontSize = Responsive.getFontSize(scene, 12);
+            this.skillUseCooldownText = scene.add.text(buttonX, buttonY + buttonHeight * 0.2, '준비 완료', {
+                fontSize: cooldownFontSize,
+                color: '#ffffff',
+                fontFamily: 'Arial',
+                font: `500 ${cooldownFontSize} Arial`
+            });
+            this.skillUseCooldownText.setOrigin(0.5);
+            this.skillUseCooldownText.setDepth(16);
         }
     },
     
@@ -562,6 +827,66 @@ export const UIManager = {
                     const nextStat = currentStat + 1;
                     (this as any).autoFullText.setText(`공격속도 (${currentStat} -> ${nextStat}) 비용: ${attackSpeedCost}`);
                     (this as any).autoFullText.setColor(canAfford ? '#e0e0e0' : '#999999');
+                }
+            }
+        }
+
+        // SP 표시 업데이트 - Skill 탭일 때만
+        if (this.skillSpText && this.activeTabIndex === 2) {
+            this.skillSpText.setText(`SP: ${GameState.sp}`);
+        }
+        
+        // 스킬 습득 버튼 상태 업데이트 - Skill 탭일 때만
+        if (this.activeTabIndex === 2) {
+            // 스킬 카드들을 다시 생성하여 상태 업데이트
+            // (습득 상태가 변경되었을 수 있으므로)
+            SkillConfigs.forEach((skillConfig, index) => {
+                const isLearned = GameState.isSkillLearned(skillConfig.id);
+                const canLearn = !isLearned && GameState.sp >= skillConfig.spCost;
+                
+                // 해당 인덱스의 버튼이 있으면 업데이트
+                if (index < this.skillLearnButtonBgs.length && index < this.skillLearnButtons.length && index < this.skillLearnButtonTexts.length) {
+                    const buttonBg = this.skillLearnButtonBgs[index];
+                    const learnButton = this.skillLearnButtons[index];
+                    const buttonText = this.skillLearnButtonTexts[index];
+                    
+                    if (isLearned) {
+                        // 습득 완료면 버튼 숨기기
+                        buttonBg.setVisible(false);
+                        learnButton.setVisible(false);
+                        buttonText.setVisible(false);
+                    } else {
+                        // 버튼 색상 업데이트
+                        const buttonWidth = learnButton.width;
+                        const buttonHeight = learnButton.height;
+                        const buttonX = learnButton.x;
+                        const buttonY = learnButton.y;
+                        const buttonRadius = 8;
+                        
+                        buttonBg.clear();
+                        buttonBg.fillStyle(canLearn ? 0x50c878 : 0x555555, canLearn ? 1 : 0.8);
+                        buttonBg.fillRoundedRect(buttonX - buttonWidth / 2, buttonY - buttonHeight / 2, buttonWidth, buttonHeight, buttonRadius);
+                        buttonBg.lineStyle(2, canLearn ? 0x6ad888 : 0x666666, canLearn ? 1 : 0.8);
+                        buttonBg.strokeRoundedRect(buttonX - buttonWidth / 2, buttonY - buttonHeight / 2, buttonWidth, buttonHeight, buttonRadius);
+                        
+                        buttonText.setColor(canLearn ? '#ffffff' : '#999999');
+                    }
+                }
+            });
+        }
+        
+        // 화면 중앙 스킬 사용 버튼 쿨타임 업데이트
+        if (scene && this.skillUseCooldownText && this.skillUseButton) {
+            const isLearned = GameState.isSkillLearned('big_k_fish_bread');
+            if (isLearned) {
+                const remaining = SkillManager.getRemainingCooldown('big_k_fish_bread', scene.time.now);
+                if (remaining <= 0) {
+                    this.skillUseCooldownText.setText('준비 완료');
+                    this.skillUseCooldownText.setColor('#ffffff');
+                } else {
+                    const seconds = Math.ceil(remaining);
+                    this.skillUseCooldownText.setText(`${seconds}초`);
+                    this.skillUseCooldownText.setColor('#ffcc00');
                 }
             }
         }

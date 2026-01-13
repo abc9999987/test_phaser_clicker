@@ -8,6 +8,8 @@ interface SaveData {
     stage: number;
     killsInCurrentStage: number;
     saveTime: number;
+    sp: number;
+    learnedSkills: string[];
 }
 
 export const GameState = {
@@ -18,6 +20,8 @@ export const GameState = {
     chapter: 1,  // 챕터 (1, 2, 3, ...)
     stage: 1,  // 스테이지 (1-20)
     killsInCurrentStage: 0,  // 현재 스테이지에서 처치한 적 수
+    sp: 0,  // Skill Point
+    learnedSkills: [] as string[],  // 습득한 스킬 ID 목록
     storageKey: 'test_clicker_save', // localStorage 키
     saveTimer: null as number | null,
     
@@ -32,7 +36,9 @@ export const GameState = {
                 chapter: this.chapter,
                 stage: this.stage,
                 killsInCurrentStage: this.killsInCurrentStage,
-                saveTime: Date.now()
+                saveTime: Date.now(),
+                sp: this.sp,
+                learnedSkills: this.learnedSkills
             };
             localStorage.setItem(this.storageKey, JSON.stringify(saveData));
             console.log('Game state saved');
@@ -54,6 +60,8 @@ export const GameState = {
                 this.chapter = data.chapter || 1;
                 this.stage = data.stage || 1;
                 this.killsInCurrentStage = data.killsInCurrentStage || 0;
+                this.sp = data.sp || 0;
+                this.learnedSkills = data.learnedSkills || [];
                 console.log('Game state loaded');
                 return true;
             }
@@ -206,5 +214,36 @@ export const GameState = {
     
     upgradeAutoFire(): boolean {
         return this.upgradeAttackSpeed();
+    },
+    
+    // SP 추가
+    addSp(amount: number): void {
+        this.sp += amount;
+        this.debouncedSave();
+    },
+    
+    // SP 차감
+    spendSp(amount: number): boolean {
+        if (this.sp >= amount) {
+            this.sp -= amount;
+            this.save();
+            return true;
+        }
+        return false;
+    },
+    
+    // 스킬 습득 여부 확인
+    isSkillLearned(skillId: string): boolean {
+        return this.learnedSkills.includes(skillId);
+    },
+    
+    // 스킬 습득
+    learnSkill(skillId: string): boolean {
+        if (!this.isSkillLearned(skillId)) {
+            this.learnedSkills.push(skillId);
+            this.save();
+            return true;
+        }
+        return false;
     }
 };

@@ -6,6 +6,7 @@ import { Background } from '../game/Background';
 import { Character } from '../game/Character';
 import { Enemy } from '../game/Enemy';
 import { UIManager } from '../ui/UIManager';
+import { SkillManager } from '../managers/SkillManager';
 
 // 메인 게임 씬
 export class GameScene extends Phaser.Scene {
@@ -16,6 +17,32 @@ export class GameScene extends Phaser.Scene {
     
     constructor() {
         super({ key: 'GameScene' });
+    }
+    
+    // 스킬 사용 (UIManager에서 호출)
+    useSkill(skillId: string): void {
+        const used = SkillManager.tryUseSkill(this, skillId);
+        if (used) {
+            // 스킬 사용 후 UI 업데이트
+            UIManager.update(this);
+        }
+    }
+    
+    // 스킬 습득 (UIManager에서 호출)
+    learnSkill(skillId: string): void {
+        const learned = SkillManager.tryLearnSkill(skillId);
+        if (learned) {
+            // 스킬 습득 후 UI 업데이트 및 사용 버튼 생성
+            // 스킬 탭을 다시 생성하여 습득 상태 반영
+            const gameWidth = this.scale.width;
+            const gameHeight = this.scale.height;
+            const halfHeight = gameHeight * 0.5;
+            const uiAreaHeight = gameHeight * 0.5;
+            const uiAreaStartY = halfHeight;
+            UIManager.createSkillTab(this, gameWidth, gameHeight, halfHeight, uiAreaHeight, uiAreaStartY, 2);
+            UIManager.update(this);
+            UIManager.createSkillUseButtons(this);
+        }
     }
     
     preload(): void {
