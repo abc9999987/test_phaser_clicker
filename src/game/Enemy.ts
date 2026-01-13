@@ -115,7 +115,7 @@ export const Enemy = {
     },
 
     // 외부에서 직접 데미지를 줄 때 사용 (스킬 등)
-    applyDamage(scene: Phaser.Scene, damage: number): void {
+    applyDamage(scene: Phaser.Scene, damage: number, isSkill: boolean = false): void {
         if (!this.enemy || this.isDefeated) return;
 
         // HP 감소
@@ -144,7 +144,7 @@ export const Enemy = {
         });
 
         // 데미지 파티클 효과 (빨간색, - 형식)
-        Effects.createDamageParticle(scene, this.enemy.x, this.enemy.y, damage);
+        Effects.createDamageParticle(scene, this.enemy.x, this.enemy.y, damage, isSkill);
     },
     
     // 적 처치 시 처리

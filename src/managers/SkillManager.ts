@@ -85,8 +85,8 @@ export const SkillManager = {
             this.playBigKFishBreadAnimation(scene, config);
         } else {
             // 다른 스킬은 즉시 데미지 적용
-            const damage = GameState.getAttackPowerValue() * config.damageMultiplier;
-            Enemy.applyDamage(scene, damage);
+            const damage = Math.round(GameState.getAttackPowerValue() * config.damageMultiplier);
+            Enemy.applyDamage(scene, damage, true); // 스킬 데미지로 표시
         }
 
         // 마지막 사용 시간 기록
@@ -107,11 +107,11 @@ export const SkillManager = {
         const targetY = Enemy.enemy.y - Enemy.enemy.height * Enemy.enemy.scaleY * 0.5 - 20;
         
         // 데미지 계산
-        const damage = GameState.getAttackPowerValue() * config.damageMultiplier;
+        const damage = Math.round(GameState.getAttackPowerValue() * config.damageMultiplier);
         
         // 거대한 붕어빵 이미지 생성
         const fishBread = scene.add.image(startX, startY, 'weapon');
-        const scale = 1.0;
+        const scale = 0.8;
         fishBread.setScale(scale);
         fishBread.setOrigin(0.5, 0.5);
         fishBread.setDepth(25); // 적 위에 표시
@@ -143,21 +143,21 @@ export const SkillManager = {
                     ease: 'Power3',
                     onComplete: () => {
                         // 적에게 도달했을 때 데미지 적용
-                        Enemy.applyDamage(scene, damage);
+                        Enemy.applyDamage(scene, damage, true); // 스킬 데미지로 표시
                         
                         // 꽂히는 효과 (스케일 증가 + 약간의 진동)
                         scene.tweens.add({
                             targets: fishBread,
                             scaleX: scale * 1.5,
                             scaleY: scale * 1.5,
-                            duration: 100,
+                            duration: 50,
                             ease: 'Power2',
                             onComplete: () => {
                                 // 페이드아웃
                                 scene.tweens.add({
                                     targets: fishBread,
                                     alpha: 0,
-                                    duration: 300,
+                                    duration: 50,
                                     ease: 'Power2',
                                     onComplete: () => {
                                         fishBread.destroy();

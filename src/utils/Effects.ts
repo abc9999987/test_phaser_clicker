@@ -26,18 +26,32 @@ export const Effects = {
     },
     
     // 데미지 파티클 효과 생성 (빨간색, - 형식)
-    createDamageParticle(scene: Phaser.Scene, x: number, y: number, damage: number): void {
+    createDamageParticle(scene: Phaser.Scene, x: number, y: number, damage: number, isSkill: boolean = false): void {
+        // 스킬 데미지는 더 크고 강조된 스타일
+        const fontSize = isSkill ? 32 : 20;
+        const color = isSkill ? '#ff4444' : '#ff0000'; // 스킬은 더 밝은 빨간색
+        const strokeColor = isSkill ? '#ffffff' : undefined;
+        const strokeThickness = isSkill ? 3 : 0;
+        
         const damageText = scene.add.text(x, y, `-${damage}`, {
-            font: 'bold 20px Arial',
-            color: '#ff0000' // 빨간색
+            font: `bold ${fontSize}px Arial`,
+            color: color,
+            stroke: strokeColor,
+            strokeThickness: strokeThickness
         });
         damageText.setOrigin(0.5);
         
+        // 스킬 데미지는 더 크게 위로 올라가고, 약간의 스케일 애니메이션 추가
+        const targetY = y - (isSkill ? 70 : 50);
+        const scale = isSkill ? 1.2 : 1.0;
+        
         scene.tweens.add({
             targets: damageText,
-            y: y - 50,
+            y: targetY,
+            scaleX: scale,
+            scaleY: scale,
             alpha: 0,
-            duration: 800,
+            duration: isSkill ? 1000 : 800,
             ease: 'Power2',
             onComplete: () => damageText.destroy()
         });

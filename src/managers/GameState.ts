@@ -11,6 +11,7 @@ interface SaveData {
     sp: number;
     learnedSkills: string[];
     spPurchaseCount: number;
+    skillAutoUse?: Record<string, boolean>; // 스킬 자동 사용 상태
 }
 
 export const GameState = {
@@ -24,6 +25,7 @@ export const GameState = {
     sp: 0,  // Skill Point
     learnedSkills: [] as string[],  // 습득한 스킬 ID 목록
     spPurchaseCount: 0,  // SP 구매 횟수 (최대 5)
+    skillAutoUse: {} as Record<string, boolean>,  // 스킬 자동 사용 상태 (skillId -> boolean)
     storageKey: 'test_clicker_save', // localStorage 키
     saveTimer: null as number | null,
     
@@ -41,7 +43,8 @@ export const GameState = {
                 saveTime: Date.now(),
                 sp: this.sp,
                 learnedSkills: this.learnedSkills,
-                spPurchaseCount: this.spPurchaseCount
+                spPurchaseCount: this.spPurchaseCount,
+                skillAutoUse: this.skillAutoUse
             };
             localStorage.setItem(this.storageKey, JSON.stringify(saveData));
             console.log('Game state saved');
@@ -66,6 +69,7 @@ export const GameState = {
                 this.sp = data.sp || 0;
                 this.learnedSkills = data.learnedSkills || [];
                 this.spPurchaseCount = data.spPurchaseCount || 0;
+                this.skillAutoUse = data.skillAutoUse || {};
                 console.log('Game state loaded');
                 return true;
             }
@@ -172,6 +176,18 @@ export const GameState = {
     },
     
     // 공격력 실제 값 계산 (레벨에 따른 공격력)
+    // 스킬 자동 사용 토글
+    toggleSkillAutoUse(skillId: string): boolean {
+        this.skillAutoUse[skillId] = !this.isSkillAutoUse(skillId);
+        this.debouncedSave();
+        return this.skillAutoUse[skillId];
+    },
+    
+    // 스킬 자동 사용 여부 확인
+    isSkillAutoUse(skillId: string): boolean {
+        return this.skillAutoUse[skillId] === true;
+    },
+    
     getAttackPowerValue(): number {
         const level = this.attackPower - 1; // attackPower는 1부터 시작하므로 0부터 시작하도록 변환
         const section = Math.floor(level / 10);

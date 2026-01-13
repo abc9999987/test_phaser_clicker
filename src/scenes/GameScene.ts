@@ -1,12 +1,12 @@
 import Phaser from 'phaser';
 import { AssetLoader } from '../managers/AssetLoader';
 import { GameState } from '../managers/GameState';
+import { SkillManager } from '../managers/SkillManager';
 import { Projectile } from '../game/Projectile';
 import { Background } from '../game/Background';
 import { Character } from '../game/Character';
 import { Enemy } from '../game/Enemy';
 import { UIManager } from '../ui/UIManager';
-import { SkillManager } from '../managers/SkillManager';
 
 // 메인 게임 씬
 export class GameScene extends Phaser.Scene {
@@ -136,6 +136,9 @@ export class GameScene extends Phaser.Scene {
         // UI 업데이트 (타이머 표시용)
         UIManager.update(this);
         
+        // 자동 스킬 사용 체크
+        this.checkAutoSkillUse();
+        
         // 투사체와 enemy 충돌 감지
         // 배열을 복사하여 순회 (제거 시 인덱스 문제 방지)
         const projectilesToCheck = [...Projectile.active];
@@ -147,6 +150,23 @@ export class GameScene extends Phaser.Scene {
             if (Enemy.checkCollision(projectile)) {
                 Enemy.onHit(this, projectile);
                 Projectile.remove(projectile);
+            }
+        }
+    }
+    
+    // 자동 스킬 사용 체크
+    checkAutoSkillUse(): void {
+        const learnedSkills = GameState.learnedSkills;
+        for (const skillId of learnedSkills) {
+            // 자동 사용이 켜져 있고, 쿨타임이 끝났으면 자동으로 사용
+            if (GameState.isSkillAutoUse(skillId)) {
+                const now = this.time.now;
+                if (SkillManager.canUseSkill(skillId, now)) {
+                    // 적이 있으면 스킬 사용
+                    if (Enemy.enemy) {
+                        SkillManager.tryUseSkill(this, skillId);
+                    }
+                }
             }
         }
     }
