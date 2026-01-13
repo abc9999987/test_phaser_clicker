@@ -14,7 +14,7 @@ export const SkillConfigs: SkillConfig[] = [
     {
         id: 'big_k_fish_bread',
         name: '붕어빵테오',
-        cooldown: 6,
+        cooldown: 3,
         damageMultiplier: 20,
         spCost: 1  // 습득에 필요한 SP
     }
