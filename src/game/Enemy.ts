@@ -155,7 +155,7 @@ export const Enemy = {
         const wasBoss = this.isBoss;
         
         // 스테이지별 골드 지급 (적 체력과 동일) * 1.2
-        const goldReward = GameState.getEnemyGoldReward() * 1.2;
+        const goldReward = Math.floor(GameState.getEnemyGoldReward() * 1.2);
         GameState.addCoins(goldReward);
         
         // 스테이지 진행 처리

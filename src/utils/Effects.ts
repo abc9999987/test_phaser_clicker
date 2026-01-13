@@ -7,7 +7,9 @@ export const Effects = {
     
     // 코인 파티클 효과 생성 (황금색, + 형식)
     createCoinParticle(scene: Phaser.Scene, x: number, y: number, amount: number = 1): void {
-        const coin = scene.add.text(x, y, `+${amount}`, {
+        // 소수점 제거하고 정수로 표시
+        const displayAmount = Math.floor(amount);
+        const coin = scene.add.text(x, y, `+${displayAmount}`, {
             font: 'bold 20px Arial',
             color: '#ffd700' // 황금색
         });

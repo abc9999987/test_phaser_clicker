@@ -27,10 +27,10 @@ export const UIManager = {
     skillLearnButtonTexts: [] as Phaser.GameObjects.Text[],
     skillCards: [] as Phaser.GameObjects.Container[],
     skillSpText: null as Phaser.GameObjects.Text | null,
-    skillUseButton: null as Phaser.GameObjects.Rectangle | null,
-    skillUseButtonBg: null as Phaser.GameObjects.Graphics | null,
-    skillUseButtonText: null as Phaser.GameObjects.Text | null,
-    skillUseCooldownText: null as Phaser.GameObjects.Text | null,
+    skillUseButtons: [] as Phaser.GameObjects.Rectangle[],
+    skillUseButtonBgs: [] as Phaser.GameObjects.Graphics[],
+    skillUseButtonTexts: [] as Phaser.GameObjects.Text[],
+    skillUseCooldownTexts: [] as Phaser.GameObjects.Text[],
     
     // UI 생성 (아래쪽 절반 영역에 배치)
     create(scene: Phaser.Scene): void {
@@ -116,6 +116,11 @@ export const UIManager = {
         
         // 초기 UI 업데이트
         this.update();
+        
+        // 게임 시작 시 이미 습득한 스킬이 있으면 사용 버튼 생성
+        if (GameState.learnedSkills.length > 0) {
+            this.createSkillUseButtons(scene);
+        }
     },
     
     // 탭 시스템 생성
@@ -376,75 +381,107 @@ export const UIManager = {
     
     // 화면 중앙에 습득한 스킬 사용 버튼 생성
     createSkillUseButtons(scene: Phaser.Scene): void {
+        // 기존 버튼들 제거
+        this.removeSkillUseButtons();
+        
         const gameWidth = scene.scale.width;
         const gameHeight = scene.scale.height;
         const centerY = gameHeight * 0.5; // 화면 중앙
         
-        // BigKFishBread 스킬 사용 버튼
-        if (GameState.isSkillLearned('big_k_fish_bread')) {
-            const buttonWidth = gameWidth * 0.25;
-            const buttonHeight = gameHeight * 0.08;
-            const buttonRadius = 16;
-            const buttonX = gameWidth / 2;
-            const buttonY = centerY;
-            
-            this.skillUseButtonBg = scene.add.graphics();
-            this.skillUseButtonBg.fillStyle(0xff6b6b, 1);
-            this.skillUseButtonBg.fillRoundedRect(buttonX - buttonWidth / 2, buttonY - buttonHeight / 2, buttonWidth, buttonHeight, buttonRadius);
-            this.skillUseButtonBg.lineStyle(2, 0xff8e8e, 1);
-            this.skillUseButtonBg.strokeRoundedRect(buttonX - buttonWidth / 2, buttonY - buttonHeight / 2, buttonWidth, buttonHeight, buttonRadius);
-            this.skillUseButtonBg.setDepth(15);
-            
-            this.skillUseButton = scene.add.rectangle(buttonX, buttonY, buttonWidth, buttonHeight, 0x000000, 0);
-            this.skillUseButton.setInteractive({ useHandCursor: true });
-            this.skillUseButton.setDepth(16);
-            
-            this.skillUseButton.on('pointerdown', () => {
-                if ((scene as any).useSkill) {
-                    (scene as any).useSkill('big_k_fish_bread');
-                }
-            });
-            
-            this.skillUseButton.on('pointerover', () => {
-                if (this.skillUseButtonBg) {
-                    this.skillUseButtonBg.clear();
-                    this.skillUseButtonBg.fillStyle(0xff8e8e, 1);
-                    this.skillUseButtonBg.fillRoundedRect(buttonX - buttonWidth / 2, buttonY - buttonHeight / 2, buttonWidth, buttonHeight, buttonRadius);
-                    this.skillUseButtonBg.lineStyle(2, 0xffb3b3, 1);
-                    this.skillUseButtonBg.strokeRoundedRect(buttonX - buttonWidth / 2, buttonY - buttonHeight / 2, buttonWidth, buttonHeight, buttonRadius);
-                }
-            });
-            
-            this.skillUseButton.on('pointerout', () => {
-                if (this.skillUseButtonBg) {
-                    this.skillUseButtonBg.clear();
-                    this.skillUseButtonBg.fillStyle(0xff6b6b, 1);
-                    this.skillUseButtonBg.fillRoundedRect(buttonX - buttonWidth / 2, buttonY - buttonHeight / 2, buttonWidth, buttonHeight, buttonRadius);
-                    this.skillUseButtonBg.lineStyle(2, 0xff8e8e, 1);
-                    this.skillUseButtonBg.strokeRoundedRect(buttonX - buttonWidth / 2, buttonY - buttonHeight / 2, buttonWidth, buttonHeight, buttonRadius);
-                }
-            });
-            
-            const useButtonTextFontSize = Responsive.getFontSize(scene, 16);
-            this.skillUseButtonText = scene.add.text(buttonX, buttonY - buttonHeight * 0.2, 'BigKFishBread', {
-                fontSize: useButtonTextFontSize,
-                color: '#ffffff',
-                fontFamily: 'Arial',
-                font: `600 ${useButtonTextFontSize} Arial`
-            });
-            this.skillUseButtonText.setOrigin(0.5);
-            this.skillUseButtonText.setDepth(16);
-            
-            const cooldownFontSize = Responsive.getFontSize(scene, 12);
-            this.skillUseCooldownText = scene.add.text(buttonX, buttonY + buttonHeight * 0.2, '준비 완료', {
-                fontSize: cooldownFontSize,
-                color: '#ffffff',
-                fontFamily: 'Arial',
-                font: `500 ${cooldownFontSize} Arial`
-            });
-            this.skillUseCooldownText.setOrigin(0.5);
-            this.skillUseCooldownText.setDepth(16);
+        // 습득한 모든 스킬에 대해 버튼 생성
+        const learnedSkills = GameState.learnedSkills;
+        console.log('습득한 스킬:', learnedSkills); // 디버깅용
+        if (learnedSkills.length === 0) {
+            console.log('습득한 스킬이 없습니다.');
+            return;
         }
+        
+        // 첫 번째 습득한 스킬만 버튼 생성 (나중에 여러 개 지원 가능)
+        const skillId = learnedSkills[0];
+        const skillConfig = SkillConfigs.find(s => s.id === skillId);
+        if (!skillConfig) {
+            console.log('스킬 설정을 찾을 수 없습니다:', skillId);
+            return;
+        }
+        
+        console.log('스킬 사용 버튼 생성:', skillConfig.name); // 디버깅용
+        
+        const buttonWidth = gameWidth * 0.25;
+        const buttonHeight = gameHeight * 0.08;
+        const buttonRadius = 16;
+        const buttonX = gameWidth / 2;
+        const buttonY = centerY;
+        
+        const buttonBg = scene.add.graphics();
+        buttonBg.fillStyle(0xff6b6b, 1);
+        buttonBg.fillRoundedRect(buttonX - buttonWidth / 2, buttonY - buttonHeight / 2, buttonWidth, buttonHeight, buttonRadius);
+        buttonBg.lineStyle(2, 0xff8e8e, 1);
+        buttonBg.strokeRoundedRect(buttonX - buttonWidth / 2, buttonY - buttonHeight / 2, buttonWidth, buttonHeight, buttonRadius);
+        buttonBg.setDepth(15);
+        this.skillUseButtonBgs.push(buttonBg);
+        
+        const useButton = scene.add.rectangle(buttonX, buttonY, buttonWidth, buttonHeight, 0x000000, 0);
+        useButton.setInteractive({ useHandCursor: true });
+        useButton.setDepth(16);
+        
+        useButton.on('pointerdown', () => {
+            if ((scene as any).useSkill) {
+                (scene as any).useSkill(skillId);
+            }
+        });
+        
+        useButton.on('pointerover', () => {
+            buttonBg.clear();
+            buttonBg.fillStyle(0xff8e8e, 1);
+            buttonBg.fillRoundedRect(buttonX - buttonWidth / 2, buttonY - buttonHeight / 2, buttonWidth, buttonHeight, buttonRadius);
+            buttonBg.lineStyle(2, 0xffb3b3, 1);
+            buttonBg.strokeRoundedRect(buttonX - buttonWidth / 2, buttonY - buttonHeight / 2, buttonWidth, buttonHeight, buttonRadius);
+        });
+        
+        useButton.on('pointerout', () => {
+            buttonBg.clear();
+            buttonBg.fillStyle(0xff6b6b, 1);
+            buttonBg.fillRoundedRect(buttonX - buttonWidth / 2, buttonY - buttonHeight / 2, buttonWidth, buttonHeight, buttonRadius);
+            buttonBg.lineStyle(2, 0xff8e8e, 1);
+            buttonBg.strokeRoundedRect(buttonX - buttonWidth / 2, buttonY - buttonHeight / 2, buttonWidth, buttonHeight, buttonRadius);
+        });
+        
+        this.skillUseButtons.push(useButton);
+        
+        const useButtonTextFontSize = Responsive.getFontSize(scene, 16);
+        const buttonText = scene.add.text(buttonX, buttonY - buttonHeight * 0.2, skillConfig.name, {
+            fontSize: useButtonTextFontSize,
+            color: '#ffffff',
+            fontFamily: 'Arial',
+            font: `600 ${useButtonTextFontSize} Arial`
+        });
+        buttonText.setOrigin(0.5);
+        buttonText.setDepth(16);
+        this.skillUseButtonTexts.push(buttonText);
+        
+        const cooldownFontSize = Responsive.getFontSize(scene, 12);
+        const cooldownText = scene.add.text(buttonX, buttonY + buttonHeight * 0.2, '준비 완료', {
+            fontSize: cooldownFontSize,
+            color: '#ffffff',
+            fontFamily: 'Arial',
+            font: `500 ${cooldownFontSize} Arial`
+        });
+        cooldownText.setOrigin(0.5);
+        cooldownText.setDepth(16);
+        this.skillUseCooldownTexts.push(cooldownText);
+    },
+    
+    // 스킬 사용 버튼 제거
+    removeSkillUseButtons(): void {
+        this.skillUseButtons.forEach(btn => btn.destroy());
+        this.skillUseButtonBgs.forEach(bg => bg.destroy());
+        this.skillUseButtonTexts.forEach(text => text.destroy());
+        this.skillUseCooldownTexts.forEach(text => text.destroy());
+        
+        this.skillUseButtons = [];
+        this.skillUseButtonBgs = [];
+        this.skillUseButtonTexts = [];
+        this.skillUseCooldownTexts = [];
     },
     
     // Stats 탭 내용 생성 (내 정보)
@@ -996,19 +1033,22 @@ export const UIManager = {
         }
         
         // 화면 중앙 스킬 사용 버튼 쿨타임 업데이트
-        if (scene && this.skillUseCooldownText && this.skillUseButton) {
-            const isLearned = GameState.isSkillLearned('big_k_fish_bread');
-            if (isLearned) {
-                const remaining = SkillManager.getRemainingCooldown('big_k_fish_bread', scene.time.now);
-                if (remaining <= 0) {
-                    this.skillUseCooldownText.setText('준비 완료');
-                    this.skillUseCooldownText.setColor('#ffffff');
-                } else {
-                    const seconds = Math.ceil(remaining);
-                    this.skillUseCooldownText.setText(`${seconds}초`);
-                    this.skillUseCooldownText.setColor('#ffcc00');
+        if (scene && this.skillUseCooldownTexts.length > 0) {
+            const learnedSkills = GameState.learnedSkills;
+            learnedSkills.forEach((skillId, index) => {
+                if (index < this.skillUseCooldownTexts.length) {
+                    const cooldownText = this.skillUseCooldownTexts[index];
+                    const remaining = SkillManager.getRemainingCooldown(skillId, scene.time.now);
+                    if (remaining <= 0) {
+                        cooldownText.setText('준비 완료');
+                        cooldownText.setColor('#ffffff');
+                    } else {
+                        const seconds = Math.ceil(remaining);
+                        cooldownText.setText(`${seconds}초`);
+                        cooldownText.setColor('#ffcc00');
+                    }
                 }
-            }
+            });
         }
     }
 };

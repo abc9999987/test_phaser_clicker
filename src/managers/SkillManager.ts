@@ -2,6 +2,7 @@ import Phaser from 'phaser';
 import { SkillConfigs, SkillConfig } from '../config/gameConfig';
 import { GameState } from './GameState';
 import { Enemy } from '../game/Enemy';
+import { Character } from '../game/Character';
 
 // 스킬 쿨타임 및 사용 로직 관리
 export const SkillManager = {
@@ -79,15 +80,95 @@ export const SkillManager = {
             return false;
         }
 
-        // 데미지 계산: 유저 공격력 * 배수
-        const damage = GameState.getAttackPowerValue() * config.damageMultiplier;
-
-        // 적에게 데미지 적용
-        Enemy.applyDamage(scene, damage);
+        // 붕어빵테오 스킬의 경우 특별한 애니메이션 처리
+        if (skillId === 'big_k_fish_bread') {
+            this.playBigKFishBreadAnimation(scene, config);
+        } else {
+            // 다른 스킬은 즉시 데미지 적용
+            const damage = GameState.getAttackPowerValue() * config.damageMultiplier;
+            Enemy.applyDamage(scene, damage);
+        }
 
         // 마지막 사용 시간 기록
         this.lastUsedAt[skillId] = now;
         return true;
+    },
+    
+    // 붕어빵테오 스킬 애니메이션
+    playBigKFishBreadAnimation(scene: Phaser.Scene, config: SkillConfig): void {
+        if (!Enemy.enemy || !Character.char) return;
+        
+        // 캐릭터 머리 위 위치 (캐릭터 위쪽)
+        const startX = Character.char.x;
+        const startY = Character.char.y - Character.char.height * Character.char.scaleY * 0.5 - 30;
+        
+        // 적 머리 위치 (적의 위쪽)
+        const targetX = Enemy.enemy.x;
+        const targetY = Enemy.enemy.y - Enemy.enemy.height * Enemy.enemy.scaleY * 0.5 - 20;
+        
+        // 데미지 계산
+        const damage = GameState.getAttackPowerValue() * config.damageMultiplier;
+        
+        // 거대한 붕어빵 이미지 생성
+        const fishBread = scene.add.image(startX, startY, 'weapon');
+        const scale = 1.0;
+        fishBread.setScale(scale);
+        fishBread.setOrigin(0.5, 0.5);
+        fishBread.setDepth(25); // 적 위에 표시
+        
+        // 회전 각도 계산 (적 방향으로)
+        const angle = (Math.atan2(targetY - startY, targetX - startX) + Math.PI / 2) + 1;
+        console.log(angle);
+        fishBread.setRotation(angle);
+        
+        // 1단계: 캐릭터 머리 위에 1초 동안 떠있기 (약간의 위아래 움직임)
+        scene.tweens.add({
+            targets: fishBread,
+            y: startY - 10,
+            duration: 500,
+            yoyo: true,
+            repeat: 1,
+            ease: 'Sine.easeInOut',
+            onComplete: () => {
+                // 2단계: 퐉!! 하고 적 머리에 빠르게 꽂히기
+                // 회전 각도 재계산 (적 방향으로)
+                const finalAngle = Math.atan2(targetY - fishBread.y, targetX - fishBread.x) + Math.PI / 2 + 0.8;
+                fishBread.setRotation(finalAngle);
+                
+                scene.tweens.add({
+                    targets: fishBread,
+                    x: targetX,
+                    y: targetY,
+                    duration: 300, // 빠르게 날아감
+                    ease: 'Power3',
+                    onComplete: () => {
+                        // 적에게 도달했을 때 데미지 적용
+                        Enemy.applyDamage(scene, damage);
+                        
+                        // 꽂히는 효과 (스케일 증가 + 약간의 진동)
+                        scene.tweens.add({
+                            targets: fishBread,
+                            scaleX: scale * 1.5,
+                            scaleY: scale * 1.5,
+                            duration: 100,
+                            ease: 'Power2',
+                            onComplete: () => {
+                                // 페이드아웃
+                                scene.tweens.add({
+                                    targets: fishBread,
+                                    alpha: 0,
+                                    duration: 300,
+                                    ease: 'Power2',
+                                    onComplete: () => {
+                                        fishBread.destroy();
+                                    }
+                                });
+                            }
+                        });
+                    }
+                });
+            }
+        });
     }
 };
 
