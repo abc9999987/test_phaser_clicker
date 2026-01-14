@@ -1,0 +1,23 @@
+html, body {
+    height: 100%;
+    margin: 0;
+    padding: 0;
+    background-color: #000000;
+    overflow: hidden; /* 스크롤 방지 */
+}
+
+#game-container {
+    width: 100vw;
+    height: 100vh;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    background-color: #000000;
+    position: relative;
+}
+
+/* Phaser 캔버스가 중앙에 오도록 */
+#game-container canvas {
+    display: block;
+    margin: 0 auto;
+}
