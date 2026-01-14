@@ -4,6 +4,7 @@ interface SaveData {
     attackPower: number;
     attackSpeed: number;
     critChance: number; // 치명타 확률 (%)
+    critDamage: number;
     clickCount: number;
     chapter: number;
     stage: number;
@@ -20,6 +21,7 @@ export const GameState = {
     attackPower: 1,  // 공격력
     attackSpeed: 0,  // 공격 속도 (초당 발사 횟수)
     critChance: 0,  // 치명타 확률 (%)
+    critDamage: 0,  // 치명타 데미지 (%)
     clickCount: 0,
     chapter: 1,  // 챕터 (1, 2, 3, ...)
     stage: 1,  // 스테이지 (1-20)
@@ -39,6 +41,7 @@ export const GameState = {
                 attackPower: this.attackPower,
                 attackSpeed: this.attackSpeed,
                 critChance: this.critChance,
+                critDamage: this.critDamage,
                 clickCount: this.clickCount,
                 chapter: this.chapter,
                 stage: this.stage,
@@ -66,6 +69,7 @@ export const GameState = {
                 this.attackPower = data.attackPower || 1;
                 this.attackSpeed = data.attackSpeed || 0;
                 this.critChance = data.critChance || 0;
+                this.critDamage = data.critDamage || 0;
                 this.clickCount = data.clickCount || 0;
                 this.chapter = data.chapter || 1;
                 this.stage = data.stage || 1;
@@ -223,6 +227,11 @@ export const GameState = {
     getCritChanceUpgradeCost(): number {
         return Math.floor(75 * Math.pow(2.0, this.critChance));
     },
+
+    // 치명타 데미지 강화 비용 계산
+    getCritDamageUpgradeCost(): number {
+        return Math.floor(75 * Math.pow(1.35, this.critDamage));
+    },
     
     // 공격력 강화 구매
     upgradeAttackPower(): boolean {
@@ -267,6 +276,21 @@ export const GameState = {
         return false;
     },
     
+    // 치명타 데미지 강화 구매 (최대 100%)
+    upgradeCritDamage(): boolean {
+        // 최대치 체크
+        if (this.critDamage >= 100) {
+            return false;
+        }
+        
+        const cost = this.getCritDamageUpgradeCost();
+        if (this.spendCoins(cost)) {
+            this.critDamage++;
+            this.save(); // 자동 저장
+            return true;
+        }
+        return false;
+    },
     // 호환성을 위한 별칭 (이전 함수명)
     getClickUpgradeCost(): number {
         return this.getAttackPowerUpgradeCost();

@@ -118,7 +118,7 @@ export const Projectile = {
         const critChance = GameState.critChance;
         const isCrit = Math.random() * 100 < critChance;
         const baseDamage = GameState.getAttackPowerValue();
-        projectile.damage = isCrit ? Math.round(baseDamage * 1.5) : baseDamage;
+        projectile.damage = isCrit ? Math.round(baseDamage * (1.5 + (GameState.critDamage / 100))) : baseDamage;
         projectile.isCrit = isCrit;
         projectile.projectileType = type;
         

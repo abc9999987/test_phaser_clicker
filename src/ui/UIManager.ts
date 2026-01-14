@@ -213,6 +213,24 @@ export const UIManager = {
     
     // Skill 탭 내용 생성
     createSkillTab(scene: Phaser.Scene, gameWidth: number, _gameHeight: number, _halfHeight: number, uiAreaHeight: number, uiAreaStartY: number, tabIndex: number): void {
+        // 기존 탭 컨텐츠 제거
+        if (this.tabContents[tabIndex]) {
+            this.tabContents[tabIndex].destroy();
+            this.tabContents[tabIndex] = null as any;
+        }
+        
+        // 기존 스킬 카드들 제거
+        this.skillCards.forEach(card => card.destroy());
+        this.skillLearnButtons.forEach(btn => btn.destroy());
+        this.skillLearnButtonBgs.forEach(bg => bg.destroy());
+        this.skillLearnButtonTexts.forEach(text => text.destroy());
+        
+        // 스킬 배열 초기화
+        this.skillLearnButtons = [];
+        this.skillLearnButtonBgs = [];
+        this.skillLearnButtonTexts = [];
+        this.skillCards = [];
+        
         const contentContainer = scene.add.container(0, 0);
 
         // 타이틀
@@ -247,12 +265,6 @@ export const UIManager = {
         const skillCardHeight = uiAreaHeight * 0.15; // 한 줄 레이아웃에 맞게 높이 축소
         const skillCardSpacing = uiAreaHeight * 0.02; // 세로 간격
         const cardX = gameWidth / 2; // 카드는 중앙 정렬
-
-        // 스킬 배열 초기화
-        this.skillLearnButtons = [];
-        this.skillLearnButtonBgs = [];
-        this.skillLearnButtonTexts = [];
-        this.skillCards = [];
 
         // 각 스킬에 대해 카드 생성 (세로로 배치)
         SkillConfigs.forEach((skillConfig, index) => {
@@ -676,7 +688,7 @@ export const UIManager = {
         
         // 공격력 텍스트
         const attackPowerFontSize = Responsive.getFontSize(scene, 20);
-        const attackPowerY = attackSpeedY + uiAreaHeight * 0.12;
+        const attackPowerY = attackSpeedY + uiAreaHeight * 0.06;
         const attackPowerText = scene.add.text(gameWidth * 0.1, attackPowerY, `공격력: ${GameState.getAttackPowerValue()}`, {
             fontSize: attackPowerFontSize,
             color: '#e0e0e0',
@@ -688,7 +700,7 @@ export const UIManager = {
         
         // 치명타 확률 텍스트
         const critChanceFontSize = Responsive.getFontSize(scene, 20);
-        const critChanceY = attackPowerY + uiAreaHeight * 0.12;
+        const critChanceY = attackPowerY + uiAreaHeight * 0.06;
         const critChanceText = scene.add.text(gameWidth * 0.1, critChanceY, `치명타 확률: ${GameState.critChance}%`, {
             fontSize: critChanceFontSize,
             color: '#e0e0e0',
@@ -697,6 +709,18 @@ export const UIManager = {
         });
         (this as any).critChanceText = critChanceText;
         contentContainer.add(critChanceText);
+
+        // 치명타 데미지 텍스트
+        const critDamageFontSize = Responsive.getFontSize(scene, 20);
+        const critDamageY = critChanceY + uiAreaHeight * 0.06;
+        const critDamageText = scene.add.text(gameWidth * 0.1, critDamageY, `치명타 데미지: ${GameState.critDamage}%`, {
+            fontSize: critDamageFontSize,
+            color: '#e0e0e0',
+            fontFamily: 'Arial',
+            font: `500 ${critDamageFontSize} Arial`
+        });
+        (this as any).critDamageText = critDamageText;
+        contentContainer.add(critDamageText);
         
         this.tabContents[0] = contentContainer;
     },
@@ -966,9 +990,37 @@ export const UIManager = {
         contentContainer.add(critChanceCard);
         this.upgradeCards.push(critChanceCard);
         (this as any).critChanceCard = critChanceCard;
+
+        // 4. 치명타 데미지 강화 카드
+        const critDamageCardY = cardStartY + (cardHeight + cardSpacing) * 3;
+        const critDamageCurrent = GameState.critDamage;
+        const critDamageNext = critDamageCurrent + 1;
+        const critDamageCost = GameState.getCritDamageUpgradeCost();
+        const isCritDamageMax = critDamageCurrent >= 100;
         
-        // 4. SP 구매 카드
-        const spPurchaseCardY = cardStartY + (cardHeight + cardSpacing) * 3;
+        const critDamageCard = this.createUpgradeCard(
+            scene,
+            cardX,
+            critDamageCardY,
+            cardWidth,
+            cardHeight,
+            '치명타데미지',
+            isCritDamageMax ? `(${critDamageCurrent}%) 최대 레벨` : `(${critDamageCurrent}% -> ${critDamageNext}%)`,
+            isCritDamageMax ? '' : `${critDamageCost}`,
+            0x50c878, // 버튼 색상
+            0x60d888, // 호버 색상
+            0x6ad888, // 테두리 색상
+            () => GameState.upgradeCritDamage(),
+            () => GameState.getCritDamageUpgradeCost(),
+            () => GameState.coins >= GameState.getCritDamageUpgradeCost(),
+            () => GameState.critDamage >= 100
+        );
+        contentContainer.add(critDamageCard);
+        this.upgradeCards.push(critDamageCard);
+        (this as any).critDamageCard = critDamageCard;
+        
+        // 5. SP 구매 카드
+        const spPurchaseCardY = cardStartY + (cardHeight + cardSpacing) * 4;
         const spPurchaseCurrent = GameState.spPurchaseCount;
         const spPurchaseNext = spPurchaseCurrent + 1;
         const spPurchaseCost = GameState.getSpPurchaseCost();
@@ -1200,6 +1252,42 @@ export const UIManager = {
                 const cardData = (this as any).critChanceCard.upgradeCardData;
                 if (cardData) {
                     const currentStat = GameState.critChance;
+                    const isMaxLevel = cardData.isMaxLevel ? cardData.isMaxLevel() : false;
+                    const cost = cardData.getCost();
+                    const canAfford = !isMaxLevel && cardData.canAfford();
+                    
+                    if (isMaxLevel) {
+                        cardData.value.setText(`(${currentStat}%) 최대 레벨`);
+                        cardData.value.setColor('#999999');
+                        cardData.costValue.setText('');
+                    } else {
+                        const nextStat = currentStat + 1;
+                        cardData.value.setText(`(${currentStat}% -> ${nextStat}%)`);
+                        cardData.value.setColor(canAfford ? '#e0e0e0' : '#999999');
+                        cardData.costValue.setText(`${cost}`);
+                        cardData.costValue.setColor(canAfford ? '#e0e0e0' : '#999999');
+                    }
+                    
+                    // 버튼 색상 업데이트
+                    const buttonX = cardData.button.x;
+                    const buttonY = cardData.button.y;
+                    const buttonWidth = cardData.button.width;
+                    const buttonHeight = cardData.button.height;
+                    const buttonRadius = 12;
+                    
+                    cardData.buttonBg.clear();
+                    cardData.buttonBg.fillStyle(canAfford ? 0x50c878 : 0x555555, canAfford ? 1 : 0.8);
+                    cardData.buttonBg.fillRoundedRect(buttonX - buttonWidth / 2, buttonY - buttonHeight / 2, buttonWidth, buttonHeight, buttonRadius);
+                    cardData.buttonBg.lineStyle(2, canAfford ? 0x6ad888 : 0x666666, canAfford ? 1 : 0.8);
+                    cardData.buttonBg.strokeRoundedRect(buttonX - buttonWidth / 2, buttonY - buttonHeight / 2, buttonWidth, buttonHeight, buttonRadius);
+                }
+            }
+
+            // 치명타 데미지 카드 업데이트
+            if ((this as any).critDamageCard) {
+                const cardData = (this as any).critDamageCard.upgradeCardData;
+                if (cardData) {
+                    const currentStat = GameState.critDamage;
                     const isMaxLevel = cardData.isMaxLevel ? cardData.isMaxLevel() : false;
                     const cost = cardData.getCost();
                     const canAfford = !isMaxLevel && cardData.canAfford();
