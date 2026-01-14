@@ -136,11 +136,11 @@ export class GameScene extends Phaser.Scene {
         // UI 업데이트 (타이머 표시용)
         UIManager.update(this);
         
+        // 버프 만료 체크 및 쿨타임 적용 (자동 스킬 사용 체크보다 먼저 실행)
+        this.checkBuffExpiration();
+        
         // 자동 스킬 사용 체크
         this.checkAutoSkillUse();
-        
-        // 버프 만료 체크 및 쿨타임 적용
-        this.checkBuffExpiration();
         
         // 투사체와 enemy 충돌 감지
         // 배열을 복사하여 순회 (제거 시 인덱스 문제 방지)
