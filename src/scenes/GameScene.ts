@@ -139,6 +139,9 @@ export class GameScene extends Phaser.Scene {
         // 자동 스킬 사용 체크
         this.checkAutoSkillUse();
         
+        // 버프 만료 체크 및 쿨타임 적용
+        this.checkBuffExpiration();
+        
         // 투사체와 enemy 충돌 감지
         // 배열을 복사하여 순회 (제거 시 인덱스 문제 방지)
         const projectilesToCheck = [...Projectile.active];
@@ -167,6 +170,25 @@ export class GameScene extends Phaser.Scene {
                         SkillManager.tryUseSkill(this, skillId);
                     }
                 }
+            }
+        }
+    }
+    
+    // 버프 만료 체크 및 쿨타임 적용
+    checkBuffExpiration(): void {
+        const now = this.time.now;
+        const activeBuffs = GameState.activeBuffs;
+        
+        for (const skillId in activeBuffs) {
+            const buff = activeBuffs[skillId];
+            // 버프가 만료되었는지 확인
+            if (now >= buff.endTime) {
+                // 버프 제거
+                GameState.removeBuff(skillId);
+                
+                // 버프 만료 후 쿨타임 적용
+                SkillManager.lastUsedAt[skillId] = now;
+                console.log(`버프 만료: ${skillId}, 쿨타임 시작`);
             }
         }
     }

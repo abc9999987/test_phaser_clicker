@@ -1,5 +1,6 @@
 import Phaser from 'phaser';
 import { GameState } from '../managers/GameState';
+import { SkillManager } from '../managers/SkillManager';
 
 // 투사체 타입 정의
 export interface ProjectileType extends Phaser.GameObjects.Image {
@@ -91,7 +92,7 @@ export const Projectile = {
     },
     
     // 투사체 생성 (풀에서 재사용)
-    create(_scene: Phaser.Scene, startX: number, startY: number, targetX: number, targetY: number, type: 'manual' | 'auto' = 'manual'): ProjectileType | null {
+    create(scene: Phaser.Scene, startX: number, startY: number, targetX: number, targetY: number, type: 'manual' | 'auto' = 'manual'): ProjectileType | null {
         const projectile = this.getFromPool(type);
         
         // 투사체 활성화
@@ -118,7 +119,20 @@ export const Projectile = {
         const critChance = GameState.critChance;
         const isCrit = Math.random() * 100 < critChance;
         const baseDamage = GameState.getAttackPowerValue();
-        projectile.damage = isCrit ? Math.round(baseDamage * (1.5 + (GameState.critDamage / 100))) : baseDamage;
+        
+        // 버프 배수 적용 (분노 스킬 등)
+        let buffMultiplier = 1;
+        const currentTime = scene.time.now;
+        if (GameState.isBuffActive('buff_attack_damage', currentTime)) {
+            const buffConfig = SkillManager.getSkillConfig('buff_attack_damage');
+            if (buffConfig) {
+                buffMultiplier = buffConfig.skillPower;
+            }
+        }
+        
+        let finalDamage = isCrit ? Math.round(baseDamage * (1.5 + (GameState.critDamage / 100))) : baseDamage;
+        finalDamage = Math.round(finalDamage * buffMultiplier);
+        projectile.damage = finalDamage;
         projectile.isCrit = isCrit;
         projectile.projectileType = type;
         

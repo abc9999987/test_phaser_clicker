@@ -55,7 +55,20 @@ export const SkillManager = {
 
     // 스킬 사용 가능 여부
     canUseSkill(skillId: string, now: number): boolean {
-        return this.getRemainingCooldown(skillId, now) <= 0;
+        // 쿨타임 체크
+        if (this.getRemainingCooldown(skillId, now) > 0) {
+            return false;
+        }
+        
+        // BUFF 타입 스킬은 버프가 활성화되어 있으면 사용 불가
+        const config = this.getSkillConfig(skillId);
+        if (config && config.skillType === 2) { // BUFF 타입
+            if (GameState.isBuffActive(skillId, now)) {
+                return false;
+            }
+        }
+        
+        return true;
     },
 
     // 스킬 사용 시도
@@ -75,22 +88,35 @@ export const SkillManager = {
             return false;
         }
 
-        // 적이 없으면 사용 불가
-        if (!Enemy.enemy) {
-            return false;
-        }
-
-        // 붕어빵테오 스킬의 경우 특별한 애니메이션 처리
-        if (skillId === 'big_k_fish_bread') {
-            this.playBigKFishBreadAnimation(scene, config);
+        // 스킬 타입에 따라 처리
+        if (config.skillType === 2) { // BUFF 타입
+            // 버프 스킬: 지속시간 동안 효과 적용
+            if (config.duration) {
+                GameState.activateBuff(skillId, now, config.duration);
+                console.log(`버프 활성화: ${config.name}, 지속시간: ${config.duration}초`);
+            }
+            // 버프 스킬은 즉시 쿨타임을 적용하지 않고, 지속시간이 끝나면 쿨타임 적용
+            // 마지막 사용 시간은 기록하지 않음 (지속시간 종료 시 기록)
         } else {
-            // 다른 스킬은 즉시 데미지 적용
-            const damage = Math.round(GameState.getAttackPowerValue() * config.damageMultiplier);
-            Enemy.applyDamage(scene, damage, true); // 스킬 데미지로 표시
-        }
+            // ATTACK 타입 스킬
+            // 적이 없으면 사용 불가
+            if (!Enemy.enemy) {
+                return false;
+            }
 
-        // 마지막 사용 시간 기록
-        this.lastUsedAt[skillId] = now;
+            // 붕어빵테오 스킬의 경우 특별한 애니메이션 처리
+            if (skillId === 'big_k_fish_bread') {
+                this.playBigKFishBreadAnimation(scene, config);
+            } else {
+                // 다른 스킬은 즉시 데미지 적용
+                const damage = Math.round(GameState.getAttackPowerValue() * config.skillPower);
+                Enemy.applyDamage(scene, damage, true); // 스킬 데미지로 표시
+            }
+
+            // 마지막 사용 시간 기록
+            this.lastUsedAt[skillId] = now;
+        }
+        
         return true;
     },
     
@@ -107,7 +133,7 @@ export const SkillManager = {
         const targetY = Enemy.enemy.y - Enemy.enemy.height * Enemy.enemy.scaleY * 0.5 - 20;
         
         // 데미지 계산
-        const damage = Math.round(GameState.getAttackPowerValue() * config.damageMultiplier);
+        const damage = Math.round(GameState.getAttackPowerValue() * config.skillPower);
         
         // 거대한 붕어빵 이미지 생성
         const fishBread = scene.add.image(startX, startY, 'weapon');

@@ -22,9 +22,6 @@ export const UIManager = {
     skillButton: null as Phaser.GameObjects.Rectangle | null,
     skillButtonText: null as Phaser.GameObjects.Text | null,
     skillCooldownText: null as Phaser.GameObjects.Text | null,
-    skillLearnButtons: [] as Phaser.GameObjects.Rectangle[],
-    skillLearnButtonBgs: [] as Phaser.GameObjects.Graphics[],
-    skillLearnButtonTexts: [] as Phaser.GameObjects.Text[],
     skillCards: [] as Phaser.GameObjects.Container[],
     skillSpText: null as Phaser.GameObjects.Text | null,
     skillUseButtons: [] as Phaser.GameObjects.Arc[],
@@ -34,6 +31,7 @@ export const UIManager = {
     skillUseCooldownTexts: [] as Phaser.GameObjects.Text[],
     skillUseCooldownMasks: [] as Phaser.GameObjects.Graphics[],
     skillUseCooldownStates: [] as { isInCooldown: boolean; lastSecond: number }[], // 최적화: 이전 상태 저장
+    skillBuffDurationMasks: [] as Phaser.GameObjects.Graphics[], // Buff 스킬 지속시간 표시용
     skillAutoButtons: [] as Phaser.GameObjects.Rectangle[],
     skillAutoButtonBgs: [] as Phaser.GameObjects.Graphics[],
     skillAutoButtonTexts: [] as Phaser.GameObjects.Text[],
@@ -219,16 +217,10 @@ export const UIManager = {
             this.tabContents[tabIndex] = null as any;
         }
         
-        // 기존 스킬 카드들 제거
+        // 기존 스킬 카드들 제거 (카드가 destroy되면 내부 버튼들도 자동으로 제거됨)
         this.skillCards.forEach(card => card.destroy());
-        this.skillLearnButtons.forEach(btn => btn.destroy());
-        this.skillLearnButtonBgs.forEach(bg => bg.destroy());
-        this.skillLearnButtonTexts.forEach(text => text.destroy());
         
         // 스킬 배열 초기화
-        this.skillLearnButtons = [];
-        this.skillLearnButtonBgs = [];
-        this.skillLearnButtonTexts = [];
         this.skillCards = [];
         
         const contentContainer = scene.add.container(0, 0);
@@ -308,40 +300,70 @@ export const UIManager = {
         nameText.setOrigin(0, 0.5);
         cardContainer.add(nameText);
 
-        // 2. descText (nameText 다음)
+        // 버튼 영역 계산 (습득하지 않은 경우)
+        const buttonWidth = !isLearned ? width * 0.15 : 0;
+        const buttonAreaWidth = buttonWidth + padding; // 버튼 + 오른쪽 패딩
+        
+        // 2. descText (nameText 다음, 버튼 영역을 고려한 최대 너비)
         const descFontSize = Responsive.getFontSize(scene, 10);
         const nameTextWidth = nameText.width;
         const descX = nameX + nameTextWidth + itemSpacing;
-        const descText = scene.add.text(descX, centerY, `×${skillConfig.damageMultiplier} | ${skillConfig.cooldown}초`, {
+        // BUFF 타입 스킬은 duration도 표시
+        let descTextContent = `×${skillConfig.skillPower} | ${skillConfig.cooldown}초`;
+        if (skillConfig.skillType === 2 && skillConfig.duration) { // BUFF 타입
+            descTextContent = `×${skillConfig.skillPower} | ${skillConfig.duration}초 지속 | ${skillConfig.cooldown}초 쿨타임`;
+        }
+        const descText = scene.add.text(descX, centerY, descTextContent, {
             fontSize: descFontSize,
             color: '#b0b0b0',
             fontFamily: 'Arial',
             font: `400 ${descFontSize} Arial`
         });
         descText.setOrigin(0, 0.5);
+        // descText가 버튼 영역과 겹치지 않도록 최대 너비 제한
+        const maxDescWidth = width / 2 - descX - buttonAreaWidth - itemSpacing * 2;
+        if (descText.width > maxDescWidth && maxDescWidth > 0) {
+            descText.setWordWrapWidth(maxDescWidth);
+        }
         cardContainer.add(descText);
 
-        // 3. statusText (descText 다음)
+        // 3. statusText (습득 완료일 때는 오른쪽 끝에 배치, 아니면 descText 다음)
         const statusFontSize = Responsive.getFontSize(scene, 12);
-        const descTextWidth = descText.width;
-        const statusX = descX + descTextWidth + itemSpacing;
-        const statusText = scene.add.text(statusX, centerY, isLearned ? '✓ 습득 완료' : `SP ${skillConfig.spCost}`, {
-            fontSize: statusFontSize,
-            color: isLearned ? '#4ade80' : '#ffd700',
-            fontFamily: 'Arial',
-            font: `500 ${statusFontSize} Arial`
-        });
-        statusText.setOrigin(0, 0.5);
+        let statusText: Phaser.GameObjects.Text;
+        
+        if (isLearned) {
+            // 습득 완료 텍스트를 오른쪽 끝에 배치
+            const statusX = width / 2 - padding;
+            statusText = scene.add.text(statusX, centerY, '✓ 습득 완료', {
+                fontSize: statusFontSize,
+                color: '#4ade80',
+                fontFamily: 'Arial',
+                font: `500 ${statusFontSize} Arial`
+            });
+            statusText.setOrigin(1, 0.5); // 오른쪽 정렬
+        } else {
+            // SP 비용 텍스트는 descText 다음에 배치
+            const descTextWidth = descText.width;
+            const statusX = descX + descTextWidth + itemSpacing;
+            statusText = scene.add.text(statusX, centerY, `SP ${skillConfig.spCost}`, {
+                fontSize: statusFontSize,
+                color: '#ffd700',
+                fontFamily: 'Arial',
+                font: `500 ${statusFontSize} Arial`
+            });
+            statusText.setOrigin(0, 0.5);
+        }
         cardContainer.add(statusText);
 
         // 4. 습득 버튼 (카드 오른쪽 끝에 배치)
         if (!isLearned) {
-            const buttonWidth = width * 0.2;
+            const buttonWidth = width * 0.15; // 버튼 너비
             const buttonHeight = height * 0.5;
             const buttonRadius = 8;
-            // 버튼을 카드 오른쪽 끝에서 padding만큼 떨어진 위치에 배치
-            const buttonX = width / 2 - padding - buttonWidth / 2;
+            // 버튼을 카드 오른쪽 끝에 최대한 붙여서 배치 (최소한의 여유만)
+            const buttonX = width / 2 - padding * 0.5 - buttonWidth / 2;
             const buttonY = centerY;
+            
 
             const buttonBg = scene.add.graphics();
             const canLearn = GameState.sp >= skillConfig.spCost;
@@ -349,11 +371,12 @@ export const UIManager = {
             buttonBg.fillRoundedRect(buttonX - buttonWidth / 2, buttonY - buttonHeight / 2, buttonWidth, buttonHeight, buttonRadius);
             buttonBg.lineStyle(2, canLearn ? 0x6ad888 : 0x666666, canLearn ? 1 : 0.8);
             buttonBg.strokeRoundedRect(buttonX - buttonWidth / 2, buttonY - buttonHeight / 2, buttonWidth, buttonHeight, buttonRadius);
+            buttonBg.setDepth(100); // 다른 요소 위에 표시
             cardContainer.add(buttonBg);
-            this.skillLearnButtonBgs.push(buttonBg);
 
             const learnButton = scene.add.rectangle(buttonX, buttonY, buttonWidth, buttonHeight, 0x000000, 0);
             learnButton.setInteractive({ useHandCursor: true });
+            learnButton.setDepth(101); // 버튼 배경 위에 표시
             
             const skillId = skillConfig.id;
             learnButton.on('pointerdown', () => {
@@ -381,7 +404,6 @@ export const UIManager = {
             });
 
             cardContainer.add(learnButton);
-            this.skillLearnButtons.push(learnButton);
 
             const buttonTextFontSize = Responsive.getFontSize(scene, 11);
             const buttonText = scene.add.text(buttonX, buttonY, '습득', {
@@ -391,8 +413,21 @@ export const UIManager = {
                 font: `600 ${buttonTextFontSize} Arial`
             });
             buttonText.setOrigin(0.5);
+            buttonText.setDepth(102); // 버튼 위에 표시
             cardContainer.add(buttonText);
-            this.skillLearnButtonTexts.push(buttonText);
+            
+            // 카드 컨테이너에 버튼 참조 저장 (업데이트용)
+            (cardContainer as any).skillCardData = {
+                skillId: skillConfig.id,
+                buttonBg: buttonBg,
+                learnButton: learnButton,
+                buttonText: buttonText,
+                buttonX: buttonX,
+                buttonY: buttonY,
+                buttonWidth: buttonWidth,
+                buttonHeight: buttonHeight,
+                buttonRadius: buttonRadius
+            };
         }
 
         return cardContainer;
@@ -406,182 +441,155 @@ export const UIManager = {
         const gameWidth = scene.scale.width;
         const gameHeight = scene.scale.height;
         const centerY = gameHeight * 0.45; // 화면 y축 중앙
-        const rightX = gameWidth * 0.9; // 화면 오른쪽
+        const rightX = gameWidth * 0.9; // 화면 오른쪽 기준 위치
         
         // 습득한 모든 스킬에 대해 버튼 생성
         const learnedSkills = GameState.learnedSkills;
-        console.log('습득한 스킬:', learnedSkills); // 디버깅용
         if (learnedSkills.length === 0) {
-            console.log('습득한 스킬이 없습니다.');
             return;
         }
         
-        // 첫 번째 습득한 스킬만 버튼 생성 (나중에 여러 개 지원 가능)
-        const skillId = learnedSkills[0];
-        const index = 0; // 첫 번째 스킬 인덱스
-        const skillConfig = SkillConfigs.find(s => s.id === skillId);
-        if (!skillConfig) {
-            console.log('스킬 설정을 찾을 수 없습니다:', skillId);
-            return;
-        }
-        
-        console.log('스킬 사용 버튼 생성:', skillConfig.name); // 디버깅용
-        
-        // 작은 원형 버튼 크기
+        // 각 스킬마다 하나의 버튼을 오른쪽에서부터 왼쪽으로 배치
         const buttonRadius = gameWidth * 0.06; // 화면 너비의 6%
-        const buttonX = rightX;
-        const buttonY = centerY;
+        const buttonSpacing = buttonRadius * 2.4; // 버튼 간 간격
         
-        // 원형 배경 생성
-        const buttonBg = scene.add.graphics();
-        buttonBg.fillStyle(0x4a4a4a, 1);
-        buttonBg.fillCircle(buttonX, buttonY, buttonRadius);
-        buttonBg.lineStyle(3, 0xffffff, 1);
-        buttonBg.strokeCircle(buttonX, buttonY, buttonRadius);
-        buttonBg.setDepth(15);
-        this.skillUseButtonBgs.push(buttonBg);
-        
-        // 클릭 가능한 투명한 원형 영역
-        const useButton = scene.add.circle(buttonX, buttonY, buttonRadius, 0x000000, 0);
-        useButton.setInteractive({ useHandCursor: true });
-        useButton.setDepth(16);
-        
-        useButton.on('pointerdown', () => {
-            if ((scene as any).useSkill) {
-                (scene as any).useSkill(skillId);
-            }
-        });
-        
-        useButton.on('pointerover', () => {
-            // 쿨타임 중이면 호버 효과 적용하지 않음
-            const remaining = SkillManager.getRemainingCooldown(skillId, scene.time.now);
-            if (remaining > 0) {
+        learnedSkills.forEach((skillId, index) => {
+            const skillConfig = SkillConfigs.find(s => s.id === skillId);
+            if (!skillConfig) {
                 return;
             }
             
-            buttonBg.clear();
-            buttonBg.fillStyle(0x5a5a5a, 1);
-            buttonBg.fillCircle(buttonX, buttonY, buttonRadius);
-            buttonBg.lineStyle(3, 0xffff00, 1);
-            buttonBg.strokeCircle(buttonX, buttonY, buttonRadius);
-        });
-        
-        useButton.on('pointerout', () => {
-            // 쿨타임 중이면 호버 효과 적용하지 않음
-            const remaining = SkillManager.getRemainingCooldown(skillId, scene.time.now);
-            if (remaining > 0) {
-                return;
-            }
+            const buttonX = rightX - index * buttonSpacing;
+            const buttonY = centerY;
             
-            buttonBg.clear();
+            // 원형 배경 생성
+            const buttonBg = scene.add.graphics();
             buttonBg.fillStyle(0x4a4a4a, 1);
             buttonBg.fillCircle(buttonX, buttonY, buttonRadius);
             buttonBg.lineStyle(3, 0xffffff, 1);
             buttonBg.strokeCircle(buttonX, buttonY, buttonRadius);
-        });
-        
-        this.skillUseButtons.push(useButton);
-        
-        // 붕어빵 아이콘 이미지 (원 안에 배치)
-        const iconSize = buttonRadius * 1.2; // 원보다 약간 작게
-        const skillIcon = scene.add.image(buttonX, buttonY, 'weapon');
-        skillIcon.setDisplaySize(iconSize, iconSize);
-        skillIcon.setOrigin(0.5, 0.5);
-        skillIcon.setDepth(16);
-        this.skillUseButtonIcons.push(skillIcon);
-        
-        // 쿨타임 텍스트 (아이콘 바로 밑에 작게)
-        const cooldownFontSize = Responsive.getFontSize(scene, 10);
-        const cooldownFontSizeNum = parseFloat(cooldownFontSize);
-        const cooldownText = scene.add.text(buttonX, buttonY + buttonRadius + cooldownFontSizeNum, '준비 완료', {
-            fontSize: cooldownFontSize,
-            color: '#ffffff',
-            fontFamily: 'Arial',
-            font: `500 ${cooldownFontSize} Arial`
-        });
-        cooldownText.setOrigin(0.5);
-        cooldownText.setDepth(16);
-        this.skillUseCooldownTexts.push(cooldownText);
-        
-        // 쿨타임 마스크 (원형 그래프로 쿨타임 표시)
-        const cooldownMask = scene.add.graphics();
-        cooldownMask.setDepth(17); // 아이콘 위에 표시
-        this.skillUseCooldownMasks.push(cooldownMask);
-        
-        // 최적화: 쿨타임 상태 추적 초기화
-        this.skillUseCooldownStates.push({ isInCooldown: false, lastSecond: -1 });
-        
-        // Auto 버튼 생성 (스킬 사용 버튼 왼쪽)
-        const autoButtonWidth = gameWidth * 0.12;
-        const autoButtonHeight = gameWidth * 0.08;
-        const autoButtonX = buttonX - buttonRadius * 2 - autoButtonWidth / 2;
-        const autoButtonY = buttonY;
-        const autoButtonRadius = 8;
-        
-        // Auto 버튼 배경
-        const autoButtonBg = scene.add.graphics();
-        const isAutoOn = GameState.isSkillAutoUse(skillId);
-        autoButtonBg.fillStyle(isAutoOn ? 0x50c878 : 0x4a4a4a, 1);
-        autoButtonBg.fillRoundedRect(
-            autoButtonX - autoButtonWidth / 2,
-            autoButtonY - autoButtonHeight / 2,
-            autoButtonWidth,
-            autoButtonHeight,
-            autoButtonRadius
-        );
-        autoButtonBg.lineStyle(2, isAutoOn ? 0x6ad888 : 0xffffff, 1);
-        autoButtonBg.strokeRoundedRect(
-            autoButtonX - autoButtonWidth / 2,
-            autoButtonY - autoButtonHeight / 2,
-            autoButtonWidth,
-            autoButtonHeight,
-            autoButtonRadius
-        );
-        autoButtonBg.setDepth(15);
-        this.skillAutoButtonBgs.push(autoButtonBg);
-        
-        // Auto 버튼 클릭 영역
-        const autoButton = scene.add.rectangle(
-            autoButtonX,
-            autoButtonY,
-            autoButtonWidth,
-            autoButtonHeight,
-            0x000000,
-            0
-        );
-        autoButton.setInteractive({ useHandCursor: true });
-        autoButton.setDepth(16);
-        
-        autoButton.on('pointerdown', () => {
-            const newState = GameState.toggleSkillAutoUse(skillId);
-            // 배경 업데이트
-            autoButtonBg.clear();
-            autoButtonBg.fillStyle(newState ? 0x50c878 : 0x4a4a4a, 1);
-            autoButtonBg.fillRoundedRect(
-                autoButtonX - autoButtonWidth / 2,
-                autoButtonY - autoButtonHeight / 2,
-                autoButtonWidth,
-                autoButtonHeight,
-                autoButtonRadius
-            );
-            autoButtonBg.lineStyle(2, newState ? 0x6ad888 : 0xffffff, 1);
-            autoButtonBg.strokeRoundedRect(
-                autoButtonX - autoButtonWidth / 2,
-                autoButtonY - autoButtonHeight / 2,
-                autoButtonWidth,
-                autoButtonHeight,
-                autoButtonRadius
-            );
-            // 텍스트 색상 업데이트
-            if (index < this.skillAutoButtonTexts.length) {
-                this.skillAutoButtonTexts[index].setColor(newState ? '#ffffff' : '#cccccc');
+            buttonBg.setDepth(15);
+            this.skillUseButtonBgs.push(buttonBg);
+            
+            // 클릭 가능한 투명한 원형 영역
+            const useButton = scene.add.circle(buttonX, buttonY, buttonRadius, 0x000000, 0);
+            useButton.setInteractive({ useHandCursor: true });
+            useButton.setDepth(16);
+            
+            useButton.on('pointerdown', () => {
+                if ((scene as any).useSkill) {
+                    (scene as any).useSkill(skillId);
+                }
+            });
+            
+            useButton.on('pointerover', () => {
+                // 쿨타임 중이거나 버프 지속시간 중이면 호버 효과 적용하지 않음
+                const now = scene.time.now;
+                const remaining = SkillManager.getRemainingCooldown(skillId, now);
+                const buffRemaining = skillConfig.skillType === 2 ? GameState.getBuffRemainingDuration(skillId, now) : 0;
+                
+                if (remaining > 0 || buffRemaining > 0) {
+                    return;
+                }
+                
+                buttonBg.clear();
+                buttonBg.fillStyle(0x5a5a5a, 1);
+                buttonBg.fillCircle(buttonX, buttonY, buttonRadius);
+                buttonBg.lineStyle(3, 0xffff00, 1);
+                buttonBg.strokeCircle(buttonX, buttonY, buttonRadius);
+            });
+            
+            useButton.on('pointerout', () => {
+                // 쿨타임 중이거나 버프 지속시간 중이면 호버 효과 적용하지 않음
+                const now = scene.time.now;
+                const remaining = SkillManager.getRemainingCooldown(skillId, now);
+                const buffRemaining = skillConfig.skillType === 2 ? GameState.getBuffRemainingDuration(skillId, now) : 0;
+                
+                if (remaining > 0 || buffRemaining > 0) {
+                    return;
+                }
+                
+                buttonBg.clear();
+                buttonBg.fillStyle(0x4a4a4a, 1);
+                buttonBg.fillCircle(buttonX, buttonY, buttonRadius);
+                buttonBg.lineStyle(3, 0xffffff, 1);
+                buttonBg.strokeCircle(buttonX, buttonY, buttonRadius);
+            });
+            
+            this.skillUseButtons.push(useButton);
+            
+            // 공격 스킬은 기존처럼 아이콘, 버프 스킬은 텍스트 "Buff" 표시
+            if (skillConfig.id === 'buff_attack_damage') {
+                // Buff 텍스트만 가운데 표시
+                const labelFontSize = Responsive.getFontSize(scene, 12);
+                const labelText = scene.add.text(buttonX, buttonY, 'Buff', {
+                    fontSize: labelFontSize,
+                    color: '#ffffff',
+                    fontFamily: 'Arial',
+                    font: `600 ${labelFontSize} Arial`
+                });
+                labelText.setOrigin(0.5);
+                labelText.setDepth(16);
+                // 아이콘 배열에는 추가하지 않음 (파괴 시에도 문제 없음)
+            } else {
+                // 붕어빵 아이콘 이미지 (원 안에 배치)
+                const iconSize = buttonRadius * 1.2; // 원보다 약간 작게
+                const skillIcon = scene.add.image(buttonX, buttonY, 'weapon');
+                skillIcon.setDisplaySize(iconSize, iconSize);
+                skillIcon.setOrigin(0.5, 0.5);
+                skillIcon.setDepth(16);
+                this.skillUseButtonIcons.push(skillIcon);
             }
+            
+            // 쿨타임 텍스트 (아이콘/텍스트 바로 밑에 작게)
+            const cooldownFontSize = Responsive.getFontSize(scene, 10);
+            const cooldownFontSizeNum = parseFloat(cooldownFontSize);
+            const cooldownText = scene.add.text(buttonX, buttonY + buttonRadius + cooldownFontSizeNum, '준비 완료', {
+                fontSize: cooldownFontSize,
+                color: '#ffffff',
+                fontFamily: 'Arial',
+                font: `500 ${cooldownFontSize} Arial`
+            });
+            cooldownText.setOrigin(0.5);
+            cooldownText.setDepth(16);
+            this.skillUseCooldownTexts.push(cooldownText);
+            
+            // 쿨타임 마스크 (원형 그래프로 쿨타임 표시)
+            const cooldownMask = scene.add.graphics();
+            cooldownMask.setDepth(17); // 아이콘/텍스트 위에 표시
+            this.skillUseCooldownMasks.push(cooldownMask);
+            
+            // Buff 스킬 지속시간 마스크 (Buff 스킬일 때만 생성)
+            if (skillConfig.skillType === 2) { // BUFF 타입
+                const buffDurationMask = scene.add.graphics();
+                buffDurationMask.setDepth(18); // 쿨타임 마스크 위에 표시
+                this.skillBuffDurationMasks.push(buffDurationMask);
+            } else {
+                // 공격 스킬은 지속시간 마스크 없음
+                this.skillBuffDurationMasks.push(null as any);
+            }
+            
+            // 최적화: 쿨타임 상태 추적 초기화
+            this.skillUseCooldownStates.push({ isInCooldown: false, lastSecond: -1 });
         });
         
-        autoButton.on('pointerover', () => {
-            autoButtonBg.clear();
-            const isAutoOn = GameState.isSkillAutoUse(skillId);
-            autoButtonBg.fillStyle(isAutoOn ? 0x6ad888 : 0x5a5a5a, 1);
+        // Auto 버튼 하나 생성 (모든 스킬의 자동 사용을 관리)
+        if (learnedSkills.length > 0) {
+            // 가장 왼쪽 스킬 버튼 위치 계산
+            const leftmostButtonX = rightX - (learnedSkills.length - 1) * buttonSpacing * 0.35;
+            const autoButtonWidth = gameWidth * 0.12;
+            const autoButtonHeight = gameWidth * 0.08;
+            // 가장 왼쪽 스킬 버튼 왼쪽에 여유 공간을 두고 배치
+            const autoButtonX = leftmostButtonX - buttonRadius * 3 - autoButtonWidth / 2;
+            const autoButtonY = centerY;
+            const autoButtonRadius = 8;
+            
+            // 모든 스킬의 자동 사용 상태 확인 (하나라도 켜져있으면 켜진 상태)
+            const hasAnyAutoOn = learnedSkills.some(skillId => GameState.isSkillAutoUse(skillId));
+            
+            // Auto 버튼 배경
+            const autoButtonBg = scene.add.graphics();
+            autoButtonBg.fillStyle(hasAnyAutoOn ? 0x50c878 : 0x4a4a4a, 1);
             autoButtonBg.fillRoundedRect(
                 autoButtonX - autoButtonWidth / 2,
                 autoButtonY - autoButtonHeight / 2,
@@ -589,7 +597,7 @@ export const UIManager = {
                 autoButtonHeight,
                 autoButtonRadius
             );
-            autoButtonBg.lineStyle(2, isAutoOn ? 0x7ae888 : 0xffff00, 1);
+            autoButtonBg.lineStyle(2, hasAnyAutoOn ? 0x6ad888 : 0xffffff, 1);
             autoButtonBg.strokeRoundedRect(
                 autoButtonX - autoButtonWidth / 2,
                 autoButtonY - autoButtonHeight / 2,
@@ -597,42 +605,115 @@ export const UIManager = {
                 autoButtonHeight,
                 autoButtonRadius
             );
-        });
-        
-        autoButton.on('pointerout', () => {
-            autoButtonBg.clear();
-            const isAutoOn = GameState.isSkillAutoUse(skillId);
-            autoButtonBg.fillStyle(isAutoOn ? 0x50c878 : 0x4a4a4a, 1);
-            autoButtonBg.fillRoundedRect(
-                autoButtonX - autoButtonWidth / 2,
-                autoButtonY - autoButtonHeight / 2,
+            autoButtonBg.setDepth(15);
+            this.skillAutoButtonBgs.push(autoButtonBg);
+            
+            // Auto 버튼 클릭 영역
+            const autoButton = scene.add.rectangle(
+                autoButtonX,
+                autoButtonY,
                 autoButtonWidth,
                 autoButtonHeight,
-                autoButtonRadius
+                0x000000,
+                0
             );
-            autoButtonBg.lineStyle(2, isAutoOn ? 0x6ad888 : 0xffffff, 1);
-            autoButtonBg.strokeRoundedRect(
-                autoButtonX - autoButtonWidth / 2,
-                autoButtonY - autoButtonHeight / 2,
-                autoButtonWidth,
-                autoButtonHeight,
-                autoButtonRadius
-            );
-        });
-        
-        this.skillAutoButtons.push(autoButton);
-        
-        // Auto 텍스트
-        const autoFontSize = Responsive.getFontSize(scene, 12);
-        const autoText = scene.add.text(autoButtonX, autoButtonY, 'Auto', {
-            fontSize: autoFontSize,
-            color: isAutoOn ? '#ffffff' : '#cccccc',
-            fontFamily: 'Arial',
-            font: `600 ${autoFontSize} Arial`
-        });
-        autoText.setOrigin(0.5);
-        autoText.setDepth(16);
-        this.skillAutoButtonTexts.push(autoText);
+            autoButton.setInteractive({ useHandCursor: true });
+            autoButton.setDepth(16);
+            
+            autoButton.on('pointerdown', () => {
+                // 현재 상태 확인 (하나라도 켜져있으면 모두 끄기, 모두 꺼져있으면 모두 켜기)
+                const currentState = learnedSkills.some(skillId => GameState.isSkillAutoUse(skillId));
+                const newState = !currentState;
+                
+                // 모든 스킬의 자동 사용 상태 변경
+                learnedSkills.forEach(skillId => {
+                    const currentSkillState = GameState.isSkillAutoUse(skillId);
+                    if (currentSkillState !== newState) {
+                        GameState.toggleSkillAutoUse(skillId);
+                    }
+                });
+                
+                // 배경 업데이트
+                autoButtonBg.clear();
+                autoButtonBg.fillStyle(newState ? 0x50c878 : 0x4a4a4a, 1);
+                autoButtonBg.fillRoundedRect(
+                    autoButtonX - autoButtonWidth / 2,
+                    autoButtonY - autoButtonHeight / 2,
+                    autoButtonWidth,
+                    autoButtonHeight,
+                    autoButtonRadius
+                );
+                autoButtonBg.lineStyle(2, newState ? 0x6ad888 : 0xffffff, 1);
+                autoButtonBg.strokeRoundedRect(
+                    autoButtonX - autoButtonWidth / 2,
+                    autoButtonY - autoButtonHeight / 2,
+                    autoButtonWidth,
+                    autoButtonHeight,
+                    autoButtonRadius
+                );
+                
+                // 텍스트 색상 업데이트
+                if (this.skillAutoButtonTexts.length > 0) {
+                    this.skillAutoButtonTexts[0].setColor(newState ? '#ffffff' : '#cccccc');
+                }
+            });
+            
+            autoButton.on('pointerover', () => {
+                const hasAnyAutoOnNow = learnedSkills.some(skillId => GameState.isSkillAutoUse(skillId));
+                autoButtonBg.clear();
+                autoButtonBg.fillStyle(hasAnyAutoOnNow ? 0x6ad888 : 0x5a5a5a, 1);
+                autoButtonBg.fillRoundedRect(
+                    autoButtonX - autoButtonWidth / 2,
+                    autoButtonY - autoButtonHeight / 2,
+                    autoButtonWidth,
+                    autoButtonHeight,
+                    autoButtonRadius
+                );
+                autoButtonBg.lineStyle(2, hasAnyAutoOnNow ? 0x7ae888 : 0xffff00, 1);
+                autoButtonBg.strokeRoundedRect(
+                    autoButtonX - autoButtonWidth / 2,
+                    autoButtonY - autoButtonHeight / 2,
+                    autoButtonWidth,
+                    autoButtonHeight,
+                    autoButtonRadius
+                );
+            });
+            
+            autoButton.on('pointerout', () => {
+                const hasAnyAutoOnNow = learnedSkills.some(skillId => GameState.isSkillAutoUse(skillId));
+                autoButtonBg.clear();
+                autoButtonBg.fillStyle(hasAnyAutoOnNow ? 0x50c878 : 0x4a4a4a, 1);
+                autoButtonBg.fillRoundedRect(
+                    autoButtonX - autoButtonWidth / 2,
+                    autoButtonY - autoButtonHeight / 2,
+                    autoButtonWidth,
+                    autoButtonHeight,
+                    autoButtonRadius
+                );
+                autoButtonBg.lineStyle(2, hasAnyAutoOnNow ? 0x6ad888 : 0xffffff, 1);
+                autoButtonBg.strokeRoundedRect(
+                    autoButtonX - autoButtonWidth / 2,
+                    autoButtonY - autoButtonHeight / 2,
+                    autoButtonWidth,
+                    autoButtonHeight,
+                    autoButtonRadius
+                );
+            });
+            
+            this.skillAutoButtons.push(autoButton);
+            
+            // Auto 텍스트
+            const autoFontSize = Responsive.getFontSize(scene, 12);
+            const autoText = scene.add.text(autoButtonX, autoButtonY, 'Auto', {
+                fontSize: autoFontSize,
+                color: hasAnyAutoOn ? '#ffffff' : '#cccccc',
+                fontFamily: 'Arial',
+                font: `600 ${autoFontSize} Arial`
+            });
+            autoText.setOrigin(0.5);
+            autoText.setDepth(16);
+            this.skillAutoButtonTexts.push(autoText);
+        }
     },
     
     // 스킬 사용 버튼 제거
@@ -643,6 +724,9 @@ export const UIManager = {
         this.skillUseButtonTexts.forEach(text => text.destroy());
         this.skillUseCooldownTexts.forEach(text => text.destroy());
         this.skillUseCooldownMasks.forEach(mask => mask.destroy());
+        this.skillBuffDurationMasks.forEach(mask => {
+            if (mask) mask.destroy();
+        });
         this.skillAutoButtons.forEach(btn => btn.destroy());
         this.skillAutoButtonBgs.forEach(bg => bg.destroy());
         this.skillAutoButtonTexts.forEach(text => text.destroy());
@@ -653,6 +737,7 @@ export const UIManager = {
         this.skillUseButtonTexts = [];
         this.skillUseCooldownTexts = [];
         this.skillUseCooldownMasks = [];
+        this.skillBuffDurationMasks = [];
         this.skillUseCooldownStates = [];
         this.skillAutoButtons = [];
         this.skillAutoButtonBgs = [];
@@ -1363,69 +1448,82 @@ export const UIManager = {
         
         // 스킬 습득 버튼 상태 업데이트 - Skill 탭일 때만
         if (this.activeTabIndex === 2) {
-            // 스킬 카드들을 다시 생성하여 상태 업데이트
-            // (습득 상태가 변경되었을 수 있으므로)
-            SkillConfigs.forEach((skillConfig, index) => {
-                const isLearned = GameState.isSkillLearned(skillConfig.id);
-                const canLearn = !isLearned && GameState.sp >= skillConfig.spCost;
-                
-                // 해당 인덱스의 버튼이 있으면 업데이트
-                if (index < this.skillLearnButtonBgs.length && index < this.skillLearnButtons.length && index < this.skillLearnButtonTexts.length) {
-                    const buttonBg = this.skillLearnButtonBgs[index];
-                    const learnButton = this.skillLearnButtons[index];
-                    const buttonText = this.skillLearnButtonTexts[index];
+            // 각 스킬 카드를 순회하며 버튼 상태 업데이트
+            this.skillCards.forEach((card) => {
+                const cardData = (card as any).skillCardData;
+                // 버튼이 있는 카드만 업데이트 (습득하지 않은 스킬)
+                if (cardData) {
+                    const skillId = cardData.skillId;
+                    const isLearned = GameState.isSkillLearned(skillId);
+                    const skillConfig = SkillConfigs.find(s => s.id === skillId);
                     
-                    if (isLearned) {
-                        // 습득 완료면 버튼 숨기기
-                        buttonBg.setVisible(false);
-                        learnButton.setVisible(false);
-                        buttonText.setVisible(false);
-                    } else {
-                        // 버튼 색상 업데이트
-                        const buttonWidth = learnButton.width;
-                        const buttonHeight = learnButton.height;
-                        const buttonX = learnButton.x;
-                        const buttonY = learnButton.y;
-                        const buttonRadius = 8;
-                        
-                        buttonBg.clear();
-                        buttonBg.fillStyle(canLearn ? 0x50c878 : 0x555555, canLearn ? 1 : 0.8);
-                        buttonBg.fillRoundedRect(buttonX - buttonWidth / 2, buttonY - buttonHeight / 2, buttonWidth, buttonHeight, buttonRadius);
-                        buttonBg.lineStyle(2, canLearn ? 0x6ad888 : 0x666666, canLearn ? 1 : 0.8);
-                        buttonBg.strokeRoundedRect(buttonX - buttonWidth / 2, buttonY - buttonHeight / 2, buttonWidth, buttonHeight, buttonRadius);
-                        
-                        buttonText.setColor(canLearn ? '#ffffff' : '#999999');
-                    }
+                    if (!skillConfig) return;
+                    
+                    const canLearn = !isLearned && GameState.sp >= skillConfig.spCost;
+                    const buttonBg = cardData.buttonBg;
+                    const buttonText = cardData.buttonText;
+                    const buttonWidth = cardData.buttonWidth;
+                    const buttonHeight = cardData.buttonHeight;
+                    const buttonRadius = cardData.buttonRadius;
+                    const buttonX = cardData.buttonX;
+                    const buttonY = cardData.buttonY;
+                    
+                    // 버튼 색상 업데이트
+                    buttonBg.clear();
+                    buttonBg.fillStyle(canLearn ? 0x50c878 : 0x555555, canLearn ? 1 : 0.8);
+                    buttonBg.fillRoundedRect(buttonX - buttonWidth / 2, buttonY - buttonHeight / 2, buttonWidth, buttonHeight, buttonRadius);
+                    buttonBg.lineStyle(2, canLearn ? 0x6ad888 : 0x666666, canLearn ? 1 : 0.8);
+                    buttonBg.strokeRoundedRect(buttonX - buttonWidth / 2, buttonY - buttonHeight / 2, buttonWidth, buttonHeight, buttonRadius);
+                    
+                    buttonText.setColor(canLearn ? '#ffffff' : '#999999');
                 }
             });
         }
         
-        // 화면 중앙 스킬 사용 버튼 쿨타임 업데이트
+        // 화면 중앙 스킬 사용 버튼 쿨타임 및 지속시간 업데이트
         if (scene && this.skillUseCooldownTexts.length > 0) {
             const learnedSkills = GameState.learnedSkills;
+            const now = scene.time.now;
+            
             learnedSkills.forEach((skillId, index) => {
                 if (index < this.skillUseCooldownTexts.length && index < this.skillUseCooldownMasks.length && index < this.skillUseCooldownStates.length) {
                     const cooldownText = this.skillUseCooldownTexts[index];
                     const cooldownMask = this.skillUseCooldownMasks[index];
                     const cooldownState = this.skillUseCooldownStates[index];
                     const skillConfig = SkillConfigs.find(s => s.id === skillId);
-                    const remaining = SkillManager.getRemainingCooldown(skillId, scene.time.now);
-                    const isInCooldown = remaining > 0;
-                    const currentSecond = isInCooldown ? Math.ceil(remaining) : -1;
+                    if (!skillConfig) return;
                     
-                    // 최적화: 쿨타임 텍스트는 초 단위로 변경될 때만 업데이트
-                    if (cooldownState.lastSecond !== currentSecond) {
-                        cooldownState.lastSecond = currentSecond;
-                        if (remaining <= 0) {
-                            cooldownText.setText('준비 완료');
-                            cooldownText.setColor('#ffffff');
-                        } else {
-                            cooldownText.setText(`${currentSecond}초`);
-                            cooldownText.setColor('#ffcc00');
-                        }
+                    const remaining = SkillManager.getRemainingCooldown(skillId, now);
+                    const isInCooldown = remaining > 0;
+                    
+                    // Buff 스킬 지속시간 확인
+                    const isBuffSkill = skillConfig.skillType === 2;
+                    const buffRemaining = isBuffSkill ? GameState.getBuffRemainingDuration(skillId, now) : 0;
+                    const isBuffActive = buffRemaining > 0;
+                    
+                    // 텍스트 업데이트: 지속시간이 우선, 없으면 쿨타임, 둘 다 없으면 준비 완료
+                    let displayText = '준비 완료';
+                    let displayColor = '#ffffff';
+                    let displaySecond = -1;
+                    
+                    if (isBuffActive) {
+                        displaySecond = Math.ceil(buffRemaining);
+                        displayText = `${displaySecond}초`;
+                        displayColor = '#ffff00'; // 노란색
+                    } else if (isInCooldown) {
+                        displaySecond = Math.ceil(remaining);
+                        displayText = `${displaySecond}초`;
+                        displayColor = '#ffcc00'; // 주황색
                     }
                     
-                    // 쿨타임 마스크 업데이트 (원형 그래프)
+                    // 최적화: 텍스트는 초 단위로 변경될 때만 업데이트
+                    if (cooldownState.lastSecond !== displaySecond) {
+                        cooldownState.lastSecond = displaySecond;
+                        cooldownText.setText(displayText);
+                        cooldownText.setColor(displayColor);
+                    }
+                    
+                    // 쿨타임 및 지속시간 마스크 업데이트
                     if (skillConfig && index < this.skillUseButtons.length && index < this.skillUseButtonBgs.length) {
                         const useButton = this.skillUseButtons[index];
                         const buttonBg = this.skillUseButtonBgs[index];
@@ -1433,8 +1531,22 @@ export const UIManager = {
                         const buttonY = useButton.y;
                         const buttonRadius = useButton.radius;
                         
+                        // Buff 스킬 지속시간 마스크 가져오기
+                        const buffDurationMask = index < this.skillBuffDurationMasks.length ? this.skillBuffDurationMasks[index] : null;
+                        
+                        // 버튼 비활성화 처리 (지속시간 중일 때)
+                        if (isBuffActive) {
+                            // 버튼을 반투명하게 표시
+                            useButton.setAlpha(0.5);
+                            buttonBg.setAlpha(0.5);
+                        } else {
+                            // 정상 상태로 복원
+                            useButton.setAlpha(1);
+                            buttonBg.setAlpha(1);
+                        }
+                        
                         // 최적화: 쿨타임 상태가 변경될 때만 배경 업데이트
-                        if (cooldownState.isInCooldown !== isInCooldown) {
+                        if (cooldownState.isInCooldown !== isInCooldown && !isBuffActive) {
                             cooldownState.isInCooldown = isInCooldown;
                             if (isInCooldown) {
                                 // 쿨타임 시작: 흰색 테두리로 변경
@@ -1447,10 +1559,49 @@ export const UIManager = {
                             // 쿨타임 종료 시에는 호버 이벤트가 자동으로 처리하므로 여기서는 아무것도 하지 않음
                         }
                         
-                        // 쿨타임 마스크는 매 프레임 업데이트 (부드러운 애니메이션을 위해)
+                        // Buff 스킬 지속시간 마스크 업데이트 (지속시간 중일 때만)
+                        if (isBuffSkill && buffDurationMask) {
+                            buffDurationMask.clear();
+                            
+                            if (isBuffActive && skillConfig.duration) {
+                                // 지속시간 진행률 계산 (0~1, 남은 시간 / 전체 지속시간)
+                                const progress = buffRemaining / skillConfig.duration;
+                                // 채워져야 할 각도 (라디안) - 시계 반대 방향으로 채워짐
+                                const angle = progress * Math.PI * 2;
+                                
+                                // 반투명한 노란색으로 표시
+                                buffDurationMask.fillStyle(0xffff00, 0.35); // 노란색, 반투명
+                                
+                                // 원형 섹터 그리기 (시계 반대 방향으로 채워짐)
+                                // 시작 각도: -90도 (위쪽에서 시작)
+                                const startAngle = -Math.PI / 2;
+                                
+                                if (angle > 0) {
+                                    buffDurationMask.beginPath();
+                                    buffDurationMask.moveTo(buttonX, buttonY);
+                                    // 시작점에서 원의 경계까지
+                                    buffDurationMask.lineTo(
+                                        buttonX + Math.cos(startAngle) * buttonRadius,
+                                        buttonY + Math.sin(startAngle) * buttonRadius
+                                    );
+                                    // 원호 그리기 (시계 반대 방향)
+                                    buffDurationMask.arc(
+                                        buttonX, buttonY, buttonRadius,
+                                        startAngle, startAngle - angle,
+                                        true // 시계 반대 방향
+                                    );
+                                    // 중심으로 돌아오기
+                                    buffDurationMask.lineTo(buttonX, buttonY);
+                                    buffDurationMask.closePath();
+                                    buffDurationMask.fillPath();
+                                }
+                            }
+                        }
+                        
+                        // 쿨타임 마스크는 지속시간이 없을 때만 표시
                         cooldownMask.clear();
                         
-                        if (remaining > 0) {
+                        if (remaining > 0 && !isBuffActive) {
                             // 쿨타임 진행률 계산 (0~1)
                             const progress = remaining / skillConfig.cooldown;
                             // 가려져야 할 각도 (라디안)

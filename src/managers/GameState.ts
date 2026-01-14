@@ -30,6 +30,7 @@ export const GameState = {
     learnedSkills: [] as string[],  // 습득한 스킬 ID 목록
     spPurchaseCount: 0,  // SP 구매 횟수 (최대 5)
     skillAutoUse: {} as Record<string, boolean>,  // 스킬 자동 사용 상태 (skillId -> boolean)
+    activeBuffs: {} as Record<string, { startTime: number; endTime: number }>,  // 활성 버프 (skillId -> { startTime, endTime })
     storageKey: 'test_clicker_save', // localStorage 키
     saveTimer: null as number | null,
     
@@ -143,7 +144,8 @@ export const GameState = {
     getEnemyHp(): number {
         const totalStage = this.getTotalStageNumber();
         // 1-1: 10, 이후 1.5배씩 증가
-        let baseHp = Math.floor(10 * Math.pow(1.5, totalStage - 1));
+        // 0.8배로 감소
+        let baseHp = Math.floor(10 * Math.pow(1.5, totalStage - 1) * 0.8);
         
         // 보스 스테이지면 체력 2배
         if (this.isBossStage()) {
@@ -153,9 +155,9 @@ export const GameState = {
         return baseHp;
     },
     
-    // 스테이지별 골드 보상 (적 체력과 동일)
+    // 스테이지별 골드 보상 (적 체력 * 1.25)
     getEnemyGoldReward(): number {
-        return this.getEnemyHp();
+        return this.getEnemyHp() * 1.25;
     },
     
     // 적 처치 시 호출 (스테이지 진행 처리)
@@ -359,5 +361,45 @@ export const GameState = {
             return true;
         }
         return false;
+    },
+    
+    // 버프 활성화
+    activateBuff(skillId: string, startTime: number, duration: number): void {
+        this.activeBuffs[skillId] = {
+            startTime: startTime,
+            endTime: startTime + duration * 1000 // duration은 초 단위이므로 밀리초로 변환
+        };
+    },
+    
+    // 버프 만료 여부 확인
+    isBuffActive(skillId: string, currentTime: number): boolean {
+        const buff = this.activeBuffs[skillId];
+        if (!buff) return false;
+        return currentTime < buff.endTime;
+    },
+    
+    // 버프 제거
+    removeBuff(skillId: string): void {
+        delete this.activeBuffs[skillId];
+    },
+    
+    // 활성 버프의 배수 가져오기 (데미지 증가용)
+    getBuffMultiplier(skillId: string, currentTime: number): number {
+        if (this.isBuffActive(skillId, currentTime)) {
+            // SkillConfig에서 skillPower 가져오기 (임시로 2배 고정, 나중에 동적으로 변경 가능)
+            return 2; // 분노 스킬의 skillPower
+        }
+        return 1;
+    },
+    
+    // 버프 남은 지속시간 계산 (초 단위)
+    getBuffRemainingDuration(skillId: string, currentTime: number): number {
+        const buff = this.activeBuffs[skillId];
+        if (!buff) return 0;
+        
+        if (currentTime >= buff.endTime) return 0;
+        
+        const remaining = (buff.endTime - currentTime) / 1000; // 밀리초를 초로 변환
+        return remaining > 0 ? remaining : 0;
     }
 };

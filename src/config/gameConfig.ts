@@ -1,11 +1,17 @@
 import Phaser from 'phaser';
 
+export enum SkillType {
+    ATTACK = 1,
+    BUFF = 2,
+}
 // 스킬 설정 타입
 export interface SkillConfig {
     id: string;
     name: string;
+    skillType: SkillType;
     cooldown: number; // 초 단위
-    damageMultiplier: number; // 유저 공격력 배수
+    duration?: number; // 지속 시간 (초 단위) BUFF 타입일 경우에만 사용함.
+    skillPower: number; // Skill 배수, ATTACK 타입일 경우 스킬의 데미지 배수, BUFF 타입일 경우 해당하는 능력치를 증가시켜주는 배수로 사용함.
     spCost: number; // 습득에 필요한 SP
 }
 
@@ -15,8 +21,18 @@ export const SkillConfigs: SkillConfig[] = [
         id: 'big_k_fish_bread',
         name: '붕어빵테오',
         cooldown: 3,
-        damageMultiplier: 20,
+        skillType: SkillType.ATTACK,
+        skillPower: 20,
         spCost: 1  // 습득에 필요한 SP
+    },
+    {
+        id: 'buff_attack_damage',
+        name: '분노',
+        skillType: SkillType.BUFF,
+        cooldown: 10,
+        duration: 10,
+        skillPower: 3,
+        spCost: 1   
     }
 ];
 
