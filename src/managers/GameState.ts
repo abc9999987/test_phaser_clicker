@@ -144,8 +144,8 @@ export const GameState = {
     getEnemyHp(): number {
         const totalStage = this.getTotalStageNumber();
         // 1-1: 10, 이후 1.5배씩 증가
-        // 0.8배로 감소
-        let baseHp = Math.floor(10 * Math.pow(1.5, totalStage - 1) * 0.8);
+        // 0.5배로 감소
+        let baseHp = Math.floor(10 * Math.pow(1.5, totalStage - 1) * 0.5);
         
         // 보스 스테이지면 체력 2배
         if (this.isBossStage()) {
@@ -155,9 +155,9 @@ export const GameState = {
         return baseHp;
     },
     
-    // 스테이지별 골드 보상 (적 체력 * 1.25)
+    // 스테이지별 골드 보상 (적 체력 * 2)
     getEnemyGoldReward(): number {
-        return this.getEnemyHp() * 1.25;
+        return this.getEnemyHp() * 2;
     },
     
     // 적 처치 시 호출 (스테이지 진행 처리)
