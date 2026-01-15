@@ -1,4 +1,5 @@
 import Phaser from 'phaser';
+import { NumberFormatter } from './NumberFormatter';
 
 // 효과 유틸리티
 export const Effects = {
@@ -9,7 +10,7 @@ export const Effects = {
     createCoinParticle(scene: Phaser.Scene, x: number, y: number, amount: number = 1): void {
         // 소수점 제거하고 정수로 표시
         const displayAmount = Math.floor(amount);
-        const coin = scene.add.text(x, y, `+${displayAmount}`, {
+        const coin = scene.add.text(x, y, `+${NumberFormatter.formatNumber(displayAmount)}`, {
             font: 'bold 20px Arial',
             color: '#ffd700' // 황금색
         });
@@ -54,7 +55,7 @@ export const Effects = {
             strokeThickness = 0;
         }
         
-        const damageText = scene.add.text(x, y, `-${damage}`, {
+        const damageText = scene.add.text(x, y, `-${NumberFormatter.formatNumber(Math.floor(damage))}`, {
             font: `bold ${fontSize}px Arial`,
             color: color,
             stroke: strokeColor,

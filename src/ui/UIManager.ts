@@ -3,6 +3,7 @@ import { Responsive } from '../utils/Responsive';
 import { GameState } from '../managers/GameState';
 import { SkillManager } from '../managers/SkillManager';
 import { SkillConfigs } from '../config/gameConfig';
+import { NumberFormatter } from '../utils/NumberFormatter';
 
 // UI 관리자
 export const UIManager = {
@@ -68,7 +69,7 @@ export const UIManager = {
         
         // 골드 텍스트 (화면 상단 좌측)
         const coinFontSize = Responsive.getFontSize(scene, 24);
-        this.coinText = scene.add.text(gameWidth * 0.03, halfHeight - gameHeight * 0.035, `코인: ${GameState.coins}`, {
+        this.coinText = scene.add.text(gameWidth * 0.03, halfHeight - gameHeight * 0.035, `코인: ${NumberFormatter.formatNumber(Math.floor(GameState.coins))}`, {
             fontSize: coinFontSize,
             color: '#ffd700',
             fontFamily: 'Arial',
@@ -240,7 +241,7 @@ export const UIManager = {
         // SP 표시
         const spFontSize = Responsive.getFontSize(scene, 20);
         const spY = titleY + uiAreaHeight * 0.1;
-        this.skillSpText = scene.add.text(gameWidth / 2, spY, `SP: ${GameState.sp}`, {
+        this.skillSpText = scene.add.text(gameWidth / 2, spY, `SP: ${NumberFormatter.formatNumber(GameState.sp)}`, {
             fontSize: spFontSize,
             color: '#ffd700',
             fontFamily: 'Arial',
@@ -345,7 +346,7 @@ export const UIManager = {
             // SP 비용 텍스트는 descText 다음에 배치
             const descTextWidth = descText.width;
             const statusX = descX + descTextWidth + itemSpacing;
-            statusText = scene.add.text(statusX, centerY, `SP ${skillConfig.spCost}`, {
+            statusText = scene.add.text(statusX, centerY, `SP ${NumberFormatter.formatNumber(skillConfig.spCost)}`, {
                 fontSize: statusFontSize,
                 color: '#ffd700',
                 fontFamily: 'Arial',
@@ -774,7 +775,7 @@ export const UIManager = {
         // 공격력 텍스트
         const attackPowerFontSize = Responsive.getFontSize(scene, 20);
         const attackPowerY = attackSpeedY + uiAreaHeight * 0.06;
-        const attackPowerText = scene.add.text(gameWidth * 0.1, attackPowerY, `공격력: ${GameState.getAttackPowerValue()}`, {
+        const attackPowerText = scene.add.text(gameWidth * 0.1, attackPowerY, `공격력: ${NumberFormatter.formatNumber(GameState.getAttackPowerValue())}`, {
             fontSize: attackPowerFontSize,
             color: '#e0e0e0',
             fontFamily: 'Arial',
@@ -1001,8 +1002,8 @@ export const UIManager = {
             cardWidth,
             cardHeight,
             '공격력',
-            `(${attackPowerCurrent} -> ${attackPowerNext})`,
-            `${attackPowerCost}`,
+            `(${NumberFormatter.formatNumber(attackPowerCurrent)} -> ${NumberFormatter.formatNumber(attackPowerNext)})`,
+            `${NumberFormatter.formatNumber(attackPowerCost)}`,
             0x4a90e2, // 버튼 색상
             0x5a9fff, // 호버 색상
             0x6ab0ff, // 테두리 색상
@@ -1029,7 +1030,7 @@ export const UIManager = {
             cardHeight,
             '공격속도',
             isAttackSpeedMax ? `(${attackSpeedCurrent}/15) 최대 레벨` : `(${attackSpeedCurrent} -> ${attackSpeedNext})`,
-            isAttackSpeedMax ? '' : `${attackSpeedCost}`,
+            isAttackSpeedMax ? '' : `${NumberFormatter.formatNumber(attackSpeedCost)}`,
             0x50c878, // 버튼 색상
             0x60d888, // 호버 색상
             0x6ad888, // 테두리 색상
@@ -1119,7 +1120,7 @@ export const UIManager = {
             cardHeight,
             'SP 구매',
             isSpPurchaseMax ? `(${spPurchaseCurrent}/5) 최대 구매 완료` : `(${spPurchaseCurrent}/5 -> ${spPurchaseNext}/5)`,
-            isSpPurchaseMax ? '' : `${spPurchaseCost}`,
+            isSpPurchaseMax ? '' : `${NumberFormatter.formatNumber(spPurchaseCost)}`,
             0xffd700, // 버튼 색상
             0xffed4e, // 호버 색상
             0xffed4e, // 테두리 색상
@@ -1247,7 +1248,7 @@ export const UIManager = {
         
         // 골드 텍스트 업데이트 (화면 상단 좌측)
         if (this.coinText) {
-            this.coinText.setText(`코인: ${Math.floor(GameState.coins)}`);
+            this.coinText.setText(`코인: ${NumberFormatter.formatNumber(Math.floor(GameState.coins))}`);
         }
         
         // 공격 속도 텍스트 업데이트 (Stats 탭에만 표시)
@@ -1257,7 +1258,7 @@ export const UIManager = {
         
         // 공격력 텍스트 업데이트 (Stats 탭에만 표시)
         if ((this as any).attackPowerText && this.activeTabIndex === 0) {
-            (this as any).attackPowerText.setText(`공격력: ${GameState.getAttackPowerValue()}`);
+            (this as any).attackPowerText.setText(`공격력: ${NumberFormatter.formatNumber(GameState.getAttackPowerValue())}`);
         }
         
         // 치명타 확률 텍스트 업데이트 (Stats 탭에만 표시)
@@ -1276,9 +1277,9 @@ export const UIManager = {
                     const cost = cardData.getCost();
                     const canAfford = cardData.canAfford();
                     
-                    cardData.value.setText(`(${currentStat} -> ${nextStat})`);
+                    cardData.value.setText(`(${NumberFormatter.formatNumber(currentStat)} -> ${NumberFormatter.formatNumber(nextStat)})`);
                     cardData.value.setColor(canAfford ? '#e0e0e0' : '#999999');
-                    cardData.costValue.setText(`${cost}`);
+                    cardData.costValue.setText(`${NumberFormatter.formatNumber(cost)}`);
                     cardData.costValue.setColor(canAfford ? '#e0e0e0' : '#999999');
                     
                     // 버튼 색상 업데이트
@@ -1313,7 +1314,7 @@ export const UIManager = {
                         const nextStat = currentStat + 1;
                         cardData.value.setText(`(${currentStat} -> ${nextStat})`);
                         cardData.value.setColor(canAfford ? '#e0e0e0' : '#999999');
-                        cardData.costValue.setText(`${cost}`);
+                        cardData.costValue.setText(`${NumberFormatter.formatNumber(cost)}`);
                         cardData.costValue.setColor(canAfford ? '#e0e0e0' : '#999999');
                     }
                     
@@ -1349,7 +1350,7 @@ export const UIManager = {
                         const nextStat = currentStat + 1;
                         cardData.value.setText(`(${currentStat}% -> ${nextStat}%)`);
                         cardData.value.setColor(canAfford ? '#e0e0e0' : '#999999');
-                        cardData.costValue.setText(`${cost}`);
+                        cardData.costValue.setText(`${NumberFormatter.formatNumber(cost)}`);
                         cardData.costValue.setColor(canAfford ? '#e0e0e0' : '#999999');
                     }
                     
@@ -1385,7 +1386,7 @@ export const UIManager = {
                         const nextStat = currentStat + 1;
                         cardData.value.setText(`(${currentStat}% -> ${nextStat}%)`);
                         cardData.value.setColor(canAfford ? '#e0e0e0' : '#999999');
-                        cardData.costValue.setText(`${cost}`);
+                        cardData.costValue.setText(`${NumberFormatter.formatNumber(cost)}`);
                         cardData.costValue.setColor(canAfford ? '#e0e0e0' : '#999999');
                     }
                     
@@ -1421,7 +1422,7 @@ export const UIManager = {
                         const nextCount = currentCount + 1;
                         cardData.value.setText(`(${currentCount}/5 -> ${nextCount}/5)`);
                         cardData.value.setColor(canPurchase ? '#e0e0e0' : '#999999');
-                        cardData.costValue.setText(`${cost}`);
+                        cardData.costValue.setText(`${NumberFormatter.formatNumber(cost)}`);
                         cardData.costValue.setColor(canPurchase ? '#e0e0e0' : '#999999');
                     }
                     
@@ -1443,7 +1444,7 @@ export const UIManager = {
 
         // SP 표시 업데이트 - Skill 탭일 때만
         if (this.skillSpText && this.activeTabIndex === 2) {
-            this.skillSpText.setText(`SP: ${GameState.sp}`);
+            this.skillSpText.setText(`SP: ${NumberFormatter.formatNumber(GameState.sp)}`);
         }
         
         // 스킬 습득 버튼 상태 업데이트 - Skill 탭일 때만
