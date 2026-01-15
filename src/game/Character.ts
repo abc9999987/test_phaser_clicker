@@ -7,6 +7,7 @@ import { Projectile } from './Projectile';
 // 캐릭터 생성 및 관리
 export const Character = {
     char: null as Phaser.GameObjects.Image | null,
+    buffEffect: null as Phaser.GameObjects.Image | null,
     
     // 캐릭터 생성
     create(scene: Phaser.Scene): Phaser.GameObjects.Image {
@@ -18,6 +19,7 @@ export const Character = {
         this.char = scene.add.image(gameWidth * 0.85, gameHeight * 0.33, 'char');
         this.char.setScale(0.1 * scale.uniform);
         this.char.setOrigin(0.5, 0.5);
+        this.char.setDepth(1); // 캐릭터 depth 설정 (이펙트보다 위에 표시)
         this.char.setInteractive({ useHandCursor: true });
         
         // 클릭 이벤트
@@ -73,6 +75,31 @@ export const Character = {
         if (this.char) {
             const baseY = scene.scale.height * 0.33; // 위쪽 절반 기준
             this.char.y = baseY - Math.sin(scene.time.now / 1000) * 5;
+            
+            // 버프 이펙트가 있으면 캐릭터와 함께 움직임
+            if (this.buffEffect) {
+                this.buffEffect.x = this.char.x;
+                this.buffEffect.y = this.char.y;
+            }
+        }
+    },
+    
+    // 버프 이펙트 표시
+    showBuffEffect(scene: Phaser.Scene): void {
+        if (!this.char || this.buffEffect) return; // 이미 표시 중이면 무시
+        
+        const scale = Responsive.getScale(scene);
+        this.buffEffect = scene.add.image(this.char.x, this.char.y, 'buff_1_effect');
+        this.buffEffect.setScale(0.15 * scale.uniform);
+        this.buffEffect.setOrigin(0.5, 0.5);
+        this.buffEffect.setDepth(0); // 캐릭터 뒤에 표시 (캐릭터는 depth 1)
+    },
+    
+    // 버프 이펙트 숨김
+    hideBuffEffect(): void {
+        if (this.buffEffect) {
+            this.buffEffect.destroy();
+            this.buffEffect = null;
         }
     }
 };

@@ -1,4 +1,6 @@
 // 게임 상태 관리
+import { Character } from '../game/Character';
+
 interface SaveData {
     coins: number;
     attackPower: number;
@@ -408,11 +410,16 @@ export const GameState = {
     },
     
     // 버프 활성화
-    activateBuff(skillId: string, startTime: number, duration: number): void {
+    activateBuff(skillId: string, startTime: number, duration: number, scene?: Phaser.Scene): void {
         this.activeBuffs[skillId] = {
             startTime: startTime,
             endTime: startTime + duration * 1000 // duration은 초 단위이므로 밀리초로 변환
         };
+        
+        // buff_attack_damage 버프일 경우 이펙트 표시
+        if (skillId === 'buff_attack_damage' && scene) {
+            Character.showBuffEffect(scene);
+        }
     },
     
     // 버프 만료 여부 확인
@@ -425,6 +432,11 @@ export const GameState = {
     // 버프 제거
     removeBuff(skillId: string): void {
         delete this.activeBuffs[skillId];
+        
+        // buff_attack_damage 버프일 경우 이펙트 숨김
+        if (skillId === 'buff_attack_damage') {
+            Character.hideBuffEffect();
+        }
     },
     
     // 활성 버프의 배수 가져오기 (데미지 증가용)

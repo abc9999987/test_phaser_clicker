@@ -92,7 +92,7 @@ export const SkillManager = {
         if (config.skillType === 2) { // BUFF 타입
             // 버프 스킬: 지속시간 동안 효과 적용
             if (config.duration) {
-                GameState.activateBuff(skillId, now, config.duration);
+                GameState.activateBuff(skillId, now, config.duration, scene);
                 console.log(`버프 활성화: ${config.name}, 지속시간: ${config.duration}초`);
             }
             // 버프 스킬은 즉시 쿨타임을 적용하지 않고, 지속시간이 끝나면 쿨타임 적용
