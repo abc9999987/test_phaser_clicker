@@ -221,13 +221,13 @@ export const GameState = {
     getAttackPowerUpgradeCost(): number {
         // 구간별 설정 (임계값, multiplier, 지수) - 큰 값부터 정렬
         const costTiers = [
-            { threshold: 90000, multiplier: 1800, exponent: 8 },
-            { threshold: 80000, multiplier: 1600, exponent: 7 },
-            { threshold: 70000, multiplier: 1400, exponent: 6 },
-            { threshold: 60000, multiplier: 1200, exponent: 6 },
-            { threshold: 50000, multiplier: 1000, exponent: 5 },
-            { threshold: 40000, multiplier: 800, exponent: 4 },
-            { threshold: 30000, multiplier: 600, exponent: 3 },
+            { threshold: 90000, multiplier: 1800, exponent: 2.7 },
+            { threshold: 80000, multiplier: 1600, exponent: 2.6 },
+            { threshold: 70000, multiplier: 1400, exponent: 2.5 },
+            { threshold: 60000, multiplier: 1000, exponent: 2.4 },
+            { threshold: 50000, multiplier: 700, exponent: 2.3 },
+            { threshold: 40000, multiplier: 500, exponent: 2.2 },
+            { threshold: 30000, multiplier: 300, exponent: 2.1 },
             { threshold: 500, multiplier: 100, exponent: 2 },
             { threshold: 400, multiplier: 80, exponent: 2 },
             { threshold: 300, multiplier: 60, exponent: 2 },
