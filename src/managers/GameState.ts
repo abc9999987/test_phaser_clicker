@@ -217,20 +217,35 @@ export const GameState = {
     
     // 공격력 강화 비용 계산
     getAttackPowerUpgradeCost(): number {
+        // 구간별 설정 (임계값, multiplier, 지수) - 큰 값부터 정렬
+        const costTiers = [
+            { threshold: 50000, multiplier: 1200, exponent: 6 },
+            { threshold: 40000, multiplier: 1000, exponent: 5 },
+            { threshold: 30000, multiplier: 800, exponent: 4 },
+            { threshold: 20000, multiplier: 600, exponent: 3 },
+            { threshold: 500, multiplier: 100, exponent: 2 },
+            { threshold: 400, multiplier: 80, exponent: 2 },
+            { threshold: 300, multiplier: 60, exponent: 2 },
+            { threshold: 200, multiplier: 40, exponent: 2 },
+            { threshold: 100, multiplier: 20, exponent: 2 }
+        ];
+        
+        // 기본값
         let multiplier = 10;
-        if (this.attackPower > 100) {
-            multiplier = 20;
-        } else if (this.attackPower > 200) {
-            multiplier = 40;
-        } else if (this.attackPower > 300) {
-            multiplier = 60;
-        } else if (this.attackPower > 400) {
-            multiplier = 80;
-        } else if (this.attackPower > 500) {
-            multiplier = 100;
+        let exponent = 2;
+        
+        // 공격력에 맞는 구간 찾기
+        for (const tier of costTiers) {
+            if (this.attackPower > tier.threshold) {
+                multiplier = tier.multiplier;
+                exponent = tier.exponent;
+                break;
+            }
         }
-        // 제곱+선형 혼합: 10 + (단계-1) * 10 + (단계-1)² * 5
-        return Math.floor(multiplier + (this.attackPower - 1) * 10 + Math.pow(this.attackPower - 1, 2) * 15);
+        
+        // 비용 계산: multiplier + (단계-1) * 10 + (단계-1)^exponent * 15
+        const level = this.attackPower - 1;
+        return Math.floor(multiplier + level * 10 + Math.pow(level, exponent) * 15);
     },
     
     // 공격 속도 강화 비용 계산 (더 비싸게 조정)
