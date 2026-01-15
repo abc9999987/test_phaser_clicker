@@ -176,14 +176,14 @@ export const SkillManager = {
                             targets: fishBread,
                             scaleX: scale * 1.5,
                             scaleY: scale * 1.5,
-                            duration: 50,
+                            duration: 25,
                             ease: 'Power2',
                             onComplete: () => {
                                 // 페이드아웃
                                 scene.tweens.add({
                                     targets: fishBread,
                                     alpha: 0,
-                                    duration: 50,
+                                    duration: 25,
                                     ease: 'Power2',
                                     onComplete: () => {
                                         fishBread.destroy();
