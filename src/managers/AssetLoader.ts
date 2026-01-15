@@ -17,7 +17,10 @@ export const AssetLoader = {
         // PNG 이미지 로드
         scene.load.image('char', 'assets/character/snow_raccoon_dog.png');
         scene.load.image('weapon', 'assets/weapon/wp1.png');
-        scene.load.image('buff_1_effect', 'assets/effect/buff_1_effect.png');
+        // 버프 이펙트 프레임들 로드
+        scene.load.image('buff_1_effect_1', 'assets/effect/buff_1_effect_1.png');
+        scene.load.image('buff_1_effect_2', 'assets/effect/buff_1_effect_2.png');
+        scene.load.image('buff_1_effect_3', 'assets/effect/buff_1_effect_3.png');
     },
     
     // 스프라이트 애니메이션 로드

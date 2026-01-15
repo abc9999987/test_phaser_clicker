@@ -8,6 +8,7 @@ import { Projectile } from './Projectile';
 export const Character = {
     char: null as Phaser.GameObjects.Image | null,
     buffEffect: null as Phaser.GameObjects.Image | null,
+    buffEffectAnimation: null as Phaser.Time.TimerEvent | null,
     
     // 캐릭터 생성
     create(scene: Phaser.Scene): Phaser.GameObjects.Image {
@@ -89,14 +90,37 @@ export const Character = {
         if (!this.char || this.buffEffect) return; // 이미 표시 중이면 무시
         
         const scale = Responsive.getScale(scene);
-        this.buffEffect = scene.add.image(this.char.x, this.char.y, 'buff_1_effect');
+        this.buffEffect = scene.add.image(this.char.x, this.char.y, 'buff_1_effect_1');
         this.buffEffect.setScale(0.15 * scale.uniform);
         this.buffEffect.setOrigin(0.5, 0.5);
         this.buffEffect.setDepth(0); // 캐릭터 뒤에 표시 (캐릭터는 depth 1)
+        
+        // 애니메이션 프레임 배열
+        const frames = ['buff_1_effect_1', 'buff_1_effect_2', 'buff_1_effect_3'];
+        let currentFrameIndex = 0;
+        
+        // 프레임 변경 애니메이션 (0.15초마다 프레임 변경)
+        this.buffEffectAnimation = scene.time.addEvent({
+            delay: 150, // 0.15초마다
+            callback: () => {
+                if (this.buffEffect) {
+                    currentFrameIndex = (currentFrameIndex + 1) % frames.length;
+                    this.buffEffect.setTexture(frames[currentFrameIndex]);
+                }
+            },
+            loop: true
+        });
     },
     
     // 버프 이펙트 숨김
     hideBuffEffect(): void {
+        // 애니메이션 정지
+        if (this.buffEffectAnimation) {
+            this.buffEffectAnimation.remove();
+            this.buffEffectAnimation = null;
+        }
+        
+        // 이펙트 이미지 제거
         if (this.buffEffect) {
             this.buffEffect.destroy();
             this.buffEffect = null;
