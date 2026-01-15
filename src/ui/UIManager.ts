@@ -847,7 +847,11 @@ export const UIManager = {
         const centerY = 0;
         const startX = -width / 2 + padding;
         const centerX = 0;
-        const buttonX = width / 2 - padding - x1ButtonWidth / 2;
+        const buttonSpacing = 5; // x1과 max 버튼 사이 간격
+        const maxButtonWidth = 50;
+        const maxButtonHeight = 35;
+        const maxButtonX = width / 2 - padding - maxButtonWidth / 2; // max 버튼 위치 (오른쪽 끝)
+        const buttonX = maxButtonX - maxButtonWidth / 2 - buttonSpacing - x1ButtonWidth / 2; // x1 버튼 위치 (max 버튼 왼쪽)
         
         // 첫 번째 줄: 큰 글씨
         const labelFontSize = Responsive.getFontSize(scene, 18);
@@ -956,6 +960,62 @@ export const UIManager = {
         buttonText.setOrigin(0.5);
         cardContainer.add(buttonText);
         
+        // max 버튼 배경
+        const maxButtonBg = scene.add.graphics();
+        maxButtonBg.fillStyle(canAffordNow ? 0xff6b35 : 0x555555, canAffordNow ? 1 : 0.8); // 주황색 계열
+        maxButtonBg.fillRoundedRect(maxButtonX - maxButtonWidth / 2, centerY - maxButtonHeight / 2, maxButtonWidth, maxButtonHeight, buttonRadius);
+        maxButtonBg.lineStyle(2, canAffordNow ? 0xff8c5a : 0x666666, canAffordNow ? 1 : 0.8);
+        maxButtonBg.strokeRoundedRect(maxButtonX - maxButtonWidth / 2, centerY - maxButtonHeight / 2, maxButtonWidth, maxButtonHeight, buttonRadius);
+        cardContainer.add(maxButtonBg);
+        
+        // max 버튼 그림자
+        const maxButtonShadow = scene.add.graphics();
+        maxButtonShadow.fillStyle(0x000000, 0.2);
+        maxButtonShadow.fillRoundedRect(maxButtonX - maxButtonWidth / 2 + 2, centerY - maxButtonHeight / 2 + 2, maxButtonWidth, maxButtonHeight, buttonRadius);
+        maxButtonShadow.setDepth(-1);
+        cardContainer.add(maxButtonShadow);
+        
+        // max 버튼 (상호작용용)
+        const maxButton = scene.add.rectangle(maxButtonX, centerY, maxButtonWidth, maxButtonHeight, 0x000000, 0);
+        maxButton.setInteractive({ useHandCursor: true });
+        maxButton.on('pointerdown', () => {
+            this.performMaxUpgrade(scene, cardContainer);
+        });
+        maxButton.on('pointerover', () => {
+            maxButtonBg.clear();
+            const maxed = isMaxLevel ? isMaxLevel() : false;
+            if (!maxed) {
+                maxButtonBg.fillStyle(0xff8c5a, 1);
+                maxButtonBg.lineStyle(2, 0xffa680, 1);
+            } else {
+                maxButtonBg.fillStyle(0x555555, 0.8);
+                maxButtonBg.lineStyle(2, 0x666666, 0.8);
+            }
+            maxButtonBg.fillRoundedRect(maxButtonX - maxButtonWidth / 2, centerY - maxButtonHeight / 2, maxButtonWidth, maxButtonHeight, buttonRadius);
+            maxButtonBg.strokeRoundedRect(maxButtonX - maxButtonWidth / 2, centerY - maxButtonHeight / 2, maxButtonWidth, maxButtonHeight, buttonRadius);
+        });
+        maxButton.on('pointerout', () => {
+            maxButtonBg.clear();
+            const maxed = isMaxLevel ? isMaxLevel() : false;
+            const canAffordNow = !maxed && canAfford();
+            maxButtonBg.fillStyle(canAffordNow ? 0xff6b35 : 0x555555, canAffordNow ? 1 : 0.8);
+            maxButtonBg.lineStyle(2, canAffordNow ? 0xff8c5a : 0x666666, canAffordNow ? 1 : 0.8);
+            maxButtonBg.fillRoundedRect(maxButtonX - maxButtonWidth / 2, centerY - maxButtonHeight / 2, maxButtonWidth, maxButtonHeight, buttonRadius);
+            maxButtonBg.strokeRoundedRect(maxButtonX - maxButtonWidth / 2, centerY - maxButtonHeight / 2, maxButtonWidth, maxButtonHeight, buttonRadius);
+        });
+        cardContainer.add(maxButton);
+        
+        // max 버튼 텍스트
+        const maxButtonFontSize = Responsive.getFontSize(scene, 14);
+        const maxButtonText = scene.add.text(maxButtonX, centerY, 'max', {
+            fontSize: maxButtonFontSize,
+            color: '#ffffff',
+            fontFamily: 'Arial',
+            font: `600 ${maxButtonFontSize} Arial`
+        });
+        maxButtonText.setOrigin(0.5);
+        cardContainer.add(maxButtonText);
+        
         // 카드에 참조 저장 (업데이트용)
         (cardContainer as any).upgradeCardData = {
             label,
@@ -965,6 +1025,9 @@ export const UIManager = {
             button,
             buttonBg,
             buttonText,
+            maxButton,
+            maxButtonBg,
+            maxButtonText,
             onUpgrade,
             getCost,
             canAfford,
@@ -972,6 +1035,142 @@ export const UIManager = {
         };
         
         return cardContainer;
+    },
+    
+    // 모든 업그레이드 버튼 비활성화
+    disableAllUpgradeButtons(): void {
+        this.upgradeCards.forEach((card) => {
+            const cardData = (card as any).upgradeCardData;
+            if (cardData) {
+                // x1 버튼 비활성화
+                if (cardData.button) {
+                    cardData.button.disableInteractive();
+                    cardData.button.setAlpha(0.5);
+                }
+                // max 버튼 비활성화
+                if (cardData.maxButton) {
+                    cardData.maxButton.disableInteractive();
+                    cardData.maxButton.setAlpha(0.5);
+                }
+                // 버튼 배경 시각적 표시
+                if (cardData.buttonBg) {
+                    cardData.buttonBg.setAlpha(0.5);
+                }
+                if (cardData.maxButtonBg) {
+                    cardData.maxButtonBg.setAlpha(0.5);
+                }
+            }
+        });
+    },
+    
+    // 모든 업그레이드 버튼 활성화
+    enableAllUpgradeButtons(): void {
+        this.upgradeCards.forEach((card) => {
+            const cardData = (card as any).upgradeCardData;
+            if (cardData) {
+                // x1 버튼 활성화
+                if (cardData.button) {
+                    cardData.button.setInteractive({ useHandCursor: true });
+                    cardData.button.setAlpha(1);
+                }
+                // max 버튼 활성화
+                if (cardData.maxButton) {
+                    cardData.maxButton.setInteractive({ useHandCursor: true });
+                    cardData.maxButton.setAlpha(1);
+                }
+                // 버튼 배경 복원
+                if (cardData.buttonBg) {
+                    cardData.buttonBg.setAlpha(1);
+                }
+                if (cardData.maxButtonBg) {
+                    cardData.maxButtonBg.setAlpha(1);
+                }
+            }
+        });
+    },
+    
+    // 카드의 max 버튼 업데이트 (색상 및 상태)
+    updateMaxButton(cardData: any, canAfford: boolean, isMaxed: boolean, buttonColor: number, buttonBorderColor: number): void {
+        if (!cardData.maxButton || !cardData.maxButtonBg) return;
+        
+        const maxButtonX = cardData.maxButton.x;
+        const maxButtonY = cardData.maxButton.y;
+        const maxButtonWidth = cardData.maxButton.width;
+        const maxButtonHeight = cardData.maxButton.height;
+        const buttonRadius = 12;
+        
+        cardData.maxButtonBg.clear();
+        const canClick = !isMaxed && canAfford;
+        cardData.maxButtonBg.fillStyle(canClick ? buttonColor : 0x555555, canClick ? 1 : 0.8);
+        cardData.maxButtonBg.fillRoundedRect(maxButtonX - maxButtonWidth / 2, maxButtonY - maxButtonHeight / 2, maxButtonWidth, maxButtonHeight, buttonRadius);
+        cardData.maxButtonBg.lineStyle(2, canClick ? buttonBorderColor : 0x666666, canClick ? 1 : 0.8);
+        cardData.maxButtonBg.strokeRoundedRect(maxButtonX - maxButtonWidth / 2, maxButtonY - maxButtonHeight / 2, maxButtonWidth, maxButtonHeight, buttonRadius);
+    },
+    
+    // Max 업그레이드 수행
+    performMaxUpgrade(scene: Phaser.Scene, targetCard: Phaser.GameObjects.Container): void {
+        const cardData = (targetCard as any).upgradeCardData;
+        if (!cardData) return;
+        
+        // 최대 레벨 체크
+        if (cardData.isMaxLevel && cardData.isMaxLevel()) {
+            return;
+        }
+        
+        // 모든 버튼 비활성화
+        this.disableAllUpgradeButtons();
+        
+        // 업그레이드 반복 수행 (배치 처리로 UI 멈춤 방지)
+        let upgradeCount = 0;
+        const maxIterations = 100000; // 무한 루프 방지
+        const batchSize = 100; // 한 번에 처리할 업그레이드 수
+        
+        const performUpgradeBatch = () => {
+            let batchCount = 0;
+            
+            // 배치 크기만큼 또는 조건 만족할 때까지 업그레이드 수행
+            while (batchCount < batchSize && upgradeCount < maxIterations) {
+                // 최대 레벨 체크
+                if (cardData.isMaxLevel && cardData.isMaxLevel()) {
+                    this.enableAllUpgradeButtons();
+                    this.update(scene);
+                    return;
+                }
+                
+                // 골드 부족 체크
+                if (!cardData.canAfford()) {
+                    this.enableAllUpgradeButtons();
+                    this.update(scene);
+                    return;
+                }
+                
+                // 업그레이드 수행
+                const success = cardData.onUpgrade();
+                if (success) {
+                    upgradeCount++;
+                    batchCount++;
+                } else {
+                    // 업그레이드 실패 시 종료
+                    this.enableAllUpgradeButtons();
+                    this.update(scene);
+                    return;
+                }
+            }
+            
+            // UI 업데이트 (비용/값 갱신)
+            this.update(scene);
+            
+            // 다음 배치 계속 수행
+            if (upgradeCount < maxIterations) {
+                scene.time.delayedCall(0, performUpgradeBatch);
+            } else {
+                this.enableAllUpgradeButtons();
+                this.update(scene);
+            }
+        };
+        
+        // 첫 배치 시작
+        performUpgradeBatch();
     },
     
     // Upgrade 탭 내용 생성
@@ -1294,6 +1493,9 @@ export const UIManager = {
                     cardData.buttonBg.fillRoundedRect(buttonX - buttonWidth / 2, buttonY - buttonHeight / 2, buttonWidth, buttonHeight, buttonRadius);
                     cardData.buttonBg.lineStyle(2, canAfford ? 0x6ab0ff : 0x666666, canAfford ? 1 : 0.8);
                     cardData.buttonBg.strokeRoundedRect(buttonX - buttonWidth / 2, buttonY - buttonHeight / 2, buttonWidth, buttonHeight, buttonRadius);
+                    
+                    // max 버튼 업데이트
+                    this.updateMaxButton(cardData, canAfford, false, 0xff6b35, 0xff8c5a);
                 }
             }
             
@@ -1330,6 +1532,9 @@ export const UIManager = {
                     cardData.buttonBg.fillRoundedRect(buttonX - buttonWidth / 2, buttonY - buttonHeight / 2, buttonWidth, buttonHeight, buttonRadius);
                     cardData.buttonBg.lineStyle(2, canAfford ? 0x6ad888 : 0x666666, canAfford ? 1 : 0.8);
                     cardData.buttonBg.strokeRoundedRect(buttonX - buttonWidth / 2, buttonY - buttonHeight / 2, buttonWidth, buttonHeight, buttonRadius);
+                    
+                    // max 버튼 업데이트
+                    this.updateMaxButton(cardData, canAfford, isMaxLevel, 0xff6b35, 0xff8c5a);
                 }
             }
             
@@ -1366,6 +1571,9 @@ export const UIManager = {
                     cardData.buttonBg.fillRoundedRect(buttonX - buttonWidth / 2, buttonY - buttonHeight / 2, buttonWidth, buttonHeight, buttonRadius);
                     cardData.buttonBg.lineStyle(2, canAfford ? 0x6ad888 : 0x666666, canAfford ? 1 : 0.8);
                     cardData.buttonBg.strokeRoundedRect(buttonX - buttonWidth / 2, buttonY - buttonHeight / 2, buttonWidth, buttonHeight, buttonRadius);
+                    
+                    // max 버튼 업데이트
+                    this.updateMaxButton(cardData, canAfford, isMaxLevel, 0xff6b35, 0xff8c5a);
                 }
             }
 
@@ -1402,6 +1610,9 @@ export const UIManager = {
                     cardData.buttonBg.fillRoundedRect(buttonX - buttonWidth / 2, buttonY - buttonHeight / 2, buttonWidth, buttonHeight, buttonRadius);
                     cardData.buttonBg.lineStyle(2, canAfford ? 0x6ad888 : 0x666666, canAfford ? 1 : 0.8);
                     cardData.buttonBg.strokeRoundedRect(buttonX - buttonWidth / 2, buttonY - buttonHeight / 2, buttonWidth, buttonHeight, buttonRadius);
+                    
+                    // max 버튼 업데이트
+                    this.updateMaxButton(cardData, canAfford, isMaxLevel, 0xff6b35, 0xff8c5a);
                 }
             }
             
@@ -1438,6 +1649,9 @@ export const UIManager = {
                     cardData.buttonBg.fillRoundedRect(buttonX - buttonWidth / 2, buttonY - buttonHeight / 2, buttonWidth, buttonHeight, buttonRadius);
                     cardData.buttonBg.lineStyle(2, canPurchase ? 0xffed4e : 0x666666, canPurchase ? 1 : 0.8);
                     cardData.buttonBg.strokeRoundedRect(buttonX - buttonWidth / 2, buttonY - buttonHeight / 2, buttonWidth, buttonHeight, buttonRadius);
+                    
+                    // max 버튼 업데이트
+                    this.updateMaxButton(cardData, canPurchase, isMaxLevel, 0xff6b35, 0xff8c5a);
                 }
             }
         }
