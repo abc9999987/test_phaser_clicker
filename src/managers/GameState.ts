@@ -221,6 +221,7 @@ export const GameState = {
     getAttackPowerUpgradeCost(): number {
         // 구간별 설정 (임계값, multiplier, 지수) - 큰 값부터 정렬
         const costTiers = [
+            { threshold: 100000, multiplier: 1900, exponent: 2.8 },
             { threshold: 90000, multiplier: 1800, exponent: 2.7 },
             { threshold: 80000, multiplier: 1600, exponent: 2.6 },
             { threshold: 70000, multiplier: 1400, exponent: 2.5 },
@@ -283,6 +284,10 @@ export const GameState = {
     
     // 공격력 강화 구매
     upgradeAttackPower(): boolean {
+        if (this.attackPower >= 100000) {
+            return false;
+        }
+        
         const cost = this.getAttackPowerUpgradeCost();
         if (this.spendCoins(cost)) {
             this.attackPower++;
