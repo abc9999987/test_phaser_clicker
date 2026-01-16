@@ -147,11 +147,11 @@ export const GameState = {
         const totalStage = this.getTotalStageNumber();
         // 1-1: 10, 이후 1.5배씩 증가
         // 0.5배로 감소
-        let baseHp = Math.floor(10 * Math.pow(1.5, totalStage - 1) * 0.5);
+        let baseHp = Math.floor(10 * Math.pow(1.5, totalStage - 1) * 0.25);
         
         // 보스 스테이지면 체력 2배
         if (this.isBossStage()) {
-            baseHp *= 2;
+            baseHp *= 4;
         }
         
         return baseHp;
@@ -221,6 +221,16 @@ export const GameState = {
     getAttackPowerUpgradeCost(): number {
         // 구간별 설정 (임계값, multiplier, 지수) - 큰 값부터 정렬
         const costTiers = [
+            { threshold: 200000, multiplier: 2900, exponent: 3.8 },
+            { threshold: 190000, multiplier: 2800, exponent: 3.7 },
+            { threshold: 180000, multiplier: 2700, exponent: 3.6 },
+            { threshold: 170000, multiplier: 2600, exponent: 3.5 },
+            { threshold: 160000, multiplier: 2500, exponent: 3.4 },
+            { threshold: 150000, multiplier: 2400, exponent: 3.3 },
+            { threshold: 140000, multiplier: 2300, exponent: 3.2 },
+            { threshold: 130000, multiplier: 2200, exponent: 3.1 },
+            { threshold: 120000, multiplier: 2100, exponent: 3 },
+            { threshold: 110000, multiplier: 2000, exponent: 2.9 },
             { threshold: 100000, multiplier: 1900, exponent: 2.8 },
             { threshold: 90000, multiplier: 1800, exponent: 2.7 },
             { threshold: 80000, multiplier: 1600, exponent: 2.6 },
@@ -284,10 +294,6 @@ export const GameState = {
     
     // 공격력 강화 구매
     upgradeAttackPower(): boolean {
-        if (this.attackPower >= 100000) {
-            return false;
-        }
-        
         const cost = this.getAttackPowerUpgradeCost();
         if (this.spendCoins(cost)) {
             this.attackPower++;
