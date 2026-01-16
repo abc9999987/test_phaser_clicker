@@ -71,8 +71,8 @@ export const UIManager = {
         this.killCountText.setOrigin(0.5);
         
         // 골드 텍스트 (화면 상단 좌측)
-        const coinFontSize = Responsive.getFontSize(scene, 24);
-        this.coinText = scene.add.text(gameWidth * 0.03, halfHeight - gameHeight * 0.035, `코인: ${NumberFormatter.formatNumber(Math.floor(GameState.coins))}`, {
+        const coinFontSize = Responsive.getFontSize(scene, 18);
+        this.coinText = scene.add.text(gameWidth * 0.01, halfHeight - gameHeight * 0.027, `코인: ${NumberFormatter.formatNumber(Math.floor(GameState.coins))}`, {
             fontSize: coinFontSize,
             color: '#ffd700',
             fontFamily: 'Arial',
@@ -583,6 +583,9 @@ export const UIManager = {
         let descTextContent = `×${skillConfig.skillPower} | ${skillConfig.cooldown}초`;
         if (skillConfig.skillType === 2 && skillConfig.duration) { // BUFF 타입
             descTextContent = `×${skillConfig.skillPower} | ${skillConfig.duration}초 지속 | ${skillConfig.cooldown}초 쿨타임`;
+            if (skillConfig.id === 'buff_k_fish_bread_tank') {
+                descTextContent = `투사체 ×${skillConfig.skillPower}배 | ${skillConfig.duration}초 지속 | ${skillConfig.cooldown}초 쿨타임`;
+            }
         }
         const descText = scene.add.text(descX, centerY, descTextContent, {
             fontSize: descFontSize,
@@ -789,11 +792,23 @@ export const UIManager = {
             
             this.skillUseButtons.push(useButton);
             
-            // 공격 스킬은 기존처럼 아이콘, 버프 스킬은 텍스트 "Buff" 표시
+            // 공격 스킬은 기존처럼 아이콘, 버프 스킬은 텍스트 표시
             if (skillConfig.id === 'buff_attack_damage') {
-                // Buff 텍스트만 가운데 표시
+                // 분노 스킬: "Buff" 텍스트 표시
                 const labelFontSize = Responsive.getFontSize(scene, 12);
                 const labelText = scene.add.text(buttonX, buttonY, 'Buff', {
+                    fontSize: labelFontSize,
+                    color: '#ffffff',
+                    fontFamily: 'Arial',
+                    font: `600 ${labelFontSize} Arial`
+                });
+                labelText.setOrigin(0.5);
+                labelText.setDepth(16);
+                // 아이콘 배열에는 추가하지 않음 (파괴 시에도 문제 없음)
+            } else if (skillConfig.id === 'buff_k_fish_bread_tank') {
+                // 붕어빵탱크 스킬: "Tank" 텍스트 표시
+                const labelFontSize = Responsive.getFontSize(scene, 12);
+                const labelText = scene.add.text(buttonX, buttonY, 'Tank', {
                     fontSize: labelFontSize,
                     color: '#ffffff',
                     fontFamily: 'Arial',
@@ -847,11 +862,11 @@ export const UIManager = {
         // Auto 버튼 하나 생성 (모든 스킬의 자동 사용을 관리)
         if (learnedSkills.length > 0) {
             // 가장 왼쪽 스킬 버튼 위치 계산
-            const leftmostButtonX = rightX - (learnedSkills.length - 1) * buttonSpacing * 0.35;
+            const leftmostButtonX = rightX - (learnedSkills.length - 1) * buttonSpacing * 0.5;
             const autoButtonWidth = gameWidth * 0.12;
             const autoButtonHeight = gameWidth * 0.08;
             // 가장 왼쪽 스킬 버튼 왼쪽에 여유 공간을 두고 배치
-            const autoButtonX = leftmostButtonX - buttonRadius * 3 - autoButtonWidth / 2;
+            const autoButtonX = leftmostButtonX - buttonRadius * 4 - autoButtonWidth / 2;
             const autoButtonY = centerY;
             const autoButtonRadius = 8;
             

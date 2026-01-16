@@ -67,6 +67,18 @@ export class GameScene extends Phaser.Scene {
     }
     
     initializeGame(): void {
+        // 이전 타이머들 정리 (씬 재시작 시)
+        if (this.bossTimer) {
+            this.bossTimer.remove();
+            this.bossTimer = undefined;
+        }
+        this.bossTimerStartTime = undefined;
+        
+        if (this.autoFireTimer) {
+            this.autoFireTimer.remove();
+            this.autoFireTimer = undefined;
+        }
+        
         // 투사체 풀 초기화
         Projectile.init(this);
         
@@ -86,6 +98,9 @@ export class GameScene extends Phaser.Scene {
         
         // 자동 발사 타이머 설정 (로드된 상태 반영)
         this.setupAutoFire();
+        
+        // 보스 타이머 시작 (보스 스테이지인 경우)
+        this.updateBossTimer();
         
         // UI 업데이트 (로드된 상태 반영)
         UIManager.update(this);
@@ -247,8 +262,11 @@ export class GameScene extends Phaser.Scene {
     
     // 보스 타이머 만료 시 처리
     onBossTimerExpired(): void {
-        // 처치 카운트만 초기화
         GameState.onBossTimerExpired();
+        // 보스가 아니면 그냥 리스폰
+        if (Enemy.enemy) {
+            Enemy.respawn(this);
+        }
         
         // UI 업데이트
         UIManager.update(this);
@@ -258,11 +276,6 @@ export class GameScene extends Phaser.Scene {
             this.bossTimer.remove();
             this.bossTimer = undefined;
             this.bossTimerStartTime = undefined;
-        }
-        
-        // 적 리스폰 (일반 적으로)
-        if (Enemy.enemy) {
-            Enemy.respawn(this);
         }
     }
     

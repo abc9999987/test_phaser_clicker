@@ -3,6 +3,7 @@ import { Responsive } from '../utils/Responsive';
 import { Effects } from '../utils/Effects';
 import { Enemy } from './Enemy';
 import { Projectile } from './Projectile';
+import { GameState } from '../managers/GameState';
 
 // 캐릭터 생성 및 관리
 export const Character = {
@@ -97,6 +98,29 @@ export const Character = {
             targetY,
             type
         );
+        
+        // Auto 발사이고 붕어빵탱크 버프가 활성화되어 있으면 투사체를 하나 더 발사
+        if (type === 'auto') {
+            const currentTime = scene.time.now;
+            if (GameState.isBuffActive('buff_k_fish_bread_tank', currentTime)) {
+                // 두 번째 투사체는 약간 다른 위치에서 발사 (더 자연스러운 효과)
+                const secondStartX = startX + (Math.random() - 0.5) * 10;
+                const secondStartY = startY + (Math.random() - 0.5) * 10;
+                const secondTargetX = targetX + (Math.random() - 0.5) * 10;
+                const secondTargetY = targetY + (Math.random() - 0.5) * 10;
+                
+                // 붕어빵탱크로 추가 발사된 투사체는 wp2.png 이미지 사용
+                Projectile.create(
+                    scene,
+                    secondStartX,
+                    secondStartY,
+                    secondTargetX,
+                    secondTargetY,
+                    type,
+                    'weapon2' // wp2.png 이미지 사용
+                );
+            }
+        }
     },
     
     // 캐릭터 업데이트 (부드러운 움직임)

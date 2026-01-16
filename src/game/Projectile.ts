@@ -92,8 +92,11 @@ export const Projectile = {
     },
     
     // 투사체 생성 (풀에서 재사용)
-    create(scene: Phaser.Scene, startX: number, startY: number, targetX: number, targetY: number, type: 'manual' | 'auto' = 'manual'): ProjectileType | null {
+    create(scene: Phaser.Scene, startX: number, startY: number, targetX: number, targetY: number, type: 'manual' | 'auto' = 'manual', imageKey: string = 'weapon'): ProjectileType | null {
         const projectile = this.getFromPool(type);
+        
+        // 투사체 이미지 설정 (항상 명시적으로 설정하여 이전 텍스처 초기화)
+        projectile.setTexture(imageKey);
         
         // 투사체 활성화
         projectile.setPosition(startX, startY);
@@ -131,7 +134,7 @@ export const Projectile = {
         }
         
         let finalDamage = isCrit ? Math.round(baseDamage * (1.5 + (GameState.critDamage / 100))) : baseDamage;
-        finalDamage = Math.round(finalDamage * buffMultiplier);
+        finalDamage = Math.round(finalDamage * buffMultiplier);    
         projectile.damage = finalDamage;
         projectile.isCrit = isCrit;
         projectile.projectileType = type;
@@ -180,12 +183,30 @@ export const Projectile = {
             this.active.splice(index, 1);
         }
         
-        // 투사체 비활성화
-        projectile.setVisible(false);
-        projectile.setActive(false);
-        projectile.setPosition(0, 0);
-        projectile.velocityX = 0;
-        projectile.velocityY = 0;
+        // 투사체가 유효하고 씬이 존재하는 경우에만 텍스처 복원
+        if (projectile && projectile.scene && projectile.scene.sys) {
+            // 투사체 비활성화
+            projectile.setVisible(false);
+            projectile.setActive(false);
+            projectile.setPosition(0, 0);
+            projectile.velocityX = 0;
+            projectile.velocityY = 0;
+            
+            // 텍스처를 기본값으로 복원 (weapon2 등 다른 텍스처가 설정되었을 수 있음)
+            try {
+                projectile.setTexture('weapon');
+            } catch (e) {
+                // 텍스처 설정 실패 시 무시 (씬이 아직 완전히 초기화되지 않았을 수 있음)
+                console.warn('Failed to reset projectile texture:', e);
+            }
+        } else {
+            // 투사체가 유효하지 않으면 기본 속성만 초기화
+            if (projectile) {
+                projectile.velocityX = 0;
+                projectile.velocityY = 0;
+            }
+        }
+        
         // 풀에 이미 있으므로 추가할 필요 없음 (active 상태만 관리)
     },
     
