@@ -36,7 +36,7 @@ export const SkillConfigs: SkillConfig[] = [
         skillPower: 3,
         spCost: 1,
         maxLevel: 3, // 최대 레벨 3
-        spUpgradeCost: 3,
+        spUpgradeCost: 2,
     },
     {
         id: 'buff_anchovy_shot',

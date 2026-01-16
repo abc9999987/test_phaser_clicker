@@ -661,7 +661,7 @@ export const UIManager = {
             cardContainer.add(levelText);
             
             const buttonBg = scene.add.graphics();
-            const canUpgrade = GameState.sp >= 3;
+            const canUpgrade = GameState.sp >= (skillConfig.spUpgradeCost || 0);
             buttonBg.fillStyle(canUpgrade ? 0xff6b35 : 0x555555, canUpgrade ? 1 : 0.8);
             buttonBg.fillRoundedRect(buttonX - buttonWidth / 2, buttonY - buttonHeight / 2, buttonWidth, buttonHeight, buttonRadius);
             buttonBg.lineStyle(2, canUpgrade ? 0xff8b55 : 0x666666, canUpgrade ? 1 : 0.8);

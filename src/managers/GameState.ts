@@ -436,7 +436,7 @@ export const GameState = {
         }
         
         // SP 3 소모
-        if (this.sp >= 3 && this.spendSp(3)) {
+        if (config.spUpgradeCost && this.sp >= config.spUpgradeCost && this.spendSp(config.spUpgradeCost)) {
             this.skillLevels[skillId] = currentLevel + 1;
             this.save();
             return true;
