@@ -3,6 +3,7 @@ export interface DungeonConfig {
     id: string;
     name: string;
     description: string;
+    sceneKey: string; // 던전 씬의 Phaser 씬 키 (예: 'GoldDungeonScene')
     /**
      * 배경 이미지 키 (선택사항, 없으면 단색 배경 사용)
      * 
@@ -25,6 +26,7 @@ export const DungeonConfigs: DungeonConfig[] = [
         id: 'gold_dungeon',
         name: '골드 던전',
         description: '골드 획득',
+        sceneKey: 'GoldDungeonScene',
         backgroundColor: 0x2a2a3a
         // backgroundImageKey 사용 예시:
         // backgroundImageKey: 'gold_dungeon_bg' // AssetLoader에서 먼저 로드한 이미지 키

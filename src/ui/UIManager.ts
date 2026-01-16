@@ -425,9 +425,14 @@ export const UIManager = {
         enterButton.setDepth(101); // 버튼 배경 위에 표시
         
         const dungeonId = dungeonConfig.id;
+        const sceneKey = dungeonConfig.sceneKey;
         enterButton.on('pointerdown', () => {
-            // 추후 던전 입장 로직 구현
-            console.log(`던전 입장: ${dungeonId}`);
+            // 던전 씬으로 전환
+            if (sceneKey) {
+                scene.scene.start(sceneKey, { dungeonConfig: dungeonConfig });
+            } else {
+                console.error(`던전 씬 키가 설정되지 않았습니다: ${dungeonId}`);
+            }
         });
 
         enterButton.on('pointerover', () => {
