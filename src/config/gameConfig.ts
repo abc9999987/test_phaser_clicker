@@ -13,6 +13,8 @@ export interface SkillConfig {
     duration?: number; // 지속 시간 (초 단위) BUFF 타입일 경우에만 사용함.
     skillPower: number; // Skill 배수, ATTACK 타입일 경우 스킬의 데미지 배수, BUFF 타입일 경우 해당하는 능력치를 증가시켜주는 배수로 사용함.
     spCost: number; // 습득에 필요한 SP
+    maxLevel?: number; // 최대 레벨 (선택사항, 없으면 레벨 업그레이드 불가)
+    spUpgradeCost?: number; // 레벨 업그레이드에 필요한 SP
 }
 
 // 스킬 설정 목록
@@ -32,7 +34,9 @@ export const SkillConfigs: SkillConfig[] = [
         cooldown: 10,
         duration: 10,
         skillPower: 3,
-        spCost: 1   
+        spCost: 1,
+        maxLevel: 3, // 최대 레벨 3
+        spUpgradeCost: 3,
     },
     {
         id: 'buff_anchovy_shot',

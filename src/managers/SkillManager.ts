@@ -14,6 +14,11 @@ export const SkillManager = {
         return SkillConfigs.find((s) => s.id === skillId);
     },
     
+    // 스킬의 skillPower 가져오기 (레벨 반영)
+    getSkillPower(skillId: string): number {
+        return GameState.getSkillPower(skillId);
+    },
+    
     // 스킬 습득 시도
     tryLearnSkill(skillId: string): boolean {
         const config = this.getSkillConfig(skillId);

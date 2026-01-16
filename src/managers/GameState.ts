@@ -1,5 +1,6 @@
 // 게임 상태 관리
 import { Character } from '../game/Character';
+import { SkillConfigs } from '../config/gameConfig';
 
 interface SaveData {
     coins: number;
@@ -17,6 +18,7 @@ interface SaveData {
     spPurchaseCount: number;
     skillAutoUse?: Record<string, boolean>; // 스킬 자동 사용 상태
     dungeonLevels?: Record<string, number>; // 던전 단계 (던전 ID -> 단계)
+    skillLevels?: Record<string, number>; // 스킬 레벨 (스킬 ID -> 레벨)
 }
 
 export const GameState = {
@@ -35,6 +37,7 @@ export const GameState = {
     skillAutoUse: {} as Record<string, boolean>,  // 스킬 자동 사용 상태 (skillId -> boolean)
     activeBuffs: {} as Record<string, { startTime: number; endTime: number }>,  // 활성 버프 (skillId -> { startTime, endTime })
     dungeonLevels: {} as Record<string, number>,  // 던전 단계 (던전 ID -> 단계)
+    skillLevels: {} as Record<string, number>,  // 스킬 레벨 (스킬 ID -> 레벨)
     storageKey: 'test_clicker_save', // localStorage 키
     saveTimer: null as number | null,
     
@@ -56,7 +59,8 @@ export const GameState = {
                 learnedSkills: this.learnedSkills,
                 spPurchaseCount: this.spPurchaseCount,
                 skillAutoUse: this.skillAutoUse,
-                dungeonLevels: this.dungeonLevels
+                dungeonLevels: this.dungeonLevels,
+                skillLevels: this.skillLevels
             };
             localStorage.setItem(this.storageKey, JSON.stringify(saveData));
             console.log('Game state saved');
@@ -85,6 +89,7 @@ export const GameState = {
                 this.spPurchaseCount = data.spPurchaseCount || 0;
                 this.skillAutoUse = data.skillAutoUse || {};
                 this.dungeonLevels = data.dungeonLevels || {};
+                this.skillLevels = data.skillLevels || {};
                 console.log('Game state loaded');
                 return true;
             }
@@ -396,10 +401,66 @@ export const GameState = {
     learnSkill(skillId: string): boolean {
         if (!this.isSkillLearned(skillId)) {
             this.learnedSkills.push(skillId);
+            // 습득 시 레벨 1로 초기화
+            this.skillLevels[skillId] = 1;
             this.save();
             return true;
         }
         return false;
+    },
+    
+    // 스킬 레벨 가져오기
+    getSkillLevel(skillId: string): number {
+        return this.skillLevels[skillId] || 1; // 기본값 1
+    },
+    
+    // 스킬 레벨 업그레이드
+    upgradeSkill(skillId: string): boolean {
+        // 스킬을 습득하지 않았으면 실패
+        if (!this.isSkillLearned(skillId)) {
+            return false;
+        }
+        
+        // SkillConfig에서 maxLevel 확인
+        const config = SkillConfigs.find((s) => s.id === skillId);
+        if (!config) {
+            return false;
+        }
+        
+        const currentLevel = this.getSkillLevel(skillId);
+        const maxLevel = config.maxLevel || 1;
+        
+        // 최대 레벨에 도달했으면 실패
+        if (currentLevel >= maxLevel) {
+            return false;
+        }
+        
+        // SP 3 소모
+        if (this.sp >= 3 && this.spendSp(3)) {
+            this.skillLevels[skillId] = currentLevel + 1;
+            this.save();
+            return true;
+        }
+        
+        return false;
+    },
+    
+    // 스킬의 skillPower 가져오기 (레벨 반영)
+    getSkillPower(skillId: string): number {
+        const config = SkillConfigs.find((s) => s.id === skillId);
+        if (!config) {
+            return 1;
+        }
+        
+        // buff_attack_damage 스킬의 경우 레벨에 따라 skillPower 변경
+        if (skillId === 'buff_attack_damage') {
+            const level = this.getSkillLevel(skillId);
+            // 레벨 1: 3, 레벨 2: 4, 레벨 3: 5
+            return 2 + level;
+        }
+        
+        // 다른 스킬은 기본 skillPower 반환
+        return config.skillPower;
     },
     
     // SP 구매 비용 계산 (초기 10만원, 10배씩 증가)
@@ -410,7 +471,7 @@ export const GameState = {
     // SP 구매 (최대 5개까지만)
     purchaseSp(): boolean {
         // 최대 5개까지만 구매 가능
-        if (this.spPurchaseCount >= 5) {
+        if (this.spPurchaseCount >= 10) {
             return false;
         }
         
@@ -457,8 +518,8 @@ export const GameState = {
     // 활성 버프의 배수 가져오기 (데미지 증가용)
     getBuffMultiplier(skillId: string, currentTime: number): number {
         if (this.isBuffActive(skillId, currentTime)) {
-            // SkillConfig에서 skillPower 가져오기 (임시로 2배 고정, 나중에 동적으로 변경 가능)
-            return 2; // 분노 스킬의 skillPower
+            // 레벨에 따른 skillPower 반환
+            return this.getSkillPower(skillId);
         }
         return 1;
     },

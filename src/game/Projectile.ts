@@ -127,10 +127,8 @@ export const Projectile = {
         let buffMultiplier = 1;
         const currentTime = scene.time.now;
         if (GameState.isBuffActive('buff_attack_damage', currentTime)) {
-            const buffConfig = SkillManager.getSkillConfig('buff_attack_damage');
-            if (buffConfig) {
-                buffMultiplier = buffConfig.skillPower;
-            }
+            // 레벨에 따른 skillPower 가져오기
+            buffMultiplier = SkillManager.getSkillPower('buff_attack_damage');
         }
         
         let finalDamage = isCrit ? Math.round(baseDamage * (1.5 + (GameState.critDamage / 100))) : baseDamage;

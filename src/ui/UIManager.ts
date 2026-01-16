@@ -579,12 +579,18 @@ export const UIManager = {
         const descFontSize = Responsive.getFontSize(scene, 10);
         const nameTextWidth = nameText.width;
         const descX = nameX + nameTextWidth + itemSpacing;
+        
+        // 레벨에 따른 skillPower 가져오기
+        const currentSkillPower = isLearned ? SkillManager.getSkillPower(skillConfig.id) : skillConfig.skillPower;
+        const currentLevel = isLearned ? GameState.getSkillLevel(skillConfig.id) : 1;
+        const maxLevel = skillConfig.maxLevel || 1;
+        
         // BUFF 타입 스킬은 duration도 표시
-        let descTextContent = `×${skillConfig.skillPower} | ${skillConfig.cooldown}초`;
+        let descTextContent = `×${currentSkillPower} | ${skillConfig.cooldown}초`;
         if (skillConfig.skillType === 2 && skillConfig.duration) { // BUFF 타입
-            descTextContent = `×${skillConfig.skillPower} | ${skillConfig.duration}초 지속 | ${skillConfig.cooldown}초 쿨타임`;
+            descTextContent = `×${currentSkillPower} | ${skillConfig.duration}초 지속 | ${skillConfig.cooldown}초 쿨타임`;
             if (skillConfig.id === 'buff_anchovy_shot') {
-                descTextContent = `투사체 ×${skillConfig.skillPower}배 | ${skillConfig.duration}초 지속 | ${skillConfig.cooldown}초 쿨타임`;
+                descTextContent = `투사체 ×${currentSkillPower}배 | ${skillConfig.duration}초 지속 | ${skillConfig.cooldown}초 쿨타임`;
             }
         }
         const descText = scene.add.text(descX, centerY, descTextContent, {
@@ -606,9 +612,14 @@ export const UIManager = {
         let statusText: Phaser.GameObjects.Text;
         
         if (isLearned) {
-            // 습득 완료 텍스트를 오른쪽 끝에 배치
+            // 습득 완료 텍스트 (레벨이 있는 경우는 버튼 왼쪽에 표시하므로 여기서는 "✓ 습득 완료"만)
             const statusX = width / 2 - padding;
-            statusText = scene.add.text(statusX, centerY, '✓ 습득 완료', {
+            let statusTextContent = '';
+
+            if (!skillConfig.maxLevel || currentLevel >= maxLevel) {
+                statusTextContent = '✓ 습득 완료';
+            }
+            statusText = scene.add.text(statusX, centerY, statusTextContent, {
                 fontSize: statusFontSize,
                 color: '#4ade80',
                 fontFamily: 'Arial',
@@ -629,8 +640,85 @@ export const UIManager = {
         }
         cardContainer.add(statusText);
 
-        // 4. 습득 버튼 (카드 오른쪽 끝에 배치)
-        if (!isLearned) {
+        // 4. 레벨 업그레이드 버튼 또는 습득 버튼 (카드 오른쪽 끝에 배치)
+        if (isLearned && skillConfig.maxLevel && skillConfig.maxLevel > 1 && currentLevel < maxLevel) {
+            // 레벨 업그레이드 버튼
+            const buttonWidth = width * 0.15;
+            const buttonHeight = height * 0.5;
+            const buttonRadius = 8;
+            const buttonX = width / 2 - padding * 0.5 - buttonWidth / 2;
+            const buttonY = centerY;
+            
+            // 레벨 텍스트를 버튼 왼쪽에 표시
+            const levelTextX = buttonX - buttonWidth / 2 - itemSpacing;
+            const levelText = scene.add.text(levelTextX, centerY, `Lv.${currentLevel}/${maxLevel}`, {
+                fontSize: statusFontSize,
+                color: '#4ade80',
+                fontFamily: 'Arial',
+                font: `500 ${statusFontSize} Arial`
+            });
+            levelText.setOrigin(1, 0.5); // 오른쪽 정렬 (버튼 쪽으로)
+            cardContainer.add(levelText);
+            
+            const buttonBg = scene.add.graphics();
+            const canUpgrade = GameState.sp >= 3;
+            buttonBg.fillStyle(canUpgrade ? 0xff6b35 : 0x555555, canUpgrade ? 1 : 0.8);
+            buttonBg.fillRoundedRect(buttonX - buttonWidth / 2, buttonY - buttonHeight / 2, buttonWidth, buttonHeight, buttonRadius);
+            buttonBg.lineStyle(2, canUpgrade ? 0xff8b55 : 0x666666, canUpgrade ? 1 : 0.8);
+            buttonBg.strokeRoundedRect(buttonX - buttonWidth / 2, buttonY - buttonHeight / 2, buttonWidth, buttonHeight, buttonRadius);
+            buttonBg.setDepth(100);
+            cardContainer.add(buttonBg);
+            
+            const upgradeButton = scene.add.rectangle(buttonX, buttonY, buttonWidth, buttonHeight, 0x000000, 0);
+            upgradeButton.setInteractive({ useHandCursor: true });
+            upgradeButton.setDepth(101);
+            
+            const skillId = skillConfig.id;
+            upgradeButton.on('pointerdown', () => {
+                if (GameState.upgradeSkill(skillId)) {
+                    // UI 업데이트
+                    const gameWidth = scene.scale.width;
+                    const gameHeight = scene.scale.height;
+                    const halfHeight = gameHeight * 0.5;
+                    const uiAreaHeight = gameHeight * 0.5;
+                    const uiAreaStartY = halfHeight;
+                    UIManager.createSkillTab(scene, gameWidth, gameHeight, halfHeight, uiAreaHeight, uiAreaStartY, 2);
+                    UIManager.update(scene);
+                    UIManager.createSkillUseButtons(scene);
+                }
+            });
+            
+            upgradeButton.on('pointerover', () => {
+                if (canUpgrade) {
+                    buttonBg.clear();
+                    buttonBg.fillStyle(0xff8b55, 1);
+                    buttonBg.fillRoundedRect(buttonX - buttonWidth / 2, buttonY - buttonHeight / 2, buttonWidth, buttonHeight, buttonRadius);
+                    buttonBg.lineStyle(2, 0xffab75, 1);
+                    buttonBg.strokeRoundedRect(buttonX - buttonWidth / 2, buttonY - buttonHeight / 2, buttonWidth, buttonHeight, buttonRadius);
+                }
+            });
+            
+            upgradeButton.on('pointerout', () => {
+                buttonBg.clear();
+                buttonBg.fillStyle(canUpgrade ? 0xff6b35 : 0x555555, canUpgrade ? 1 : 0.8);
+                buttonBg.fillRoundedRect(buttonX - buttonWidth / 2, buttonY - buttonHeight / 2, buttonWidth, buttonHeight, buttonRadius);
+                buttonBg.lineStyle(2, canUpgrade ? 0xff8b55 : 0x666666, canUpgrade ? 1 : 0.8);
+                buttonBg.strokeRoundedRect(buttonX - buttonWidth / 2, buttonY - buttonHeight / 2, buttonWidth, buttonHeight, buttonRadius);
+            });
+            
+            cardContainer.add(upgradeButton);
+            
+            const buttonTextFontSize = Responsive.getFontSize(scene, 11);
+            const buttonText = scene.add.text(buttonX, buttonY, `SP ${skillConfig.spUpgradeCost}`, {
+                fontSize: buttonTextFontSize,
+                color: canUpgrade ? '#ffffff' : '#999999',
+                fontFamily: 'Arial',
+                font: `600 ${buttonTextFontSize} Arial`
+            });
+            buttonText.setOrigin(0.5);
+            buttonText.setDepth(102);
+            cardContainer.add(buttonText);
+        } else if (!isLearned) {
             const buttonWidth = width * 0.15; // 버튼 너비
             const buttonHeight = height * 0.5;
             const buttonRadius = 8;
@@ -1599,7 +1687,7 @@ export const UIManager = {
             cardWidth,
             cardHeight,
             'SP 구매',
-            isSpPurchaseMax ? `(${spPurchaseCurrent}/5) 최대 구매 완료` : `(${spPurchaseCurrent}/5 -> ${spPurchaseNext}/5)`,
+            isSpPurchaseMax ? `(${spPurchaseCurrent}/10) 최대 구매 완료` : `(${spPurchaseCurrent}/10 -> ${spPurchaseNext}/10)`,
             isSpPurchaseMax ? '' : `${NumberFormatter.formatNumber(spPurchaseCost)}`,
             0xffd700, // 버튼 색상
             0xffed4e, // 호버 색상
@@ -1607,7 +1695,7 @@ export const UIManager = {
             () => GameState.purchaseSp(),
             () => GameState.getSpPurchaseCost(),
             () => GameState.coins >= GameState.getSpPurchaseCost(),
-            () => GameState.spPurchaseCount >= 5
+            () => GameState.spPurchaseCount >= 10
         );
         contentContainer.add(spPurchaseCard);
         this.upgradeCards.push(spPurchaseCard);
@@ -1930,12 +2018,12 @@ export const UIManager = {
                     const canPurchase = !isMaxLevel && cardData.canAfford();
                     
                     if (isMaxLevel) {
-                        cardData.value.setText(`(${currentCount}/5) 최대 구매 완료`);
+                        cardData.value.setText(`(${currentCount}/10) 최대 구매 완료`);
                         cardData.value.setColor('#999999');
                         cardData.costValue.setText('');
                     } else {
                         const nextCount = currentCount + 1;
-                        cardData.value.setText(`(${currentCount}/5 -> ${nextCount}/5)`);
+                        cardData.value.setText(`(${currentCount}/10 -> ${nextCount}/10)`);
                         cardData.value.setColor(canPurchase ? '#e0e0e0' : '#999999');
                         cardData.costValue.setText(`${NumberFormatter.formatNumber(cost)}`);
                         cardData.costValue.setColor(canPurchase ? '#e0e0e0' : '#999999');
