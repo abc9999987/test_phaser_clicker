@@ -17,6 +17,7 @@ export const UIManager = {
     stageText: null as Phaser.GameObjects.Text | null,
     killCountText: null as Phaser.GameObjects.Text | null,
     bossTimerText: null as Phaser.GameObjects.Text | null,
+    dungeonTimerText: null as Phaser.GameObjects.Text | null,
     tabs: [] as Phaser.GameObjects.Rectangle[],
     tabTexts: [] as Phaser.GameObjects.Text[],
     tabContents: [] as Phaser.GameObjects.Container[],
@@ -124,6 +125,75 @@ export const UIManager = {
         
         // 초기 탭 활성화 (Stats 탭)
         this.switchTab(0);
+        
+        // 초기 UI 업데이트
+        this.update();
+        
+        // 게임 시작 시 이미 습득한 스킬이 있으면 사용 버튼 생성
+        if (GameState.learnedSkills.length > 0) {
+            this.createSkillUseButtons(scene);
+        }
+    },
+    
+    // 던전 씬용 UI 생성 (Tab 제외)
+    createForDungeon(scene: Phaser.Scene, dungeonName: string, dungeonLevel: number): void {
+        const gameWidth = scene.scale.width;
+        const gameHeight = scene.scale.height;
+        const halfHeight = gameHeight * 0.5; // 화면 절반 지점
+        const uiAreaHeight = gameHeight * 0.5; // 아래쪽 절반 영역 높이
+        
+        // 던전 정보 표시 (화면 위쪽 중앙)
+        const stageFontSize = Responsive.getFontSize(scene, 32);
+        this.stageText = scene.add.text(gameWidth / 2, gameHeight * 0.08, `${dungeonName} Lv.${dungeonLevel}`, {
+            fontSize: stageFontSize,
+            color: '#ffffff',
+            fontFamily: 'Arial',
+            fontStyle: 'bold',
+            stroke: '#000000',
+            strokeThickness: 4
+        });
+        this.stageText.setOrigin(0.5);
+        
+        // 처치 카운트 표시는 던전에서는 사용하지 않으므로 null로 설정
+        this.killCountText = null;
+        
+        // 던전 타이머 표시 (화면 상단 중앙, 타이머가 설정된 경우에만 표시)
+        const timerFontSize = Responsive.getFontSize(scene, 24);
+        this.dungeonTimerText = scene.add.text(gameWidth / 2, gameHeight * 0.04, '', {
+            fontSize: timerFontSize,
+            color: '#ff4444',
+            fontFamily: 'Arial',
+            font: `bold ${timerFontSize} Arial`,
+            stroke: '#000000',
+            strokeThickness: 3
+        });
+        this.dungeonTimerText.setOrigin(0.5);
+        this.dungeonTimerText.setVisible(false); // 기본적으로 숨김
+        
+        // 골드 텍스트 (화면 상단 좌측)
+        const coinFontSize = Responsive.getFontSize(scene, 24);
+        this.coinText = scene.add.text(gameWidth * 0.03, halfHeight - gameHeight * 0.035, `코인: ${NumberFormatter.formatNumber(Math.floor(GameState.coins))}`, {
+            fontSize: coinFontSize,
+            color: '#ffd700',
+            fontFamily: 'Arial',
+            font: `600 ${coinFontSize} Arial`,
+            stroke: '#b8860b',
+            strokeThickness: 1
+        });
+        
+        // 보스 타이머 표시는 던전에서는 사용하지 않으므로 null로 설정
+        this.bossTimerText = null;
+        
+        // 구분선 (위쪽 절반과 아래쪽 절반 구분)
+        const dividerLine = scene.add.line(0, 0, 0, halfHeight, gameWidth, halfHeight, 0xffffff, 0.3);
+        dividerLine.setOrigin(0, 0);
+        dividerLine.setLineWidth(2);
+        
+        // UI 패널 배경 (아래쪽 절반 전체)
+        const uiPanel = scene.add.rectangle(gameWidth / 2, halfHeight + uiAreaHeight / 2, gameWidth * 0.98, uiAreaHeight * 0.95, 0x1a1a1a, 0.9);
+        uiPanel.setOrigin(0.5, 0.5);
+        
+        // Tab 관련 내용은 생성하지 않음
         
         // 초기 UI 업데이트
         this.update();
@@ -379,7 +449,10 @@ export const UIManager = {
         const descFontSize = Responsive.getFontSize(scene, 10);
         const nameTextWidth = nameText.width;
         const descX = nameX + nameTextWidth + itemSpacing;
-        const descText = scene.add.text(descX, centerY, dungeonConfig.description, {
+        // 현재 던전 단계 가져오기
+        const dungeonLevel = GameState.getDungeonLevel(dungeonConfig.id);
+        const descriptionText = `${dungeonConfig.description} (Lv.${dungeonLevel})`;
+        const descText = scene.add.text(descX, centerY, descriptionText, {
             fontSize: descFontSize,
             color: '#b0b0b0',
             fontFamily: 'Arial',
@@ -397,7 +470,7 @@ export const UIManager = {
         const statusFontSize = Responsive.getFontSize(scene, 12);
         const descTextWidth = descText.width;
         const statusX = descX + descTextWidth + itemSpacing;
-        const statusText = scene.add.text(statusX, centerY, 'Test', {
+        const statusText = scene.add.text(statusX, centerY, '무제한', {
             fontSize: statusFontSize,
             color: '#ffd700',
             fontFamily: 'Arial',
@@ -1618,7 +1691,7 @@ export const UIManager = {
             this.stageText.setText(GameState.getStageString());
         }
         
-        // 처치 카운트 표시 업데이트
+        // 처치 카운트 표시 업데이트 (던전 씬에서는 null일 수 있음)
         if (this.killCountText) {
             this.killCountText.setText(`다음 스테이지까지: ${GameState.killsInCurrentStage}/10 처치`);
         }
@@ -1639,6 +1712,29 @@ export const UIManager = {
                 this.bossTimerText.setText(`보스 타이머: ${seconds}초`);
             } else {
                 this.bossTimerText.setVisible(false);
+            }
+        }
+        
+        // 던전 타이머 업데이트
+        if (this.dungeonTimerText && scene) {
+            const dungeonTimer = (scene as any).dungeonTimer;
+            const dungeonConfig = (scene as any).getDungeonConfig ? (scene as any).getDungeonConfig() : null;
+            
+            // 타이머가 존재하고 활성화되어 있으면 표시
+            if (dungeonTimer && dungeonTimer.getElapsed !== undefined && dungeonConfig && dungeonConfig.timeLimit) {
+                // 타이머의 경과 시간을 직접 가져옴 (더 정확함)
+                const elapsed = dungeonTimer.getElapsed();
+                const remaining = Math.max(0, dungeonConfig.timeLimit * 1000 - elapsed);
+                const seconds = Math.floor(remaining / 1000);
+                
+                this.dungeonTimerText.setVisible(true);
+                
+                // 5초 이하면 빨간색, 아니면 주황색
+                const color = seconds <= 5 ? '#ff0000' : '#ff8800';
+                this.dungeonTimerText.setColor(color);
+                this.dungeonTimerText.setText(`던전 타이머: ${seconds}초`);
+            } else {
+                this.dungeonTimerText.setVisible(false);
             }
         }
         

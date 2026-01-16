@@ -153,6 +153,12 @@ export const Projectile = {
                 continue;
             }
             
+            // velocity가 0이면 풀로 반환 (멈춘 투사체 제거)
+            if (projectile.velocityX === 0 && projectile.velocityY === 0) {
+                this.returnToPool(projectile);
+                continue;
+            }
+            
             // 위치 업데이트
             projectile.x += projectile.velocityX * deltaSeconds;
             projectile.y += projectile.velocityY * deltaSeconds;

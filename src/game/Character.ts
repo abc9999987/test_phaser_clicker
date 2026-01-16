@@ -44,7 +44,35 @@ export const Character = {
     
     // 투사체 발사
     fireProjectile(scene: Phaser.Scene, type: 'manual' | 'auto' = 'manual'): void {
-        if (!this.char || !Enemy.enemy) return;
+        if (!this.char) return;
+        
+        // 타겟 확인 (일반 씬: Enemy, 던전 씬: DungeonBoss)
+        let targetX: number;
+        let targetY: number;
+        
+        if (Enemy.enemy) {
+            // 일반 씬
+            targetX = Enemy.enemy.x;
+            targetY = Enemy.enemy.y;
+        } else {
+            // 던전 씬인지 확인 (씬 키로 확인)
+            const isDungeonScene = scene.scene.key !== 'GameScene';
+            if (isDungeonScene) {
+                // 던전 씬: 씬에서 DungeonBoss 참조 가져오기 (씬이 DungeonBoss를 import하고 있음)
+                // 순환 참조 방지를 위해 씬을 통해 접근
+                const dungeonBossRef = (scene as any).DungeonBoss;
+                if (dungeonBossRef && dungeonBossRef.boss) {
+                    targetX = dungeonBossRef.boss.x;
+                    targetY = dungeonBossRef.boss.y;
+                } else {
+                    // 타겟이 없으면 발사하지 않음
+                    return;
+                }
+            } else {
+                // 타겟이 없으면 발사하지 않음
+                return;
+            }
+        }
         
         // 발사 위치에 랜덤 오프셋 추가 (±10 픽셀 범위)
         const randomOffsetX = (Math.random() - 0.5) * 20; // -10 ~ +10
@@ -57,8 +85,8 @@ export const Character = {
         const targetOffsetX = (Math.random() - 0.5) * 15; // -7.5 ~ +7.5
         const targetOffsetY = (Math.random() - 0.5) * 15; // -7.5 ~ +7.5
         
-        const targetX = Enemy.enemy.x + targetOffsetX;
-        const targetY = Enemy.enemy.y + targetOffsetY;
+        targetX = targetX + targetOffsetX;
+        targetY = targetY + targetOffsetY;
         
         // 투사체 생성 (치명타 계산은 Projectile.create() 내부에서 처리됨)
         Projectile.create(

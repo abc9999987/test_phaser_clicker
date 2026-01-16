@@ -16,6 +16,7 @@ interface SaveData {
     learnedSkills: string[];
     spPurchaseCount: number;
     skillAutoUse?: Record<string, boolean>; // 스킬 자동 사용 상태
+    dungeonLevels?: Record<string, number>; // 던전 단계 (던전 ID -> 단계)
 }
 
 export const GameState = {
@@ -33,6 +34,7 @@ export const GameState = {
     spPurchaseCount: 0,  // SP 구매 횟수 (최대 5)
     skillAutoUse: {} as Record<string, boolean>,  // 스킬 자동 사용 상태 (skillId -> boolean)
     activeBuffs: {} as Record<string, { startTime: number; endTime: number }>,  // 활성 버프 (skillId -> { startTime, endTime })
+    dungeonLevels: {} as Record<string, number>,  // 던전 단계 (던전 ID -> 단계)
     storageKey: 'test_clicker_save', // localStorage 키
     saveTimer: null as number | null,
     
@@ -53,7 +55,8 @@ export const GameState = {
                 sp: this.sp,
                 learnedSkills: this.learnedSkills,
                 spPurchaseCount: this.spPurchaseCount,
-                skillAutoUse: this.skillAutoUse
+                skillAutoUse: this.skillAutoUse,
+                dungeonLevels: this.dungeonLevels
             };
             localStorage.setItem(this.storageKey, JSON.stringify(saveData));
             console.log('Game state saved');
@@ -81,6 +84,7 @@ export const GameState = {
                 this.learnedSkills = data.learnedSkills || [];
                 this.spPurchaseCount = data.spPurchaseCount || 0;
                 this.skillAutoUse = data.skillAutoUse || {};
+                this.dungeonLevels = data.dungeonLevels || {};
                 console.log('Game state loaded');
                 return true;
             }
@@ -468,5 +472,19 @@ export const GameState = {
         
         const remaining = (buff.endTime - currentTime) / 1000; // 밀리초를 초로 변환
         return remaining > 0 ? remaining : 0;
+    },
+    
+    // 던전 단계 가져오기
+    getDungeonLevel(dungeonId: string): number {
+        return this.dungeonLevels[dungeonId] || 1; // 기본값 1
+    },
+    
+    // 던전 단계 증가
+    incrementDungeonLevel(dungeonId: string): void {
+        if (!this.dungeonLevels[dungeonId]) {
+            this.dungeonLevels[dungeonId] = 1;
+        }
+        this.dungeonLevels[dungeonId]++;
+        this.save(); // 자동 저장
     }
 };
