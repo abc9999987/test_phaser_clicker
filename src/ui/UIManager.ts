@@ -583,7 +583,7 @@ export const UIManager = {
         let descTextContent = `×${skillConfig.skillPower} | ${skillConfig.cooldown}초`;
         if (skillConfig.skillType === 2 && skillConfig.duration) { // BUFF 타입
             descTextContent = `×${skillConfig.skillPower} | ${skillConfig.duration}초 지속 | ${skillConfig.cooldown}초 쿨타임`;
-            if (skillConfig.id === 'buff_k_fish_bread_tank') {
+            if (skillConfig.id === 'buff_anchovy_shot') {
                 descTextContent = `투사체 ×${skillConfig.skillPower}배 | ${skillConfig.duration}초 지속 | ${skillConfig.cooldown}초 쿨타임`;
             }
         }
@@ -805,18 +805,14 @@ export const UIManager = {
                 labelText.setOrigin(0.5);
                 labelText.setDepth(16);
                 // 아이콘 배열에는 추가하지 않음 (파괴 시에도 문제 없음)
-            } else if (skillConfig.id === 'buff_k_fish_bread_tank') {
-                // 붕어빵탱크 스킬: "Tank" 텍스트 표시
-                const labelFontSize = Responsive.getFontSize(scene, 12);
-                const labelText = scene.add.text(buttonX, buttonY, 'Tank', {
-                    fontSize: labelFontSize,
-                    color: '#ffffff',
-                    fontFamily: 'Arial',
-                    font: `600 ${labelFontSize} Arial`
-                });
-                labelText.setOrigin(0.5);
-                labelText.setDepth(16);
-                // 아이콘 배열에는 추가하지 않음 (파괴 시에도 문제 없음)
+            } else if (skillConfig.id === 'buff_anchovy_shot') {
+                // 멸치샷 스킬: wp2.png 이미지 표시
+                const iconSize = buttonRadius * 1.2; // 원보다 약간 작게
+                const skillIcon = scene.add.image(buttonX, buttonY, 'weapon2');
+                skillIcon.setDisplaySize(iconSize, iconSize);
+                skillIcon.setOrigin(0.5, 0.5);
+                skillIcon.setDepth(16);
+                this.skillUseButtonIcons.push(skillIcon);
             } else {
                 // 붕어빵 아이콘 이미지 (원 안에 배치)
                 const iconSize = buttonRadius * 1.2; // 원보다 약간 작게

@@ -35,8 +35,8 @@ export const SkillConfigs: SkillConfig[] = [
         spCost: 1   
     },
     {
-        id: 'buff_k_fish_bread_tank',
-        name: '붕어빵탱크',
+        id: 'buff_anchovy_shot',
+        name: '멸치샷',
         skillType: SkillType.BUFF,
         cooldown: 20,
         duration: 10,
