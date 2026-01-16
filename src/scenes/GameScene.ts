@@ -217,7 +217,6 @@ export class GameScene extends Phaser.Scene {
                 
                 // 버프 만료 후 쿨타임 적용
                 SkillManager.lastUsedAt[skillId] = now;
-                console.log(`버프 만료: ${skillId}, 쿨타임 시작`);
             }
         }
     }
