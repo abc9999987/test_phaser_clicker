@@ -8,7 +8,7 @@ import { DungeonConfig } from '../config/dungeonConfig';
 
 // 던전 보스 관리
 export const DungeonBoss = {
-    boss: null as Phaser.GameObjects.Image | null,
+    boss: null as Phaser.GameObjects.Image | Phaser.GameObjects.Sprite | null,
     hp: 100,
     maxHp: 100,
     hpBar: null as Phaser.GameObjects.Graphics | null,
@@ -17,25 +17,54 @@ export const DungeonBoss = {
     dungeonLevel: 1,
     
     // 던전 보스 생성
-    create(scene: Phaser.Scene, dungeonConfig: DungeonConfig, dungeonLevel: number): Phaser.GameObjects.Image {
+    create(scene: Phaser.Scene, dungeonConfig: DungeonConfig, dungeonLevel: number): Phaser.GameObjects.Image | Phaser.GameObjects.Sprite {
         const gameWidth = scene.scale.width;
         const gameHeight = scene.scale.height;
         const scale = Responsive.getScale(scene);
         
         // 보스 위치 (위쪽 절반 영역 중앙)
-        const x = gameWidth * 0.15;
-        const y = gameHeight * 0.33;
+        let x = gameWidth * 0.15;
+        let y = gameHeight * 0.33;
         
-        this.boss = scene.add.image(x, y, 'enemy');
         this.dungeonConfig = dungeonConfig;
         this.dungeonLevel = dungeonLevel;
         
-        // 보스는 항상 크기 2배
+        // 보스 스케일 계산
         const baseScale = 0.75 * scale.uniform;
-        this.boss.setScale(baseScale * 2);
         
-        // 보스 색상 변경 (빨간색 틴트)
-        this.boss.setTint(0xff4444);
+        // 골드 던전 보스인 경우 애니메이션 사용
+        if (dungeonConfig.id === 'gold_dungeon') {
+            y = gameHeight * 0.29;
+            // 골드 보스 애니메이션 생성 (아직 생성되지 않았으면)
+            if (!scene.anims.exists('gold_boss_anim')) {
+                scene.anims.create({
+                    key: 'gold_boss_anim',
+                    frames: [
+                        { key: 'gold_boss_1' },
+                        { key: 'gold_boss_2' },
+                        { key: 'gold_boss_4' }
+                    ],
+                    frameRate: 4, // 초당 8프레임
+                    repeat: -1 // 무한 반복
+                });
+            }
+            
+            // 스프라이트로 보스 생성
+            const goldBoss = scene.add.sprite(x, y, 'gold_boss_1') as Phaser.GameObjects.Sprite;
+            goldBoss.play('gold_boss_anim');
+            
+            // 골드 던전 보스는 크기를 1/4로 (기본 2배의 1/2 = 1/4)
+            goldBoss.setScale(baseScale * 0.5);
+            this.boss = goldBoss;
+        } else {
+            // 다른 던전은 기본 이미지 사용
+            this.boss = scene.add.image(x, y, 'enemy');
+            // 보스 색상 변경 (빨간색 틴트)
+            this.boss.setTint(0xff4444);
+            
+            // 다른 던전 보스는 크기 2배
+            this.boss.setScale(baseScale * 2);
+        }
         
         // 던전 단계에 따른 HP 설정
         if (dungeonConfig.getBossHp) {
@@ -138,13 +167,13 @@ export const DungeonBoss = {
         }
 
         // 보스가 맞았을 때 효과 (빨간색 깜빡임)
-        scene.tweens.add({
-            targets: this.boss,
-            alpha: 0.5,
-            duration: 100,
-            yoyo: true,
-            ease: 'Power2'
-        });
+        // scene.tweens.add({
+        //     targets: this.boss,
+        //     alpha: 0.5,
+        //     duration: 100,
+        //     yoyo: true,
+        //     ease: 'Power2'
+        // });
 
         // 데미지 파티클 효과
         Effects.createDamageParticle(scene, this.boss.x, this.boss.y, damage, isSkill, isCrit);

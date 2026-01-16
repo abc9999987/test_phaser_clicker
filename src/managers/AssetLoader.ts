@@ -21,6 +21,12 @@ export const AssetLoader = {
         scene.load.image('buff_1_effect_1', 'assets/effect/buff_1_effect_1.png');
         scene.load.image('buff_1_effect_2', 'assets/effect/buff_1_effect_2.png');
         scene.load.image('buff_1_effect_3', 'assets/effect/buff_1_effect_3.png');
+        
+        // 골드 던전 보스 애니메이션 프레임 로드
+        scene.load.image('gold_boss_1', 'assets/enemy/gold_boss_1.png');
+        scene.load.image('gold_boss_2', 'assets/enemy/gold_boss_2.png');
+        scene.load.image('gold_boss_3', 'assets/enemy/gold_boss_3.png');
+        scene.load.image('gold_boss_4', 'assets/enemy/gold_boss_4.png');
     },
     
     // 스프라이트 애니메이션 로드
