@@ -116,7 +116,7 @@ export abstract class BaseDungeonScene extends Phaser.Scene {
     
     // 메인 씬으로 돌아가기
     protected returnToMainScene(): void {
-        this.scene.start('GameScene');
+        this.scene.start('GameScene', { selectDungeonTab: true });
     }
     
     // 던전별 에셋 로드 (각 씬에서 구현)

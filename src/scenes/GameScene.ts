@@ -19,6 +19,14 @@ export class GameScene extends Phaser.Scene {
         super({ key: 'GameScene' });
     }
     
+    init(data?: { selectDungeonTab?: boolean }): void {
+        // 던전 씬에서 돌아왔는지 확인
+        if (data?.selectDungeonTab) {
+            // 던전 탭 인덱스는 3 (Stats=0, Upgrade=1, Skill=2, 던전=3, Lock=4)
+            (this as any).shouldSelectDungeonTab = true;
+        }
+    }
+    
     // 스킬 사용 (UIManager에서 호출)
     useSkill(skillId: string): void {
         const used = SkillManager.tryUseSkill(this, skillId);
@@ -81,6 +89,12 @@ export class GameScene extends Phaser.Scene {
         
         // UI 업데이트 (로드된 상태 반영)
         UIManager.update(this);
+        
+        // 던전 씬에서 돌아왔다면 던전 탭 선택
+        if ((this as any).shouldSelectDungeonTab) {
+            UIManager.switchTab(3); // 던전 탭 인덱스는 3
+            (this as any).shouldSelectDungeonTab = false;
+        }
         
         // 주기적 자동 저장 시작
         this.startAutoSave();

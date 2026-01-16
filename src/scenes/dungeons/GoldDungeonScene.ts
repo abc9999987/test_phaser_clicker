@@ -246,8 +246,8 @@ export class GoldDungeonScene extends BaseDungeonScene {
             ease: 'Power2',
             onComplete: () => {
                 failText.destroy();
-                // 메인 씬으로 복귀
-                this.scene.start('GameScene');
+                // 메인 씬으로 복귀 (던전 탭 선택)
+                this.scene.start('GameScene', { selectDungeonTab: true });
             }
         });
     }
@@ -261,8 +261,8 @@ export class GoldDungeonScene extends BaseDungeonScene {
             this.dungeonTimerStartTime = undefined;
         }
         
-        // 게임 씬으로 복귀
-        this.scene.start('GameScene');
+        // 게임 씬으로 복귀 (던전 탭 선택)
+        this.scene.start('GameScene', { selectDungeonTab: true });
     }
     
     // 스킬 사용 (UIManager에서 호출)
