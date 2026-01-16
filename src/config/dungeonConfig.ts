@@ -57,7 +57,7 @@ export const DungeonConfigs: DungeonConfig[] = [
         },
         // 보스 보상 계산 (단계당 1.2배 증가)
         getBossReward: (level: number) => {
-            return Math.floor(1000 * Math.pow(1.5, level - 1)) * 50;
+            return Math.floor(1000 * Math.pow(1.5, level - 1)) * 100;
         },
         timeLimit: 10 // 10초 내에 보스 처치 필요
         // backgroundImageKey 사용 예시:
