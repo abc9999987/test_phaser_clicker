@@ -1,4 +1,6 @@
 // 게임 상태 핵심 데이터 및 저장/로드 관리
+import { StorageKeys } from '../../config/StorageKeys';
+
 export interface SaveData {
     coins: number;
     attackPower: number;
@@ -37,7 +39,6 @@ export const GameStateCore = {
     activeBuffs: {} as Record<string, { startTime: number; endTime: number }>,  // 활성 버프 (skillId -> { startTime, endTime })
     dungeonLevels: {} as Record<string, number>,  // 던전 단계 (던전 ID -> 단계)
     skillLevels: {} as Record<string, number>,  // 스킬 레벨 (스킬 ID -> 레벨)
-    storageKey: 'test_clicker_save', // localStorage 키
     saveTimer: null as number | null,
     
     // 게임 상태 저장
@@ -71,7 +72,7 @@ export const GameStateCore = {
     // 게임 상태 로드
     load(): boolean {
         try {
-            const savedData = localStorage.getItem(this.storageKey);
+            const savedData = localStorage.getItem(StorageKeys.GAME_SAVE);
             if (savedData) {
                 const data: SaveData = JSON.parse(savedData);
                 this.coins = data.coins || 0;
@@ -101,7 +102,7 @@ export const GameStateCore = {
     // 저장 데이터 삭제 (초기화)
     clear(): void {
         try {
-            localStorage.removeItem(this.storageKey);
+            localStorage.removeItem(StorageKeys.GAME_SAVE);
             console.log('Game state cleared');
         } catch (error) {
             console.error('Failed to clear game state:', error);

@@ -8,6 +8,7 @@ import { UpgradeTab, UpgradeTabState } from './tabs/UpgradeTab';
 import { SkillTab, SkillTabState } from './tabs/SkillTab';
 import { DungeonTab, DungeonTabState } from './tabs/DungeonTab';
 import { LockTab } from './tabs/LockTab';
+import { MenuButtonConfigs } from './menu/MenuButtonConfig';
 
 // UI 관리자
 export const UIManager = {
@@ -18,7 +19,16 @@ export const UIManager = {
         killCountText: null as Phaser.GameObjects.Text | null,
         bossTimerText: null as Phaser.GameObjects.Text | null,
         dungeonTimerText: null as Phaser.GameObjects.Text | null,
-        activeTabIndex: 0
+        activeTabIndex: 0,
+        menuPopupState: {
+            menuButton: null,
+            popupOverlay: null,
+            popupContainer: null,
+            closeButton: null,
+            isOpen: false,
+            popupButtons: [],
+            buttonConfigs: []
+        }
     } as CommonUIState,
     
     tabSystemState: {
@@ -103,6 +113,14 @@ export const UIManager = {
         
         // 스킬 사용 버튼 생성 (습득한 스킬이 있는 경우)
         this.createSkillUseButtons(scene);
+        
+        // 메뉴 팝업 버튼 설정
+        this.setupMenuButtons(scene);
+    },
+    
+    // 메뉴 팝업 버튼 설정
+    setupMenuButtons(_scene: Phaser.Scene): void {
+        this.commonState.menuPopupState.buttonConfigs = MenuButtonConfigs;
     },
     
     // 던전 씬용 UI 생성

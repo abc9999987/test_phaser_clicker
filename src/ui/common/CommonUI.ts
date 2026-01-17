@@ -3,6 +3,7 @@ import Phaser from 'phaser';
 import { Responsive } from '../../utils/Responsive';
 import { GameState } from '../../managers/GameState';
 import { NumberFormatter } from '../../utils/NumberFormatter';
+import { MenuPopup, MenuPopupState } from '../menu/MenuPopup';
 
 // 공통 UI 상태 인터페이스
 export interface CommonUIState {
@@ -12,6 +13,7 @@ export interface CommonUIState {
     bossTimerText: Phaser.GameObjects.Text | null;
     dungeonTimerText: Phaser.GameObjects.Text | null;
     activeTabIndex: number;
+    menuPopupState: MenuPopupState;
 }
 
 // 공통 UI 생성 및 업데이트
@@ -79,6 +81,9 @@ export const CommonUI = {
         const uiAreaHeight = gameHeight * 0.5;
         const uiPanel = scene.add.rectangle(gameWidth / 2, halfHeight + uiAreaHeight / 2, gameWidth * 0.98, uiAreaHeight * 0.95, 0x1a1a1a, 0.9);
         uiPanel.setOrigin(0.5, 0.5);
+        
+        // 메뉴 버튼 생성
+        MenuPopup.createMenuButton(scene, state.menuPopupState);
     },
     
     // 공통 UI 요소 생성 (던전 씬용)
