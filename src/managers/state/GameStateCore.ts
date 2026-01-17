@@ -2,7 +2,7 @@
 import { StorageKeys } from '../../config/StorageKeys';
 
 export interface SaveData {
-    uuid: string | null;
+    uuid?: string | null;
     coins: number;
     attackPower: number;
     attackSpeed: number;
@@ -43,28 +43,34 @@ export const GameStateCore = {
     saveTimer: null as number | null,
     uuid: null as string | null,
     
+    // 현재 게임 상태를 SaveData 객체로 반환 (저장하지 않음)
+    getSaveData(): SaveData {
+        return {
+            coins: this.coins,
+            attackPower: this.attackPower,
+            attackSpeed: this.attackSpeed,
+            critChance: this.critChance,
+            critDamage: this.critDamage,
+            clickCount: this.clickCount,
+            chapter: this.chapter,
+            stage: this.stage,
+            killsInCurrentStage: this.killsInCurrentStage,
+            sp: this.sp,
+            learnedSkills: this.learnedSkills,
+            spPurchaseCount: this.spPurchaseCount,
+            skillAutoUse: this.skillAutoUse,
+            dungeonLevels: this.dungeonLevels,
+            skillLevels: this.skillLevels,
+            saveTime: Date.now(),
+            // uuid: this.uuid, // uuid는 별도로 보내기 때문에 여기에 넣지 않음
+        };
+    },
+    
     // 게임 상태 저장
     save(): void {
         try {
-            const saveData: SaveData = {
-                coins: this.coins,
-                attackPower: this.attackPower,
-                attackSpeed: this.attackSpeed,
-                critChance: this.critChance,
-                critDamage: this.critDamage,
-                clickCount: this.clickCount,
-                chapter: this.chapter,
-                stage: this.stage,
-                killsInCurrentStage: this.killsInCurrentStage,
-                saveTime: Date.now(),
-                sp: this.sp,
-                learnedSkills: this.learnedSkills,
-                spPurchaseCount: this.spPurchaseCount,
-                skillAutoUse: this.skillAutoUse,
-                dungeonLevels: this.dungeonLevels,
-                skillLevels: this.skillLevels,
-                uuid: this.uuid,
-            };
+            const saveData = this.getSaveData();
+            saveData.uuid = this.uuid; // uuid는 별도로 보내기 때문에 여기에 넣음
             localStorage.setItem(StorageKeys.GAME_SAVE, JSON.stringify(saveData));
             console.log('Game state saved');
         } catch (error) {
@@ -124,7 +130,8 @@ export const GameStateCore = {
     },
     
     // SaveData로부터 게임 상태 업데이트 (로그인 시 서버 데이터 동기화)
-    updateFromSaveData(saveData: SaveData): void {
+    // 없는 값은 제거되므로 꼭 Login으로 받은 Data에 대해서만 사용해야 함.
+    updateFromLoginSaveData(saveData: SaveData): void {
         try {
             this.coins = saveData.coins ?? 0;
             this.attackPower = saveData.attackPower ?? 1;

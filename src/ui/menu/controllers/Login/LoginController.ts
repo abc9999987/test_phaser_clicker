@@ -86,8 +86,8 @@ export const LoginController = {
                         if (response.data?.uuid) {
                             response.data.playData.uuid = response.data.uuid;
                         }
-                        
-                        GameStateCore.updateFromSaveData(response.data.playData);
+
+                        GameStateCore.updateFromLoginSaveData(response.data.playData);
                         // 로컬스토리지에 저장
                         GameStateCore.save();
                     } catch (updateError) {

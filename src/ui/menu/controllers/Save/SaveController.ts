@@ -1,8 +1,7 @@
 // 저장 컨트롤러
 import Phaser from 'phaser';
 import { ApiClient, ApiError } from '../../../../api/ApiClient';
-import { GameState } from '../../../../managers/GameState';
-import { SaveData } from '../../../../managers/state/GameStateCore';
+import { GameStateCore, SaveData } from '../../../../managers/state/GameStateCore';
 import { StorageKeys } from '../../../../config/StorageKeys';
 import { SaveSuccessPopup } from './SaveSuccessPopup';
 
@@ -38,27 +37,9 @@ export const SaveController = {
     // 저장 API 호출
     async performSave(scene: Phaser.Scene): Promise<void> {
         try {
-            // localStorage에서 직접 모든 게임 데이터 가져오기
-            const savedDataString = localStorage.getItem(StorageKeys.GAME_SAVE);
-            const saveTime = Date.now();
-            
-            let gameData: SaveData;
-            
-            if (savedDataString) {
-                // localStorage에 저장된 데이터가 있으면 파싱
-                try {
-                    gameData = JSON.parse(savedDataString) as SaveData;
-                    // saveTime은 현재 시간으로 업데이트
-                    gameData.saveTime = saveTime;
-                } catch (parseError) {
-                    console.error('Failed to parse saved data, using current state:', parseError);
-                    // 파싱 실패 시 현재 GameState에서 수집
-                    gameData = SaveController.collectCurrentGameData();
-                }
-            } else {
-                // localStorage에 데이터가 없으면 현재 GameState에서 수집
-                gameData = SaveController.collectCurrentGameData();
-            }
+            // GameStateCore에서 현재 게임 상태 데이터 가져오기
+            const gameData = GameStateCore.getSaveData();
+            const saveTime = gameData.saveTime;
             
             const requestData: SaveRequest = {
                 gameData: gameData
@@ -95,27 +76,5 @@ export const SaveController = {
                 console.error('Unknown error:', error);
             }
         }
-    },
-    
-    // 현재 GameState에서 모든 데이터 수집
-    collectCurrentGameData(): SaveData {
-        return {
-            coins: GameState.coins,
-            attackPower: GameState.attackPower,
-            attackSpeed: GameState.attackSpeed,
-            critChance: GameState.critChance,
-            critDamage: GameState.critDamage,
-            clickCount: GameState.clickCount,
-            chapter: GameState.chapter,
-            stage: GameState.stage,
-            killsInCurrentStage: GameState.killsInCurrentStage,
-            saveTime: Date.now(),
-            sp: GameState.sp,
-            learnedSkills: GameState.learnedSkills,
-            spPurchaseCount: GameState.spPurchaseCount,
-            skillAutoUse: GameState.skillAutoUse,
-            dungeonLevels: GameState.dungeonLevels,
-            skillLevels: GameState.skillLevels
-        };
     }
 };
