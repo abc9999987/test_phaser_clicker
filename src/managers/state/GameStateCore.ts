@@ -2,6 +2,7 @@
 import { StorageKeys } from '../../config/StorageKeys';
 
 export interface SaveData {
+    uuid: string | null;
     coins: number;
     attackPower: number;
     attackSpeed: number;
@@ -40,6 +41,7 @@ export const GameStateCore = {
     dungeonLevels: {} as Record<string, number>,  // 던전 단계 (던전 ID -> 단계)
     skillLevels: {} as Record<string, number>,  // 스킬 레벨 (스킬 ID -> 레벨)
     saveTimer: null as number | null,
+    uuid: null as string | null,
     
     // 게임 상태 저장
     save(): void {
@@ -60,7 +62,8 @@ export const GameStateCore = {
                 spPurchaseCount: this.spPurchaseCount,
                 skillAutoUse: this.skillAutoUse,
                 dungeonLevels: this.dungeonLevels,
-                skillLevels: this.skillLevels
+                skillLevels: this.skillLevels,
+                uuid: this.uuid,
             };
             localStorage.setItem(StorageKeys.GAME_SAVE, JSON.stringify(saveData));
             console.log('Game state saved');
@@ -90,6 +93,7 @@ export const GameStateCore = {
                 this.skillAutoUse = data.skillAutoUse || {};
                 this.dungeonLevels = data.dungeonLevels || {};
                 this.skillLevels = data.skillLevels || {};
+                this.uuid = data.uuid || null;
                 console.log('Game state loaded');
                 return true;
             }
@@ -137,6 +141,7 @@ export const GameStateCore = {
             this.skillAutoUse = saveData.skillAutoUse ?? {};
             this.dungeonLevels = saveData.dungeonLevels ?? {};
             this.skillLevels = saveData.skillLevels ?? {};
+            this.uuid = saveData.uuid ?? null;
             console.log('Game state updated from server data');
         } catch (error) {
             console.error('Failed to update game state from save data:', error);

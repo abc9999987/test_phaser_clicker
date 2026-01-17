@@ -13,6 +13,7 @@ interface LoginResponse {
     message?: string;
     data?: {
         playData: SaveData;
+        uuid: string;
     };
     token?: string;
     user?: {
@@ -82,6 +83,10 @@ export const LoginController = {
                 // 서버에서 받은 게임 데이터로 GameState 업데이트
                 if (response.data?.playData) {
                     try {
+                        if (response.data?.uuid) {
+                            response.data.playData.uuid = response.data.uuid;
+                        }
+                        
                         GameStateCore.updateFromSaveData(response.data.playData);
                         // 로컬스토리지에 저장
                         GameStateCore.save();
