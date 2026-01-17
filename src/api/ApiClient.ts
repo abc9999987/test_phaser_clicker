@@ -1,3 +1,7 @@
+import { Network } from "../config/networkConfig";
+import Phaser from 'phaser';
+import { LoadingIndicator, LoadingIndicatorState } from '../ui/common/LoadingIndicator';
+
 // 공통 API 클라이언트
 export class ApiError extends Error {
     status?: number;
@@ -11,6 +15,15 @@ export class ApiError extends Error {
     }
 }
 
+// 전역 로딩 인디케이터 상태 (싱글톤)
+const loadingIndicatorState: LoadingIndicatorState = {
+    overlay: null,
+    spinnerContainer: null,
+    spinnerGraphics: null,
+    spinnerTween: null,
+    isVisible: false
+};
+
 export const ApiClient = {
     // POST 요청
     async post<T>(
@@ -19,6 +32,7 @@ export const ApiClient = {
         options?: {
             timeout?: number;
             headers?: Record<string, string>;
+            scene?: Phaser.Scene; // 로딩 인디케이터를 표시할 씬
         }
     ): Promise<T> {
         const timeout = options?.timeout || 10000; // 기본 10초
@@ -29,9 +43,15 @@ export const ApiClient = {
 
         const controller = new AbortController();
         const timeoutId = setTimeout(() => controller.abort(), timeout);
-
+        const requestUrl = `${Network.URL}${url}`;
+        
+        // 로딩 인디케이터 표시 (scene이 제공된 경우)
+        if (options?.scene) {
+            LoadingIndicator.show(options.scene, loadingIndicatorState);
+        }
+        
         try {
-            const response = await fetch(url, {
+            const response = await fetch(requestUrl, {
                 method: 'POST',
                 headers: headers,
                 body: JSON.stringify(data),
@@ -52,9 +72,21 @@ export const ApiClient = {
             }
 
             const result = await response.json();
+            console.log(result);
+            
+            // 로딩 인디케이터 숨기기
+            if (options?.scene) {
+                LoadingIndicator.hide(options.scene, loadingIndicatorState);
+            }
+            
             return result as T;
         } catch (error) {
             clearTimeout(timeoutId);
+            
+            // 에러 발생 시에도 로딩 인디케이터 숨기기
+            if (options?.scene) {
+                LoadingIndicator.hide(options.scene, loadingIndicatorState);
+            }
             
             if (error instanceof ApiError) {
                 throw error;

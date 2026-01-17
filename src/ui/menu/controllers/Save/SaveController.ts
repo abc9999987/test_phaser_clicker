@@ -19,7 +19,7 @@ interface SaveRequest {
 }
 
 // API 엔드포인트 URL (환경에 따라 변경 가능)
-const SAVE_API_URL = 'https://api.example.com/game/save'; // TODO: 실제 API URL로 변경
+const SAVE_API_URL = '/save'; // TODO: 실제 API URL로 변경
 
 // 저장 성공 팝업 상태 (싱글톤)
 const saveSuccessPopupState = {
@@ -73,7 +73,8 @@ export const SaveController = {
                 requestData,
                 {
                     timeout: 10000, // 10초 타임아웃
-                    headers: headers
+                    headers: headers,
+                    scene: scene // 로딩 인디케이터 표시를 위한 scene 전달
                 }
             );
             

@@ -62,7 +62,7 @@ export const GameStateCore = {
                 dungeonLevels: this.dungeonLevels,
                 skillLevels: this.skillLevels
             };
-            localStorage.setItem(this.storageKey, JSON.stringify(saveData));
+            localStorage.setItem(StorageKeys.GAME_SAVE, JSON.stringify(saveData));
             console.log('Game state saved');
         } catch (error) {
             console.error('Failed to save game state:', error);
@@ -117,5 +117,29 @@ export const GameStateCore = {
         this.saveTimer = window.setTimeout(() => {
             this.save();
         }, 1000); // 1초 후 저장
+    },
+    
+    // SaveData로부터 게임 상태 업데이트 (로그인 시 서버 데이터 동기화)
+    updateFromSaveData(saveData: SaveData): void {
+        try {
+            this.coins = saveData.coins ?? 0;
+            this.attackPower = saveData.attackPower ?? 1;
+            this.attackSpeed = saveData.attackSpeed ?? 0;
+            this.critChance = saveData.critChance ?? 0;
+            this.critDamage = saveData.critDamage ?? 0;
+            this.clickCount = saveData.clickCount ?? 0;
+            this.chapter = saveData.chapter ?? 1;
+            this.stage = saveData.stage ?? 1;
+            this.killsInCurrentStage = saveData.killsInCurrentStage ?? 0;
+            this.sp = saveData.sp ?? 0;
+            this.learnedSkills = saveData.learnedSkills ?? [];
+            this.spPurchaseCount = saveData.spPurchaseCount ?? 0;
+            this.skillAutoUse = saveData.skillAutoUse ?? {};
+            this.dungeonLevels = saveData.dungeonLevels ?? {};
+            this.skillLevels = saveData.skillLevels ?? {};
+            console.log('Game state updated from server data');
+        } catch (error) {
+            console.error('Failed to update game state from save data:', error);
+        }
     }
 };

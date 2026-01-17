@@ -3,11 +3,17 @@ import Phaser from 'phaser';
 import { LoginPopup, LoginPopupState } from './LoginPopup';
 import { ApiClient, ApiError } from '../../../../api/ApiClient';
 import { StorageKeys } from '../../../../config/StorageKeys';
+import { SaveData } from '../../../../managers/state/GameStateCore';
+import { GameStateCore } from '../../../../managers/state/GameStateCore';
+import { LoginInputField } from './components/LoginInputField';
 
 // 로그인 API 응답 인터페이스
 interface LoginResponse {
-    success: boolean;
+    status?: number;
     message?: string;
+    data?: {
+        playData: SaveData;
+    };
     token?: string;
     user?: {
         id: string;
@@ -17,7 +23,7 @@ interface LoginResponse {
 
 // 로그인 API 요청 인터페이스
 interface LoginRequest {
-    id: string;
+    userId: string;
     password: string;
 }
 
@@ -31,7 +37,7 @@ const loginPopupState: LoginPopupState = {
 };
 
 // API 엔드포인트 URL (환경에 따라 변경 가능)
-const LOGIN_API_URL = 'https://api.example.com/auth/login'; // TODO: 실제 API URL로 변경
+const LOGIN_API_URL = '/login'; // TODO: 실제 API URL로 변경
 
 export const LoginController = {
     // 로그인 버튼 클릭 시 동작
@@ -41,7 +47,7 @@ export const LoginController = {
             loginPopupState,
             async (id: string, password: string) => {
                 // 로그인 API 호출
-                await LoginController.performLogin(id, password);
+                await LoginController.performLogin(scene, id, password);
             },
             () => {
                 // 취소 처리
@@ -51,10 +57,10 @@ export const LoginController = {
     },
     
     // 로그인 API 호출
-    async performLogin(id: string, password: string): Promise<void> {
+    async performLogin(scene: Phaser.Scene, id: string, password: string): Promise<void> {
         try {
             const requestData: LoginRequest = {
-                id: id,
+                userId: id,
                 password: password
             };
             
@@ -62,17 +68,50 @@ export const LoginController = {
                 LOGIN_API_URL,
                 requestData,
                 {
-                    timeout: 10000 // 10초 타임아웃
+                    timeout: 30000, // 30초 타임아웃
+                    scene: scene // 로딩 인디케이터 표시를 위한 scene 전달
                 }
             );
             
-            if (response.success) {
-                console.log('Login successful:', response);
-                // TODO: 토큰 저장 (localStorage 등)
+            if (response.status === 200) {
+                // 토큰 저장
                 if (response.token) {
                     localStorage.setItem(StorageKeys.AUTH_TOKEN, response.token);
                 }
-                // TODO: 성공 처리 (UI 업데이트 등)
+                
+                // 서버에서 받은 게임 데이터로 GameState 업데이트
+                if (response.data?.playData) {
+                    try {
+                        GameStateCore.updateFromSaveData(response.data.playData);
+                        // 로컬스토리지에 저장
+                        GameStateCore.save();
+                    } catch (updateError) {
+                        console.error('Failed to update game state from server data:', updateError);
+                    }
+                }
+                
+                // 로그인 팝업 닫기 (애니메이션 없이 즉시 닫기)
+                LoginInputField.removeHTMLInput(loginPopupState.idInput);
+                LoginInputField.removeHTMLInput(loginPopupState.passwordInput);
+                
+                if (loginPopupState.popupContainer) {
+                    loginPopupState.popupContainer.destroy();
+                    loginPopupState.popupContainer = null;
+                }
+                if (loginPopupState.popupOverlay) {
+                    loginPopupState.popupOverlay.destroy();
+                    loginPopupState.popupOverlay = null;
+                }
+                loginPopupState.idInput = null;
+                loginPopupState.passwordInput = null;
+                loginPopupState.isOpen = false;
+                
+                // 씬 재시작
+                if (scene.scene.key === 'GameScene') {
+                    scene.scene.restart();
+                } else {
+                    scene.scene.start('GameScene');
+                }
             } else {
                 console.error('Login failed:', response.message);
                 // TODO: 실패 메시지 표시

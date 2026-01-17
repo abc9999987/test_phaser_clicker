@@ -100,6 +100,11 @@ export class GameScene extends Phaser.Scene {
         // UI 생성
         UIManager.create(this);
         
+        // 스킬 사용 버튼 생성 (씬 재시작 시에도 생성되도록 보장)
+        if (GameState.learnedSkills.length > 0) {
+            UIManager.createSkillUseButtons(this);
+        }
+        
         // 업그레이드 업데이트 콜백 설정
         (this as any).onUpgradeUpdate = () => {
             UIManager.update(this);
