@@ -6,6 +6,7 @@ import { Responsive } from '../../utils/Responsive';
 export interface PopupButtonConfig {
     text: string;
     onClick?: (scene: Phaser.Scene) => void;
+    shouldShow?: () => boolean; // 버튼 표시 여부를 결정하는 함수 (없으면 항상 표시)
 }
 
 // 메뉴 팝업 상태 인터페이스
@@ -201,8 +202,18 @@ export const MenuPopup = {
         state.popupButtons.forEach(btn => btn.destroy());
         state.popupButtons = [];
         
+        // 표시할 버튼들만 필터링
+        const visibleConfigs = state.buttonConfigs.filter(config => {
+            // shouldShow 함수가 없으면 항상 표시
+            if (!config.shouldShow) {
+                return true;
+            }
+            // shouldShow 함수가 있으면 결과에 따라 표시
+            return config.shouldShow();
+        });
+        
         // 버튼 생성
-        state.buttonConfigs.forEach((config, index) => {
+        visibleConfigs.forEach((config, index) => {
             const buttonY = buttonAreaY + index * (buttonHeight + buttonSpacing);
             const button = MenuPopup.createPopupButton(
                 scene,

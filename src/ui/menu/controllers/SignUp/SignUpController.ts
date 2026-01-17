@@ -4,11 +4,10 @@ import { SignUpPopup, SignUpPopupState } from './SignUpPopup';
 import { ApiClient, ApiError } from '../../../../api/ApiClient';
 import { LoginInputField } from '../Login/components/LoginInputField';
 import { GameStateCore, SaveData } from '../../../../managers/state/GameStateCore';
+import { ICommonResponse } from '../common/ICommonResponse';
 
 // 회원가입 API 응답 인터페이스
-interface SignUpResponse {
-    status?: number;
-    message?: string;
+interface SignUpResponse extends ICommonResponse {
     data?: {
         uuid: string;
     };

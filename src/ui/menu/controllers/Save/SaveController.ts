@@ -4,17 +4,17 @@ import { ApiClient, ApiError } from '../../../../api/ApiClient';
 import { GameStateCore, SaveData } from '../../../../managers/state/GameStateCore';
 import { StorageKeys } from '../../../../config/StorageKeys';
 import { SaveSuccessPopup } from './SaveSuccessPopup';
+import { ICommonResponse } from '../common/ICommonResponse';
 
 // 저장 API 응답 인터페이스
-interface SaveResponse {
-    success: boolean;
-    message?: string;
-    saveId?: string;
+interface SaveResponse extends ICommonResponse {
+    
 }
 
 // 저장 API 요청 인터페이스
 interface SaveRequest {
-    gameData: SaveData;
+    uuid: string | null;
+    playData: SaveData;
 }
 
 // API 엔드포인트 URL (환경에 따라 변경 가능)
@@ -38,11 +38,12 @@ export const SaveController = {
     async performSave(scene: Phaser.Scene): Promise<void> {
         try {
             // GameStateCore에서 현재 게임 상태 데이터 가져오기
-            const gameData = GameStateCore.getSaveData();
-            const saveTime = gameData.saveTime;
+            const playData = GameStateCore.getSaveData();
+            const saveTime = playData.saveTime;
             
             const requestData: SaveRequest = {
-                gameData: gameData
+                uuid: GameStateCore.uuid ?? null,
+                playData
             };
             
             // 토큰이 있으면 헤더에 추가
@@ -59,7 +60,7 @@ export const SaveController = {
                 }
             );
             
-            if (response.success) {
+            if (response.status === 200) {
                 console.log('Save successful:', response);
                 // 저장 성공 팝업 표시
                 SaveSuccessPopup.show(scene, saveSuccessPopupState, saveTime);

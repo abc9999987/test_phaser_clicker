@@ -6,11 +6,10 @@ import { StorageKeys } from '../../../../config/StorageKeys';
 import { SaveData } from '../../../../managers/state/GameStateCore';
 import { GameStateCore } from '../../../../managers/state/GameStateCore';
 import { LoginInputField } from './components/LoginInputField';
+import { ICommonResponse } from '../common/ICommonResponse';
 
 // 로그인 API 응답 인터페이스
-interface LoginResponse {
-    status?: number;
-    message?: string;
+interface LoginResponse extends ICommonResponse {
     data?: {
         playData: SaveData;
         uuid: string;

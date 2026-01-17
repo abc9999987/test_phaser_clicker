@@ -54,24 +54,21 @@ export const LoadingIndicator = {
         
         // 스피너 그래픽 (회전하는 원호)
         const spinnerGraphics = scene.add.graphics();
-        spinnerGraphics.lineStyle(4, 0x4a9eff, 1);
-        spinnerGraphics.lineCap = 'round';
         state.spinnerGraphics = spinnerGraphics;
         spinnerContainer.add(spinnerGraphics);
         
         // 회전 애니메이션
-        let angle = 0;
+        const angleTarget = { angle: 0 };
         const spinnerTween = scene.tweens.add({
-            targets: { angle: 0 },
+            targets: angleTarget,
             angle: 360,
             duration: 1000,
             repeat: -1,
             ease: 'Linear',
-            onUpdate: function(tween: Phaser.Tweens.Tween) {
-                const currentAngle = tween.targets[0].angle;
+            onUpdate: function() {
+                const currentAngle = angleTarget.angle;
                 spinnerGraphics.clear();
                 spinnerGraphics.lineStyle(4, 0x4a9eff, 1);
-                spinnerGraphics.lineCap = 'round';
                 
                 // 원호 그리기 (270도부터 시작하여 270도 그리기)
                 const startAngle = Phaser.Math.DegToRad(currentAngle - 90);

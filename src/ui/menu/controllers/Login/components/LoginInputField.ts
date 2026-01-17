@@ -61,8 +61,8 @@ export const LoginInputField = {
     // 입력 필드 배경 생성
     createInputBackground(
         scene: Phaser.Scene,
-        x: number,
-        y: number,
+        _x: number,
+        _y: number,
         width: number,
         height: number
     ): Phaser.GameObjects.Graphics {
