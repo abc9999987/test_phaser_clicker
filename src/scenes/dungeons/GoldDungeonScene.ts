@@ -64,6 +64,9 @@ export class GoldDungeonScene extends BaseDungeonScene {
         // UI 생성 (Tab 제외)
         UIManager.createForDungeon(this, dungeonConfig.name, dungeonLevel);
         
+        // 스킬 사용 버튼 생성 (습득한 스킬이 있는 경우)
+        UIManager.createSkillUseButtons(this);
+        
         // 자동 발사 설정
         this.setupAutoFire();
         

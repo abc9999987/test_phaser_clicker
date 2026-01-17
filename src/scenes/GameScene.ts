@@ -41,16 +41,20 @@ export class GameScene extends Phaser.Scene {
         const learned = SkillManager.tryLearnSkill(skillId);
         if (learned) {
             // 스킬 습득 후 UI 업데이트 및 사용 버튼 생성
-            // 스킬 탭을 다시 생성하여 습득 상태 반영
-            const gameWidth = this.scale.width;
-            const gameHeight = this.scale.height;
-            const halfHeight = gameHeight * 0.5;
-            const uiAreaHeight = gameHeight * 0.5;
-            const uiAreaStartY = halfHeight;
-            UIManager.createSkillTab(this, gameWidth, gameHeight, halfHeight, uiAreaHeight, uiAreaStartY, 2);
-            UIManager.update(this);
-            UIManager.createSkillUseButtons(this);
+            this.refreshSkillTab();
         }
+    }
+    
+    // 스킬 탭 새로고침 (스킬 습득/업그레이드 후 호출)
+    refreshSkillTab(): void {
+        const gameWidth = this.scale.width;
+        const gameHeight = this.scale.height;
+        const halfHeight = gameHeight * 0.5;
+        const uiAreaHeight = gameHeight * 0.5;
+        const uiAreaStartY = halfHeight;
+        UIManager.createSkillTab(this, gameWidth, gameHeight, halfHeight, uiAreaHeight, uiAreaStartY, 2);
+        UIManager.update(this);
+        UIManager.createSkillUseButtons(this);
     }
     
     preload(): void {
@@ -95,6 +99,11 @@ export class GameScene extends Phaser.Scene {
         
         // UI 생성
         UIManager.create(this);
+        
+        // 업그레이드 업데이트 콜백 설정
+        (this as any).onUpgradeUpdate = () => {
+            UIManager.update(this);
+        };
         
         // 자동 발사 타이머 설정 (로드된 상태 반영)
         this.setupAutoFire();
