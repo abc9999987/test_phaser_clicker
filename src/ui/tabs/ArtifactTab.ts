@@ -417,8 +417,12 @@ export const ArtifactTab = {
     
     // 루비 텍스트 업데이트
     updateRubyText(state: ArtifactTabState): void {
-        if (state.rubyText) {
-            state.rubyText.setText(`루비: ${NumberFormatter.formatNumber(Math.floor(GameState.rubies))}`);
+        if (state.rubyText && state.rubyText.scene && typeof state.rubyText.setText === 'function') {
+            try {
+                state.rubyText.setText(`루비: ${NumberFormatter.formatNumber(Math.floor(GameState.rubies))}`);
+            } catch (error) {
+                console.error('[유물 탭] 루비 텍스트 업데이트 실패:', error);
+            }
         }
     }
 };

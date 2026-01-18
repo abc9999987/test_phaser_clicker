@@ -66,6 +66,9 @@ export class GameScene extends Phaser.Scene {
         // 저장된 게임 상태 로드
         GameState.load();
         
+        // 유물 던전 일일 리셋 체크
+        GameState.checkAndResetArtifactDungeonAttempts();
+        
         // 유물 스프라이트시트 프레임 생성 (이미지 로드 후 프레임으로 나누기)
         AssetLoader.createArtifactSpriteSheetFrames(this);
         

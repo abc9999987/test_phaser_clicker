@@ -14,14 +14,8 @@ export const DungeonBossReward = {
         bossY: number
     ): void {
         if (dungeonConfig.id === 'artifact_dungeon') {
-            // 유물 던전: 골드 보상 지급하지 않음
-            // TODO: 나중에 유물 보상 시스템 추가 예정
-            // 보상 계산 예시:
-            // let reward = 0;
-            // if (dungeonConfig.getBossReward) {
-            //     reward = dungeonConfig.getBossReward(dungeonLevel);
-            // }
-            // 유물 보상 지급 로직 추가 (예: ArtifactManager.giveArtifact(reward))
+            // 유물 던전: 루비 보상 지급 (현재 층수와 동일한 양)
+            this.giveRubyReward(scene, dungeonLevel, bossX, bossY);
         } else {
             // 골드 던전 등: 골드 보상 지급
             this.giveGoldReward(scene, dungeonConfig, dungeonLevel, bossX, bossY);
@@ -54,5 +48,25 @@ export const DungeonBossReward = {
         
         // 코인 파티클 효과
         Effects.createCoinParticle(scene, bossX, bossY, reward);
+    },
+    
+    // 루비 보상 지급
+    giveRubyReward(
+        scene: Phaser.Scene,
+        dungeonLevel: number,
+        bossX: number,
+        bossY: number
+    ): void {
+        // 보상 계산: 현재 층수와 동일한 양의 루비
+        const reward = dungeonLevel;
+        
+        // 보상 지급
+        GameState.addRubies(reward);
+        
+        // 즉시 저장
+        GameState.save();
+        
+        // 루비 파티클 효과
+        Effects.createRubyParticle(scene, bossX, bossY, reward);
     }
 };

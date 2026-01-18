@@ -3,6 +3,7 @@ import Phaser from 'phaser';
 import { Responsive } from '../../utils/Responsive';
 import { GameState } from '../../managers/GameState';
 import { DungeonConfigs } from '../../config/dungeonConfig';
+import { Effects } from '../../utils/Effects';
 
 export interface DungeonTabState {
     dungeonCards: Phaser.GameObjects.Container[];
@@ -150,7 +151,15 @@ export const DungeonTab = {
         const statusFontSize = Responsive.getFontSize(scene, 12);
         const descTextWidth = descText.width;
         const statusX = descX + descTextWidth + itemSpacing;
-        const statusText = scene.add.text(statusX, centerY, '무제한', {
+        
+        // 유물 던전인 경우 남은 횟수 표시, 아니면 무제한
+        let statusTextContent = '무제한';
+        if (dungeonConfig.id === 'artifact_dungeon') {
+            const remainingAttempts = GameState.getArtifactDungeonRemainingAttempts();
+            statusTextContent = `남은 횟수: ${remainingAttempts}/5`;
+        }
+        
+        const statusText = scene.add.text(statusX, centerY, statusTextContent, {
             fontSize: statusFontSize,
             color: '#ffd700',
             fontFamily: 'Arial',
@@ -159,28 +168,62 @@ export const DungeonTab = {
         statusText.setOrigin(0, 0.5);
         cardContainer.add(statusText);
 
-        // 4. 입장 버튼 (카드 오른쪽 끝에 배치)
+        // 4. 버튼 영역 (입장 버튼 + 소탕 버튼(유물 던전만))
         const buttonHeight = height * 0.5;
         const buttonRadius = 8;
-        const buttonX = width / 2 - padding * 0.5 - buttonWidth / 2;
+        const buttonSpacing = padding * 1.5; // 버튼 간 간격
+        const rightPadding = padding * 0.5; // 오른쪽 패딩
+        
+        // 유물 던전인 경우 소탕 버튼도 표시하므로 버튼 너비 조정
+        const isArtifactDungeon = dungeonConfig.id === 'artifact_dungeon';
+        
+        // 카드 오른쪽 끝 위치 (중심 기준)
+        const cardRightEdge = width / 2 - rightPadding;
+        
+        // 버튼 너비 계산 (카드를 벗어나지 않도록)
+        let actualButtonWidth: number;
+        if (isArtifactDungeon) {
+            // 두 버튼 + 간격이 카드 안에 들어가도록 계산
+            // (cardRightEdge - (버튼2개 + 간격)) / 2 = 각 버튼 너비
+            const maxTotalWidth = (cardRightEdge - 0) * 2; // 중심 0부터 오른쪽 끝까지
+            const availableWidth = maxTotalWidth - buttonSpacing;
+            actualButtonWidth = Math.min(availableWidth / 2, buttonWidth * 0.65); // 최대 buttonWidth * 0.65
+        } else {
+            actualButtonWidth = buttonWidth * 0.95; // 단일 버튼은 더 크게
+        }
+        
         const buttonY = centerY;
+        
+        // 입장 버튼 위치 (소탕 버튼이 있으면 왼쪽으로 이동)
+        let enterButtonX: number;
+        if (isArtifactDungeon) {
+            // 소탕 버튼이 카드 오른쪽 끝에 배치되므로, 입장 버튼은 그 왼쪽에 배치
+            // 소탕 버튼 중심: cardRightEdge - actualButtonWidth / 2
+            // 입장 버튼 중심: 소탕 버튼 중심 - actualButtonWidth - buttonSpacing
+            const sweepButtonCenter = cardRightEdge - actualButtonWidth / 2;
+            enterButtonX = sweepButtonCenter - actualButtonWidth - buttonSpacing;
+        } else {
+            // 단일 버튼은 카드 오른쪽에 배치
+            enterButtonX = cardRightEdge - actualButtonWidth / 2;
+        }
 
-        const buttonBg = scene.add.graphics();
-        buttonBg.fillStyle(0x50c878, 1);
-        buttonBg.fillRoundedRect(buttonX - buttonWidth / 2, buttonY - buttonHeight / 2, buttonWidth, buttonHeight, buttonRadius);
-        buttonBg.lineStyle(2, 0x6ad888, 1);
-        buttonBg.strokeRoundedRect(buttonX - buttonWidth / 2, buttonY - buttonHeight / 2, buttonWidth, buttonHeight, buttonRadius);
-        buttonBg.setDepth(100); // 다른 요소 위에 표시
-        cardContainer.add(buttonBg);
+        // 입장 버튼 배경
+        const enterButtonBg = scene.add.graphics();
+        enterButtonBg.fillStyle(0x50c878, 1);
+        enterButtonBg.fillRoundedRect(enterButtonX - actualButtonWidth / 2, buttonY - buttonHeight / 2, actualButtonWidth, buttonHeight, buttonRadius);
+        enterButtonBg.lineStyle(2, 0x6ad888, 1);
+        enterButtonBg.strokeRoundedRect(enterButtonX - actualButtonWidth / 2, buttonY - buttonHeight / 2, actualButtonWidth, buttonHeight, buttonRadius);
+        enterButtonBg.setDepth(100);
+        cardContainer.add(enterButtonBg);
 
-        const enterButton = scene.add.rectangle(buttonX, buttonY, buttonWidth, buttonHeight, 0x000000, 0);
+        const enterButton = scene.add.rectangle(enterButtonX, buttonY, actualButtonWidth, buttonHeight, 0x000000, 0);
         enterButton.setInteractive({ useHandCursor: true });
-        enterButton.setDepth(101); // 버튼 배경 위에 표시
+        enterButton.setDepth(101);
         
         const dungeonId = dungeonConfig.id;
         const sceneKey = dungeonConfig.sceneKey;
         enterButton.on('pointerdown', () => {
-            // 던전 씬으로 전환
+            // 던전 씬으로 전환 (입장 버튼은 횟수 차감 안 함)
             if (sceneKey) {
                 scene.scene.start(sceneKey, { dungeonConfig: dungeonConfig });
             } else {
@@ -189,33 +232,135 @@ export const DungeonTab = {
         });
 
         enterButton.on('pointerover', () => {
-            buttonBg.clear();
-            buttonBg.fillStyle(0x60d888, 1);
-            buttonBg.fillRoundedRect(buttonX - buttonWidth / 2, buttonY - buttonHeight / 2, buttonWidth, buttonHeight, buttonRadius);
-            buttonBg.lineStyle(2, 0x7ae898, 1);
-            buttonBg.strokeRoundedRect(buttonX - buttonWidth / 2, buttonY - buttonHeight / 2, buttonWidth, buttonHeight, buttonRadius);
+            enterButtonBg.clear();
+            enterButtonBg.fillStyle(0x60d888, 1);
+            enterButtonBg.fillRoundedRect(enterButtonX - actualButtonWidth / 2, buttonY - buttonHeight / 2, actualButtonWidth, buttonHeight, buttonRadius);
+            enterButtonBg.lineStyle(2, 0x7ae898, 1);
+            enterButtonBg.strokeRoundedRect(enterButtonX - actualButtonWidth / 2, buttonY - buttonHeight / 2, actualButtonWidth, buttonHeight, buttonRadius);
         });
 
         enterButton.on('pointerout', () => {
-            buttonBg.clear();
-            buttonBg.fillStyle(0x50c878, 1);
-            buttonBg.fillRoundedRect(buttonX - buttonWidth / 2, buttonY - buttonHeight / 2, buttonWidth, buttonHeight, buttonRadius);
-            buttonBg.lineStyle(2, 0x6ad888, 1);
-            buttonBg.strokeRoundedRect(buttonX - buttonWidth / 2, buttonY - buttonHeight / 2, buttonWidth, buttonHeight, buttonRadius);
+            enterButtonBg.clear();
+            enterButtonBg.fillStyle(0x50c878, 1);
+            enterButtonBg.fillRoundedRect(enterButtonX - actualButtonWidth / 2, buttonY - buttonHeight / 2, actualButtonWidth, buttonHeight, buttonRadius);
+            enterButtonBg.lineStyle(2, 0x6ad888, 1);
+            enterButtonBg.strokeRoundedRect(enterButtonX - actualButtonWidth / 2, buttonY - buttonHeight / 2, actualButtonWidth, buttonHeight, buttonRadius);
         });
 
         cardContainer.add(enterButton);
 
         const buttonTextFontSize = Responsive.getFontSize(scene, 11);
-        const buttonText = scene.add.text(buttonX, buttonY, '입장', {
+        const enterButtonText = scene.add.text(enterButtonX, buttonY, '입장', {
             fontSize: buttonTextFontSize,
             color: '#ffffff',
             fontFamily: 'Arial',
             font: `600 ${buttonTextFontSize} Arial`
         });
-        buttonText.setOrigin(0.5);
-        buttonText.setDepth(102); // 버튼 위에 표시
-        cardContainer.add(buttonText);
+        enterButtonText.setOrigin(0.5);
+        enterButtonText.setDepth(102);
+        cardContainer.add(enterButtonText);
+
+        // 소탕 버튼 (유물 던전만)
+        if (isArtifactDungeon) {
+            // 소탕 버튼 위치 (입장 버튼 오른쪽에 배치, 카드 오른쪽 끝 기준)
+            const sweepButtonX = cardRightEdge - actualButtonWidth / 2;
+            
+            // 소탕 가능 여부 확인
+            const currentDungeonLevel = GameState.getDungeonLevel('artifact_dungeon');
+            const canSweep = GameState.canSweepArtifactDungeon(currentDungeonLevel);
+            
+            // 소탕 버튼 배경 (활성화/비활성화에 따라 색상 변경)
+            const sweepButtonBg = scene.add.graphics();
+            const sweepButtonColor = canSweep ? 0x4169e1 : 0x555555; // 활성화: 파란색, 비활성화: 회색
+            const sweepButtonLineColor = canSweep ? 0x5b7ce1 : 0x666666;
+            sweepButtonBg.fillStyle(sweepButtonColor, 1);
+            sweepButtonBg.fillRoundedRect(sweepButtonX - actualButtonWidth / 2, buttonY - buttonHeight / 2, actualButtonWidth, buttonHeight, buttonRadius);
+            sweepButtonBg.lineStyle(2, sweepButtonLineColor, 1);
+            sweepButtonBg.strokeRoundedRect(sweepButtonX - actualButtonWidth / 2, buttonY - buttonHeight / 2, actualButtonWidth, buttonHeight, buttonRadius);
+            sweepButtonBg.setDepth(100);
+            cardContainer.add(sweepButtonBg);
+
+            const sweepButton = scene.add.rectangle(sweepButtonX, buttonY, actualButtonWidth, buttonHeight, 0x000000, 0);
+            if (canSweep) {
+                sweepButton.setInteractive({ useHandCursor: true });
+            }
+            sweepButton.setDepth(101);
+            
+            sweepButton.on('pointerdown', () => {
+                if (!canSweep) return;
+                
+                // 소탕 가능 여부 재확인
+                const level = GameState.getDungeonLevel('artifact_dungeon');
+                if (!GameState.canSweepArtifactDungeon(level)) {
+                    return;
+                }
+                
+                // 보상 계산: (현재 층수 - 1) 루비
+                const reward = Math.max(0, level - 1);
+                
+                if (reward > 0) {
+                    // 보상 지급
+                    GameState.addRubies(reward);
+                    
+                    // 횟수 차감
+                    if (GameState.useSweepAttempt()) {
+                        // 성공 피드백 (루비 파티클 효과)
+                        Effects.createRubyParticle(scene, sweepButtonX, buttonY, reward);
+                        
+                        // 소탕 완료 팝업 표시
+                        Effects.showSweepCompletePopup(scene, reward);
+                        
+                        // UI 업데이트를 위해 던전 탭 재생성
+                        // (실제로는 UIManager.update()를 호출하거나 탭을 다시 그려야 함)
+                        // 일단 간단하게 상태 텍스트만 업데이트
+                        const remainingAttempts = GameState.getArtifactDungeonRemainingAttempts();
+                        statusText.setText(`남은 횟수: ${remainingAttempts}/5`);
+                        
+                        // 소탕 버튼 상태 업데이트
+                        const newCanSweep = GameState.canSweepArtifactDungeon(level);
+                        if (!newCanSweep) {
+                            // 비활성화 처리
+                            sweepButton.removeInteractive();
+                            sweepButtonBg.clear();
+                            sweepButtonBg.fillStyle(0x555555, 1);
+                            sweepButtonBg.fillRoundedRect(sweepButtonX - actualButtonWidth / 2, buttonY - buttonHeight / 2, actualButtonWidth, buttonHeight, buttonRadius);
+                            sweepButtonBg.lineStyle(2, 0x666666, 1);
+                            sweepButtonBg.strokeRoundedRect(sweepButtonX - actualButtonWidth / 2, buttonY - buttonHeight / 2, actualButtonWidth, buttonHeight, buttonRadius);
+                        }
+                    }
+                }
+            });
+
+            if (canSweep) {
+                sweepButton.on('pointerover', () => {
+                    sweepButtonBg.clear();
+                    sweepButtonBg.fillStyle(0x5179f1, 1);
+                    sweepButtonBg.fillRoundedRect(sweepButtonX - actualButtonWidth / 2, buttonY - buttonHeight / 2, actualButtonWidth, buttonHeight, buttonRadius);
+                    sweepButtonBg.lineStyle(2, 0x6b8ff1, 1);
+                    sweepButtonBg.strokeRoundedRect(sweepButtonX - actualButtonWidth / 2, buttonY - buttonHeight / 2, actualButtonWidth, buttonHeight, buttonRadius);
+                });
+
+                sweepButton.on('pointerout', () => {
+                    sweepButtonBg.clear();
+                    sweepButtonBg.fillStyle(0x4169e1, 1);
+                    sweepButtonBg.fillRoundedRect(sweepButtonX - actualButtonWidth / 2, buttonY - buttonHeight / 2, actualButtonWidth, buttonHeight, buttonRadius);
+                    sweepButtonBg.lineStyle(2, 0x5b7ce1, 1);
+                    sweepButtonBg.strokeRoundedRect(sweepButtonX - actualButtonWidth / 2, buttonY - buttonHeight / 2, actualButtonWidth, buttonHeight, buttonRadius);
+                });
+            }
+
+            cardContainer.add(sweepButton);
+
+            const sweepButtonText = scene.add.text(sweepButtonX, buttonY, '소탕', {
+                fontSize: buttonTextFontSize,
+                color: canSweep ? '#ffffff' : '#aaaaaa',
+                fontFamily: 'Arial',
+                font: `600 ${buttonTextFontSize} Arial`
+            });
+            sweepButtonText.setOrigin(0.5);
+            sweepButtonText.setDepth(102);
+            cardContainer.add(sweepButtonText);
+        }
 
         return cardContainer;
     }

@@ -10,6 +10,7 @@ import { SpManager } from './state/SpManager';
 import { SkillStateManager } from './state/SkillStateManager';
 import { BuffManager } from './state/BuffManager';
 import { DungeonManager } from './state/DungeonManager';
+import { ArtifactDungeonManager } from './state/ArtifactDungeonManager';
 
 // 기존 인터페이스 유지를 위한 통합 GameState
 export const GameState = {
@@ -106,5 +107,12 @@ export const GameState = {
     
     // 던전 관리
     getDungeonLevel: (dungeonId: string) => DungeonManager.getDungeonLevel(dungeonId),
-    incrementDungeonLevel: (dungeonId: string) => DungeonManager.incrementDungeonLevel(dungeonId)
+    incrementDungeonLevel: (dungeonId: string) => DungeonManager.incrementDungeonLevel(dungeonId),
+    
+    // 유물 던전 관리
+    getArtifactDungeonRemainingAttempts: () => ArtifactDungeonManager.getRemainingAttempts(),
+    canEnterArtifactDungeon: () => ArtifactDungeonManager.canEnterArtifactDungeon(),
+    canSweepArtifactDungeon: (dungeonLevel: number) => ArtifactDungeonManager.canSweepArtifactDungeon(dungeonLevel),
+    useSweepAttempt: () => ArtifactDungeonManager.useSweepAttempt(),
+    checkAndResetArtifactDungeonAttempts: () => ArtifactDungeonManager.checkAndResetDailyAttempts()
 };
