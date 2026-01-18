@@ -4,6 +4,7 @@ import { StorageKeys } from '../../config/StorageKeys';
 export interface SaveData {
     uuid?: string | null;
     coins: number;
+    rubies: number; // 루비 재화
     attackPower: number;
     attackSpeed: number;
     critChance: number; // 치명타 확률 (%)
@@ -25,6 +26,7 @@ export interface SaveData {
 export const GameStateCore = {
     // 기본 상태 변수들
     coins: 0,
+    rubies: 0,  // 루비 재화 (기본값 0)
     attackPower: 1,  // 공격력
     attackSpeed: 0,  // 공격 속도 (초당 발사 횟수)
     critChance: 0,  // 치명타 확률 (%)
@@ -47,6 +49,7 @@ export const GameStateCore = {
     getSaveData(): SaveData {
         return {
             coins: this.coins,
+            rubies: this.rubies,
             attackPower: this.attackPower,
             attackSpeed: this.attackSpeed,
             critChance: this.critChance,
@@ -85,6 +88,7 @@ export const GameStateCore = {
             if (savedData) {
                 const data: SaveData = JSON.parse(savedData);
                 this.coins = data.coins || 0;
+                this.rubies = data.rubies || 0;
                 this.attackPower = data.attackPower || 1;
                 this.attackSpeed = data.attackSpeed || 0;
                 this.critChance = data.critChance || 0;
@@ -134,6 +138,7 @@ export const GameStateCore = {
     updateFromLoginSaveData(saveData: SaveData): void {
         try {
             this.coins = saveData.coins ?? 0;
+            this.rubies = saveData.rubies ?? 0;
             this.attackPower = saveData.attackPower ?? 1;
             this.attackSpeed = saveData.attackSpeed ?? 0;
             this.critChance = saveData.critChance ?? 0;

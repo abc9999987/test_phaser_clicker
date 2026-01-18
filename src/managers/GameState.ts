@@ -3,6 +3,7 @@
 
 import { GameStateCore } from './state/GameStateCore';
 import { CoinManager } from './state/CoinManager';
+import { RubyManager } from './state/RubyManager';
 import { StageManager } from './state/StageManager';
 import { StatManager } from './state/StatManager';
 import { SpManager } from './state/SpManager';
@@ -15,6 +16,8 @@ export const GameState = {
     // GameStateCore 속성들 직접 노출
     get coins() { return GameStateCore.coins; },
     set coins(value: number) { GameStateCore.coins = value; },
+    get rubies() { return GameStateCore.rubies; },
+    set rubies(value: number) { GameStateCore.rubies = value; },
     get attackPower() { return GameStateCore.attackPower; },
     set attackPower(value: number) { GameStateCore.attackPower = value; },
     get attackSpeed() { return GameStateCore.attackSpeed; },
@@ -49,6 +52,10 @@ export const GameState = {
     // 코인 관리
     addCoins: (amount: number) => CoinManager.addCoins(amount),
     spendCoins: (amount: number) => CoinManager.spendCoins(amount),
+    
+    // 루비 관리
+    addRubies: (amount: number) => RubyManager.addRubies(amount),
+    spendRubies: (amount: number) => RubyManager.spendRubies(amount),
     
     // 스테이지 관리
     getStageString: () => StageManager.getStageString(),

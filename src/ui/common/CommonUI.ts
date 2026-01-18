@@ -8,6 +8,7 @@ import { MenuPopup, MenuPopupState } from '../menu/MenuPopup';
 // 공통 UI 상태 인터페이스
 export interface CommonUIState {
     coinText: Phaser.GameObjects.Text | null;
+    rubyText: Phaser.GameObjects.Text | null;
     stageText: Phaser.GameObjects.Text | null;
     killCountText: Phaser.GameObjects.Text | null;
     bossTimerText: Phaser.GameObjects.Text | null;
@@ -210,6 +211,11 @@ export const CommonUI = {
         // 골드 텍스트 업데이트 (화면 상단 좌측)
         if (state.coinText) {
             state.coinText.setText(`코인: ${NumberFormatter.formatNumber(Math.floor(GameState.coins))}`);
+        }
+        
+        // 루비 텍스트 업데이트
+        if (state.rubyText) {
+            state.rubyText.setText(`루비: ${NumberFormatter.formatNumber(Math.floor(GameState.rubies))}`);
         }
     }
 };

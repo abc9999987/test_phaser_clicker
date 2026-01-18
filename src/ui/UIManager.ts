@@ -15,6 +15,7 @@ export const UIManager = {
     // 상태 관리
     commonState: {
         coinText: null as Phaser.GameObjects.Text | null,
+        rubyText: null as Phaser.GameObjects.Text | null,
         stageText: null as Phaser.GameObjects.Text | null,
         killCountText: null as Phaser.GameObjects.Text | null,
         bossTimerText: null as Phaser.GameObjects.Text | null,
@@ -82,7 +83,8 @@ export const UIManager = {
         scrollArea: null as Phaser.GameObjects.Rectangle | null,
         scrollStartY: 0,
         scrollStartContainerY: 0,
-        isScrolling: false
+        isScrolling: false,
+        rubyText: null as Phaser.GameObjects.Text | null
     } as ArtifactTabState,
     
     // UI 생성 (아래쪽 절반 영역에 배치)
@@ -181,5 +183,8 @@ export const UIManager = {
             // 스킬 사용 버튼 업데이트
             SkillUseButtons.updateSkillUseButtons(scene, this.skillTabState.skillUseButtonsState);
         }
+        
+        // 유물 탭 루비 텍스트 업데이트
+        ArtifactTab.updateRubyText(this.artifactTabState);
     }
 };

@@ -2,6 +2,8 @@
 import Phaser from 'phaser';
 import { Responsive } from '../../utils/Responsive';
 import { ArtifactConfigs, ArtifactConfig } from '../../config/artifactConfig';
+import { GameState } from '../../managers/GameState';
+import { NumberFormatter } from '../../utils/NumberFormatter';
 
 export interface ArtifactTabState {
     artifactCards: Phaser.GameObjects.Container[];
@@ -10,6 +12,7 @@ export interface ArtifactTabState {
     scrollStartY: number;
     scrollStartContainerY: number;
     isScrolling: boolean;
+    rubyText: Phaser.GameObjects.Text | null;
 }
 
 export const ArtifactTab = {
@@ -39,6 +42,12 @@ export const ArtifactTab = {
             state.scrollArea = null;
         }
         
+        // 기존 루비 텍스트 정리
+        if (state.rubyText) {
+            state.rubyText.destroy();
+            state.rubyText = null;
+        }
+        
         const contentContainer = scene.add.container(0, 0);
 
         // 타이틀
@@ -52,6 +61,20 @@ export const ArtifactTab = {
         });
         titleText.setOrigin(0.5);
         contentContainer.add(titleText);
+        
+        // 루비 보유량 표시 (타이틀 왼쪽 아래)
+        const rubyFontSize = Responsive.getFontSize(scene, 12);
+        const rubyX = gameWidth * 0.05; // 화면 왼쪽에서 살짝 떨어진 위치
+        const titleFontSizeNum = parseFloat(titleFontSize);
+        const rubyY = titleY + titleFontSizeNum * 0.1 + 5; // 타이틀 아래
+        state.rubyText = scene.add.text(rubyX, rubyY, `루비: ${NumberFormatter.formatNumber(Math.floor(GameState.rubies))}`, {
+            fontSize: rubyFontSize,
+            color: '#ff6b9d',
+            fontFamily: 'Arial',
+            font: `500 ${rubyFontSize} Arial`
+        });
+        state.rubyText.setOrigin(0, 0); // 왼쪽 정렬
+        contentContainer.add(state.rubyText);
 
         // 스크롤 가능한 영역 정의
         // 탭 버튼 공간을 확보하기 위해 높이를 줄임 (tabHeight = uiAreaHeight * 0.1)
@@ -390,5 +413,12 @@ export const ArtifactTab = {
         scene.input.on('pointerup', () => {
             state.isScrolling = false;
         });
+    },
+    
+    // 루비 텍스트 업데이트
+    updateRubyText(state: ArtifactTabState): void {
+        if (state.rubyText) {
+            state.rubyText.setText(`루비: ${NumberFormatter.formatNumber(Math.floor(GameState.rubies))}`);
+        }
     }
 };
