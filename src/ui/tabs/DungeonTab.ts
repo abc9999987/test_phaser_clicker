@@ -338,6 +338,9 @@ export const DungeonTab = {
                     
                     // 횟수 차감
                     if (GameState.useSweepAttempt()) {
+                        // 소탕 횟수 증가 (누적 통계)
+                        GameState.incrementArtifactDungeonSweepCount();
+                        
                         // AddArtifactRate 확률로 유물 획득
                         let obtainedArtifact: ArtifactConfig | null = null;
                         if (Math.random() < AddArtifactRate) {

@@ -118,6 +118,8 @@ export const GameState = {
     canSweepArtifactDungeon: (dungeonLevel: number) => ArtifactDungeonManager.canSweepArtifactDungeon(dungeonLevel),
     useSweepAttempt: () => ArtifactDungeonManager.useSweepAttempt(),
     checkAndResetArtifactDungeonAttempts: () => ArtifactDungeonManager.checkAndResetDailyAttempts(),
+    incrementArtifactDungeonSweepCount: () => ArtifactDungeonManager.incrementSweepCount(),
+    getArtifactDungeonSweepCount: () => ArtifactDungeonManager.getSweepCount(),
     
     // 유물 레벨 관리
     getArtifactLevel: (artifactId: number) => GameStateCore.artifactLevels[artifactId] || 0,

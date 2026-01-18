@@ -78,5 +78,16 @@ export const ArtifactDungeonManager = {
         GameStateCore.artifactDungeonUsedAttempts = currentAttempts + 1;
         GameStateCore.save(); // 즉시 저장
         return true;
+    },
+    
+    // 소탕 횟수 증가 (누적 통계)
+    incrementSweepCount(): void {
+        GameStateCore.artifactDungeonSweepCount = (GameStateCore.artifactDungeonSweepCount || 0) + 1;
+        GameStateCore.save(); // 즉시 저장
+    },
+    
+    // 소탕 횟수 조회
+    getSweepCount(): number {
+        return GameStateCore.artifactDungeonSweepCount || 0;
     }
 };
