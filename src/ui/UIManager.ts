@@ -100,7 +100,7 @@ export const UIManager = {
         
         // 탭 시스템 생성
         TabSystem.createTabs(scene, gameWidth, gameHeight, uiAreaHeight, this.tabSystemState, (tabIndex: number) => {
-            this.switchTab(tabIndex);
+            this.switchTab(tabIndex, scene);
         });
         
         // 각 탭 내용 생성
@@ -128,7 +128,7 @@ export const UIManager = {
         );
         
         // 초기 탭 활성화
-        this.switchTab(0);
+        this.switchTab(0, scene);
         
         // 스킬 사용 버튼 생성 (습득한 스킬이 있는 경우)
         this.createSkillUseButtons(scene);
@@ -148,9 +148,29 @@ export const UIManager = {
     },
     
     // 탭 전환
-    switchTab(tabIndex: number): void {
+    switchTab(tabIndex: number, scene?: Phaser.Scene): void {
         this.commonState.activeTabIndex = tabIndex;
         this.tabSystemState.activeTabIndex = tabIndex;
+        
+        // 유물 탭(4번)일 경우 항상 최신 데이터로 재생성
+        if (tabIndex === 4 && scene) {
+            const gameWidth = scene.scale.width;
+            const gameHeight = scene.scale.height;
+            const halfHeight = gameHeight * 0.5;
+            const uiAreaHeight = gameHeight * 0.5;
+            const uiAreaStartY = halfHeight;
+            
+            ArtifactTab.createArtifactTab(
+                scene,
+                gameWidth,
+                uiAreaHeight,
+                uiAreaStartY,
+                tabIndex,
+                this.artifactTabState,
+                this.tabSystemState.tabContents
+            );
+        }
+        
         TabSystem.switchTab(tabIndex, this.tabSystemState);
     },
     

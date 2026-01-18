@@ -1,6 +1,8 @@
 // 스탯 관리 (공격력, 공격 속도, 치명타 등)
 import { GameStateCore } from './GameStateCore';
 import { CoinManager } from './CoinManager';
+import { GameState } from '../GameState';
+import { ArtifactConfigs } from '../../config/artifactConfig';
 
 export const StatManager = {
     // 공격력 실제 값 계산 (레벨에 따른 공격력)
@@ -17,8 +19,24 @@ export const StatManager = {
             const prevLastValue = startValue + 9 * prevIncrement; // 이전 구간의 마지막 값
             startValue = prevLastValue + (s + 1); // 현재 구간 시작값 = 이전 마지막 + (section+1)
         }
-        
-        return startValue + position * increment;
+        // ArtifactConfigs[0]은 유물 공격력 %로 증가 (id: 1)
+        const artifactMultiplier = ((GameState.getArtifactLevel(1) * ArtifactConfigs[0].value) / 100) + 1;
+        return (startValue + position * increment) * (artifactMultiplier === 0 ? 1 : artifactMultiplier);
+    },
+
+    getAttackSpeedValue(): number {
+        const attackSpeed = GameStateCore.attackSpeed + GameState.getArtifactLevel(2);
+        return attackSpeed;
+    },
+
+    getCritChanceValue(): number {
+        const critChance = GameStateCore.critChance + GameState.getArtifactLevel(3);
+        return critChance;
+    },
+
+    getCritDamageValue(): number {
+        const critDamage = GameStateCore.critDamage + GameState.getArtifactLevel(4);
+        return critDamage;
     },
     
     // 공격력 강화 비용 계산

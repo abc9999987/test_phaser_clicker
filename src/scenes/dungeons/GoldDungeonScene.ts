@@ -89,8 +89,9 @@ export class GoldDungeonScene extends BaseDungeonScene {
         }
         
         // 공격 속도가 활성화되어 있으면 타이머 시작
-        if (GameState.attackSpeed > 0) {
-            const fireInterval = 1000 / GameState.attackSpeed;
+        const attackSpeed = GameState.getAttackSpeedValue();
+        if (attackSpeed > 0) {
+            const fireInterval = 1000 / attackSpeed;
             
             this.autoFireTimer = this.time.addEvent({
                 delay: fireInterval,

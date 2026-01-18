@@ -38,7 +38,8 @@ export const StatsTab = {
         // 공격 속도 텍스트
         const attackSpeedFontSize = Responsive.getFontSize(scene, 20);
         const attackSpeedY = titleY + uiAreaHeight * 0.15;
-        state.autoFireText = scene.add.text(gameWidth * 0.1, attackSpeedY, `공격 속도: ${GameState.attackSpeed}/초`, {
+
+        state.autoFireText = scene.add.text(gameWidth * 0.1, attackSpeedY, `공격 속도: ${GameState.getAttackSpeedValue()}/초`, {
             fontSize: attackSpeedFontSize,
             color: '#e0e0e0',
             fontFamily: 'Arial',
@@ -89,7 +90,7 @@ export const StatsTab = {
     ): void {
         // 공격 속도 텍스트 업데이트 (Stats 탭에만 표시)
         if (state.autoFireText && activeTabIndex === 0) {
-            state.autoFireText.setText(`공격 속도: ${GameState.attackSpeed}/초`);
+            state.autoFireText.setText(`공격 속도: ${GameState.getAttackSpeedValue()}/초`);
         }
         
         // 공격력 텍스트 업데이트 (Stats 탭에만 표시)

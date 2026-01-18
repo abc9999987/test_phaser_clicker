@@ -18,6 +18,8 @@ export enum ArtifactValueType {
     CritDamage = '치명타데미지',
 }
 
+export const AddArtifactRate = 0.1;
+
 // 유물설정 목록
 // 왼쪽 위부터 오른쪽으로:
 // 1행: 0, 1, 2, 3
@@ -26,23 +28,23 @@ export enum ArtifactValueType {
 export const ArtifactConfigs: ArtifactConfig[] = [
     {
         id: 1,
-        name: '유물1',
-        value: 10,
+        name: '비싼 검',
+        value: 3,
         valueType: ArtifactValueType.AttackPower,
         imageKey: 'artifact_01',
         maxLevel: 100
     },
     {
         id: 2,
-        name: '유물2',
-        value: 10,
+        name: '비싼 장갑',
+        value: 1,
         valueType: ArtifactValueType.AttackSpeed,
         imageKey: 'artifact_02',
-        maxLevel: 100
+        maxLevel: 10
     },
     {
         id: 3,
-        name: '유물3',
+        name: '비싼 투구',
         value: 10,
         valueType: ArtifactValueType.CritChance,
         imageKey: 'artifact_03',
@@ -50,7 +52,7 @@ export const ArtifactConfigs: ArtifactConfig[] = [
     },
     {
         id: 4,
-        name: '유물4',
+        name: '비싼 목걸이',
         value: 10,
         valueType: ArtifactValueType.CritDamage,
         imageKey: 'artifact_04',

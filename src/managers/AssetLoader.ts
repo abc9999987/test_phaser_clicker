@@ -6,8 +6,6 @@ interface ImageItem {
     path: string;
 }
 
-import { SpriteSheetUtils } from '../utils/SpriteSheetUtils';
-
 export const AssetLoader = {
     // 모든 에셋 로드 (Phaser 기본 로더 사용)
     preload(scene: Phaser.Scene): void {
@@ -84,21 +82,4 @@ export const AssetLoader = {
             scene.load.image(item.key, item.path);
         });
     },
-    
-    /**
-     * 유물 스프라이트시트 프레임 생성 (씬 create 단계에서 호출)
-     * @param scene Phaser Scene
-     */
-    createArtifactSpriteSheetFrames(scene: Phaser.Scene): void {
-        // item_gold_set 스프라이트시트를 4x3 그리드로 나누어 프레임 생성
-        // (1024x1024 이미지를 4x3 = 12개 프레임으로 나눔)
-        SpriteSheetUtils.createSpriteSheetFrames(
-            scene,
-            'item_gold_set',
-            1024, // 이미지 너비
-            1024, // 이미지 높이
-            4, // 가로 그리드 개수
-            3  // 세로 그리드 개수
-        );
-    }
 };

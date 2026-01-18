@@ -69,9 +69,6 @@ export class GameScene extends Phaser.Scene {
         // 유물 던전 일일 리셋 체크
         GameState.checkAndResetArtifactDungeonAttempts();
         
-        // 유물 스프라이트시트 프레임 생성 (이미지 로드 후 프레임으로 나누기)
-        AssetLoader.createArtifactSpriteSheetFrames(this);
-        
         // Phaser가 자동으로 preload 완료 후 create 호출하므로 바로 초기화
         this.initializeGame();
     }
@@ -153,9 +150,10 @@ export class GameScene extends Phaser.Scene {
             this.autoFireTimer.remove();
         }
         
+        const attackSpeed = GameState.getAttackSpeedValue();
         // 공격 속도가 활성화되어 있으면 타이머 시작
-        if (GameState.attackSpeed > 0) {
-            const fireInterval = 1000 / GameState.attackSpeed; // 초당 N회 = 1000ms / N
+        if (attackSpeed > 0) {
+            const fireInterval = 1000 / attackSpeed; // 초당 N회 = 1000ms / N
             
             this.autoFireTimer = this.time.addEvent({
                 delay: fireInterval,

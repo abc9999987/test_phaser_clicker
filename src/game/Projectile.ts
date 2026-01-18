@@ -1,6 +1,7 @@
 import Phaser from 'phaser';
 import { GameState } from '../managers/GameState';
 import { SkillManager } from '../managers/SkillManager';
+import { ArtifactConfigs } from '../config/artifactConfig';
 
 // 투사체 타입 정의
 export interface ProjectileType extends Phaser.GameObjects.Image {
@@ -130,7 +131,7 @@ export const Projectile = {
             // 레벨에 따른 skillPower 가져오기
             buffMultiplier = SkillManager.getSkillPower('buff_attack_damage');
         }
-        
+
         let finalDamage = isCrit ? Math.round(baseDamage * (1.5 + (GameState.critDamage / 100))) : baseDamage;
         finalDamage = Math.round(finalDamage * buffMultiplier);    
         projectile.damage = finalDamage;

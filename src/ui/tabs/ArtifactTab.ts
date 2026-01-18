@@ -192,9 +192,17 @@ export const ArtifactTab = {
         // 강화 확률 계산 (maxLevel - 현재 level)
         const upgradeChance = artifactConfig.maxLevel - currentLevel;
         
-        // 루비 소모량 계산 (0->1 ~ 9->10: 10개, 10->11 ~ 19->20: 20개, ...)
+        // 루비 소모량 계산
+        // 유물2(id: 2): 레벨당 10씩 증가 (0->1: 10개, 1->2: 20개, ...)
+        // 다른 유물: 10레벨 단위로 비용 증가 (0->1 ~ 9->10: 10개, 10->11 ~ 19->20: 20개, ...)
         const getUpgradeCost = (level: number): number => {
-            return Math.floor(level / 10) * 10 + 10;
+            if (artifactConfig.id === 2) {
+                // 유물2: 레벨당 10씩 증가
+                return (level + 1) * 10;
+            } else {
+                // 다른 유물: 10레벨 단위로 비용 증가
+                return Math.floor(level / 10) * 10 + 10;
+            }
         };
         const upgradeCost = getUpgradeCost(currentLevel);
 

@@ -4,6 +4,9 @@ import { Responsive } from '../../utils/Responsive';
 import { GameState } from '../../managers/GameState';
 import { DungeonConfigs } from '../../config/dungeonConfig';
 import { Effects } from '../../utils/Effects';
+import { ArtifactConfigs, ArtifactConfig, AddArtifactRate } from '../../config/artifactConfig';
+import { UIManager } from '../UIManager';
+import { ArtifactTab } from './ArtifactTab';
 
 export interface DungeonTabState {
     dungeonCards: Phaser.GameObjects.Container[];
@@ -260,6 +263,37 @@ export const DungeonTab = {
         enterButtonText.setDepth(102);
         cardContainer.add(enterButtonText);
 
+        // 유물 던전 카드 클릭 이벤트 (카드 영역 클릭 시 정보 팝업 표시)
+        // 주의: 버튼은 depth 100 이상이므로 버튼 클릭이 우선 처리됨
+        if (isArtifactDungeon) {
+            // 카드 배경 Graphics에 클릭 이벤트 추가
+            // Container 내부의 요소는 직접 클릭 이벤트를 추가하는 것이 더 안전함
+            const cardBgForClick = cardContainer.list.find((obj: any) => obj.type === 'Graphics') as Phaser.GameObjects.Graphics | undefined;
+            
+            if (cardBgForClick) {
+                // 기존 카드 배경에 클릭 이벤트 추가
+                cardBgForClick.setInteractive(new Phaser.Geom.Rectangle(-width / 2, -height / 2, width, height), Phaser.Geom.Rectangle.Contains);
+                cardBgForClick.setDepth(1); // 낮은 depth
+                
+                cardBgForClick.on('pointerdown', () => {
+                    // 버튼은 depth가 높아서 버튼 클릭 시 여기까지 오지 않음
+                    // 따라서 여기까지 오면 카드 영역(버튼 제외) 클릭
+                    Effects.showArtifactDungeonInfoPopup(scene);
+                });
+            } else {
+                // 배경이 없는 경우 별도 클릭 영역 생성 (안전한 방법)
+                const cardClickArea = scene.add.zone(0, 0, width, height);
+                cardClickArea.setInteractive(new Phaser.Geom.Rectangle(-width / 2, -height / 2, width, height), Phaser.Geom.Rectangle.Contains);
+                cardClickArea.setDepth(1);
+                
+                cardClickArea.on('pointerdown', () => {
+                    Effects.showArtifactDungeonInfoPopup(scene);
+                });
+                
+                cardContainer.add(cardClickArea);
+            }
+        }
+
         // 소탕 버튼 (유물 던전만)
         if (isArtifactDungeon) {
             // 소탕 버튼 위치 (입장 버튼 오른쪽에 배치, 카드 오른쪽 끝 기준)
@@ -304,17 +338,58 @@ export const DungeonTab = {
                     
                     // 횟수 차감
                     if (GameState.useSweepAttempt()) {
+                        // AddArtifactRate 확률로 유물 획득
+                        let obtainedArtifact: ArtifactConfig | null = null;
+                        if (Math.random() < AddArtifactRate) {
+                            // maxLevel에 도달하지 않은 유물만 필터링
+                            const availableArtifacts = ArtifactConfigs.filter(artifact => {
+                                const currentLevel = GameState.getArtifactLevel(artifact.id);
+                                return currentLevel < artifact.maxLevel;
+                            });
+                            
+                            // 업그레이드 가능한 유물이 있을 때만 선택
+                            if (availableArtifacts.length > 0) {
+                                const randomIndex = Math.floor(Math.random() * availableArtifacts.length);
+                                obtainedArtifact = availableArtifacts[randomIndex];
+                                // 유물 레벨 +1 증가
+                                GameState.incrementArtifactLevel(obtainedArtifact.id);
+                            }
+                        }
+                        
                         // 성공 피드백 (루비 파티클 효과)
                         Effects.createRubyParticle(scene, sweepButtonX, buttonY, reward);
                         
-                        // 소탕 완료 팝업 표시
-                        Effects.showSweepCompletePopup(scene, reward);
+                        // 소탕 완료 팝업 표시 (유물 획득 시 이미지 포함)
+                        Effects.showSweepCompletePopup(scene, reward, obtainedArtifact);
                         
                         // UI 업데이트를 위해 던전 탭 재생성
                         // (실제로는 UIManager.update()를 호출하거나 탭을 다시 그려야 함)
                         // 일단 간단하게 상태 텍스트만 업데이트
                         const remainingAttempts = GameState.getArtifactDungeonRemainingAttempts();
                         statusText.setText(`남은 횟수: ${remainingAttempts}/5`);
+                        
+                        // 유물 획득 시 유물 탭 UI 업데이트
+                        if (obtainedArtifact) {
+                            // 유물 탭이 활성화되어 있으면 탭을 다시 그려서 레벨 업데이트 반영
+                            if (UIManager.commonState.activeTabIndex === 4) {
+                                // 유물 탭 재생성
+                                const gameWidth = scene.scale.width;
+                                const gameHeight = scene.scale.height;
+                                const halfHeight = gameHeight * 0.5;
+                                const uiAreaHeight = gameHeight * 0.5;
+                                const uiAreaStartY = halfHeight;
+                                
+                                ArtifactTab.createArtifactTab(
+                                    scene,
+                                    gameWidth,
+                                    uiAreaHeight,
+                                    uiAreaStartY,
+                                    4,
+                                    UIManager.artifactTabState,
+                                    UIManager.tabSystemState.tabContents
+                                );
+                            }
+                        }
                         
                         // 소탕 버튼 상태 업데이트
                         const newCanSweep = GameState.canSweepArtifactDungeon(level);

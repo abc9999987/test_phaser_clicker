@@ -1,5 +1,6 @@
 import Phaser from 'phaser';
 import { NumberFormatter } from './NumberFormatter';
+import { ArtifactConfig, AddArtifactRate } from '../config/artifactConfig';
 
 // 효과 유틸리티
 export const Effects = {
@@ -46,33 +47,172 @@ export const Effects = {
         });
     },
     
-    // 소탕 완료 팝업 표시
-    showSweepCompletePopup(scene: Phaser.Scene, rubies: number): void {
+    // 유물 던전 정보 팝업 표시
+    showArtifactDungeonInfoPopup(scene: Phaser.Scene): void {
         const gameWidth = scene.scale.width;
         const gameHeight = scene.scale.height;
         const centerX = gameWidth / 2;
         const centerY = gameHeight / 2;
         
+        const popupWidth = 450;
+        const popupHeight = 200;
+        
+        // 전체 화면 오버레이 (팝업 외부 클릭 방지용)
+        const overlay = scene.add.rectangle(0, 0, gameWidth, gameHeight, 0x000000, 0.5);
+        overlay.setOrigin(0, 0);
+        overlay.setDepth(999); // 팝업보다 낮은 depth
+        overlay.setInteractive(); // 클릭 이벤트 받기 (팝업 외부 클릭 차단)
+        
         // 팝업 배경 (반투명 검은색)
         const popupBg = scene.add.graphics();
-        popupBg.fillStyle(0x000000, 0.8);
-        popupBg.fillRoundedRect(centerX - 200, centerY - 80, 400, 160, 15);
+        popupBg.fillStyle(0x000000, 0.85);
+        popupBg.fillRoundedRect(centerX - popupWidth / 2, centerY - popupHeight / 2, popupWidth, popupHeight, 15);
         popupBg.lineStyle(3, 0x4169e1, 1);
-        popupBg.strokeRoundedRect(centerX - 200, centerY - 80, 400, 160, 15);
+        popupBg.strokeRoundedRect(centerX - popupWidth / 2, centerY - popupHeight / 2, popupWidth, popupHeight, 15);
         popupBg.setDepth(1000);
         
         // 제목 텍스트
-        const titleText = scene.add.text(centerX, centerY - 40, '소탕 완료!', {
-            font: 'bold 28px Arial',
+        const titleText = scene.add.text(centerX, centerY - 70, '유물 던전 안내', {
+            font: 'bold 24px Arial',
             color: '#ffffff'
         });
         titleText.setOrigin(0.5);
         titleText.setDepth(1001);
         
-        // 보상 텍스트
+        // 안내 문구 1
+        const infoText1 = scene.add.text(centerX, centerY - 20, '던전 입장시에는 횟수가 소모되지 않습니다.', {
+            font: '18px Arial',
+            color: '#e0e0e0',
+            align: 'center',
+            wordWrap: { width: popupWidth - 40 }
+        });
+        infoText1.setOrigin(0.5);
+        infoText1.setDepth(1001);
+        
+        // 안내 문구 2 (AddArtifactRate 사용)
+        const artifactRatePercent = Math.floor((AddArtifactRate || 0.1) * 100);
+        const infoText2 = scene.add.text(centerX, centerY + 30, `던전 소탕시 횟수가 소모되며 ${artifactRatePercent}% 확률로 온전한 유물을 획득할 수 있습니다.`, {
+            font: '18px Arial',
+            color: '#e0e0e0',
+            align: 'center',
+            wordWrap: { width: popupWidth - 40 }
+        });
+        infoText2.setOrigin(0.5);
+        infoText2.setDepth(1001);
+        
+        // 닫기 버튼
+        const closeButtonWidth = 100;
+        const closeButtonHeight = 35;
+        const closeButtonX = centerX;
+        const closeButtonY = centerY + 70;
+        
+        const closeButtonBg = scene.add.graphics();
+        closeButtonBg.fillStyle(0x4169e1, 1);
+        closeButtonBg.fillRoundedRect(closeButtonX - closeButtonWidth / 2, closeButtonY - closeButtonHeight / 2, closeButtonWidth, closeButtonHeight, 8);
+        closeButtonBg.lineStyle(2, 0x5b7ce1, 1);
+        closeButtonBg.strokeRoundedRect(closeButtonX - closeButtonWidth / 2, closeButtonY - closeButtonHeight / 2, closeButtonWidth, closeButtonHeight, 8);
+        closeButtonBg.setDepth(1001);
+        
+        const closeButton = scene.add.rectangle(closeButtonX, closeButtonY, closeButtonWidth, closeButtonHeight, 0x000000, 0);
+        // Rectangle의 경우 자동으로 크기를 사용하므로 hitArea 명시 불필요
+        closeButton.setInteractive();
+        closeButton.setDepth(1002);
+        
+        const closeButtonText = scene.add.text(closeButtonX, closeButtonY, '확인', {
+            font: 'bold 16px Arial',
+            color: '#ffffff'
+        });
+        closeButtonText.setOrigin(0.5);
+        closeButtonText.setDepth(1003);
+        
+        // 닫기 버튼 클릭 이벤트
+        const closePopup = () => {
+            overlay.destroy();
+            popupBg.destroy();
+            titleText.destroy();
+            infoText1.destroy();
+            infoText2.destroy();
+            closeButtonBg.destroy();
+            closeButton.destroy();
+            closeButtonText.destroy();
+        };
+        
+        // 오버레이 클릭 시에도 팝업 닫기 (선택사항, 원하면 주석 처리)
+        // overlay.on('pointerdown', closePopup);
+        
+        closeButton.on('pointerdown', closePopup);
+        
+        // 호버 효과
+        closeButton.on('pointerover', () => {
+            closeButtonBg.clear();
+            closeButtonBg.fillStyle(0x5179f1, 1);
+            closeButtonBg.fillRoundedRect(closeButtonX - closeButtonWidth / 2, closeButtonY - closeButtonHeight / 2, closeButtonWidth, closeButtonHeight, 8);
+            closeButtonBg.lineStyle(2, 0x6b8ff1, 1);
+            closeButtonBg.strokeRoundedRect(closeButtonX - closeButtonWidth / 2, closeButtonY - closeButtonHeight / 2, closeButtonWidth, closeButtonHeight, 8);
+        });
+        
+        closeButton.on('pointerout', () => {
+            closeButtonBg.clear();
+            closeButtonBg.fillStyle(0x4169e1, 1);
+            closeButtonBg.fillRoundedRect(closeButtonX - closeButtonWidth / 2, closeButtonY - closeButtonHeight / 2, closeButtonWidth, closeButtonHeight, 8);
+            closeButtonBg.lineStyle(2, 0x5b7ce1, 1);
+            closeButtonBg.strokeRoundedRect(closeButtonX - closeButtonWidth / 2, closeButtonY - closeButtonHeight / 2, closeButtonWidth, closeButtonHeight, 8);
+        });
+    },
+    
+    // 소탕 완료 팝업 표시
+    showSweepCompletePopup(scene: Phaser.Scene, rubies: number, artifact: ArtifactConfig | null = null): void {
+        const gameWidth = scene.scale.width;
+        const gameHeight = scene.scale.height;
+        const centerX = gameWidth / 2;
+        const centerY = gameHeight / 2;
+        
+        // 유물 획득 여부에 따라 팝업 크기 조정
+        const hasArtifact = artifact !== null;
+        const popupHeight = hasArtifact ? 220 : 160;
+        
+        // 팝업 배경 (반투명 검은색)
+        const popupBg = scene.add.graphics();
+        popupBg.fillStyle(0x000000, 0.8);
+        popupBg.fillRoundedRect(centerX - 200, centerY - popupHeight / 2, 400, popupHeight, 15);
+        popupBg.lineStyle(3, hasArtifact ? 0xffd700 : 0x4169e1, 1); // 유물 획득 시 황금색 테두리
+        popupBg.strokeRoundedRect(centerX - 200, centerY - popupHeight / 2, 400, popupHeight, 15);
+        popupBg.setDepth(1000);
+        
+        // 제목 텍스트
+        const titleText = scene.add.text(centerX, centerY - (hasArtifact ? 70 : 40), hasArtifact ? '소탕 완료! 유물 획득!' : '소탕 완료!', {
+            font: 'bold 28px Arial',
+            color: hasArtifact ? '#ffd700' : '#ffffff' // 유물 획득 시 황금색
+        });
+        titleText.setOrigin(0.5);
+        titleText.setDepth(1001);
+        
+        // 유물 이미지 표시 (획득한 경우)
+        let artifactImage: Phaser.GameObjects.Image | null = null;
+        let artifactNameText: Phaser.GameObjects.Text | null = null;
+        if (hasArtifact && artifact) {
+            // 유물 이미지
+            if (scene.textures.exists(artifact.imageKey)) {
+                artifactImage = scene.add.image(centerX, centerY - 10, artifact.imageKey);
+                artifactImage.setDisplaySize(64, 64);
+                artifactImage.setOrigin(0.5);
+                artifactImage.setDepth(1001);
+            }
+            
+            // 유물 이름 텍스트
+            artifactNameText = scene.add.text(centerX, centerY + 30, artifact.name, {
+                font: 'bold 20px Arial',
+                color: '#ffd700'
+            });
+            artifactNameText.setOrigin(0.5);
+            artifactNameText.setDepth(1001);
+        }
+        
+        // 보상 텍스트 (유물 획득 시 위치 조정)
+        const rewardTextY = hasArtifact ? centerY + 60 : centerY + 20;
         const rewardText = scene.add.text(
             centerX, 
-            centerY + 20, 
+            rewardTextY, 
             `루비 ${NumberFormatter.formatNumber(Math.floor(rubies))}개 획득`, 
             {
                 font: 'bold 24px Arial',
@@ -83,16 +223,22 @@ export const Effects = {
         rewardText.setDepth(1001);
         
         // 페이드 아웃 애니메이션 (3초 후)
+        const targetsToFade: Phaser.GameObjects.GameObject[] = [popupBg, titleText, rewardText];
+        if (artifactImage) targetsToFade.push(artifactImage);
+        if (artifactNameText) targetsToFade.push(artifactNameText);
+        
         scene.tweens.add({
-            targets: [popupBg, titleText, rewardText],
+            targets: targetsToFade,
             alpha: 0,
             duration: 500,
-            delay: 1000,
+            delay: 1500, // 유물 획득 시 조금 더 길게 표시
             ease: 'Power2',
             onComplete: () => {
                 popupBg.destroy();
                 titleText.destroy();
                 rewardText.destroy();
+                if (artifactImage) artifactImage.destroy();
+                if (artifactNameText) artifactNameText.destroy();
             }
         });
     },

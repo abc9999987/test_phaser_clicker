@@ -69,6 +69,9 @@ export const GameState = {
     
     // 스탯 관리
     getAttackPowerValue: () => StatManager.getAttackPowerValue(),
+    getAttackSpeedValue: () => StatManager.getAttackSpeedValue(),
+    getCritChanceValue: () => StatManager.getCritChanceValue(),
+    getCritDamageValue: () => StatManager.getCritDamageValue(),
     getAttackPowerUpgradeCost: () => StatManager.getAttackPowerUpgradeCost(),
     getAttackSpeedUpgradeCost: () => StatManager.getAttackSpeedUpgradeCost(),
     getCritChanceUpgradeCost: () => StatManager.getCritChanceUpgradeCost(),
