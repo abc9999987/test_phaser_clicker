@@ -6,6 +6,8 @@ interface ImageItem {
     path: string;
 }
 
+import { SpriteSheetUtils } from '../utils/SpriteSheetUtils';
+
 export const AssetLoader = {
     // 모든 에셋 로드 (Phaser 기본 로더 사용)
     preload(scene: Phaser.Scene): void {
@@ -28,6 +30,12 @@ export const AssetLoader = {
         scene.load.image('gold_boss_2', 'assets/enemy/gold_boss_2.png');
         scene.load.image('gold_boss_3', 'assets/enemy/gold_boss_3.png');
         scene.load.image('gold_boss_4', 'assets/enemy/gold_boss_4.png');
+        
+        // 유물 스프라이트시트 로드 (1024x1024, 4x3 그리드 = 12개 프레임)
+        scene.load.image('item_gold_set', 'assets/item/item_gold_set.png');
+        
+        // 로드 완료 후 프레임 생성 (create 단계에서 처리하도록 변경 필요 시)
+        // 프레임 생성을 create 단계로 이동하거나, preload 완료 이벤트에서 처리
     },
     
     // 스프라이트 애니메이션 로드
@@ -69,5 +77,22 @@ export const AssetLoader = {
         imageList.forEach(item => {
             scene.load.image(item.key, item.path);
         });
+    },
+    
+    /**
+     * 유물 스프라이트시트 프레임 생성 (씬 create 단계에서 호출)
+     * @param scene Phaser Scene
+     */
+    createArtifactSpriteSheetFrames(scene: Phaser.Scene): void {
+        // item_gold_set 스프라이트시트를 4x3 그리드로 나누어 프레임 생성
+        // (1024x1024 이미지를 4x3 = 12개 프레임으로 나눔)
+        SpriteSheetUtils.createSpriteSheetFrames(
+            scene,
+            'item_gold_set',
+            1024, // 이미지 너비
+            1024, // 이미지 높이
+            4, // 가로 그리드 개수
+            3  // 세로 그리드 개수
+        );
     }
 };

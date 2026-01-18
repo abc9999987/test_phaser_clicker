@@ -64,23 +64,23 @@ export const DungeonConfigs: DungeonConfig[] = [
         // backgroundImageKey: 'gold_dungeon_bg' // AssetLoader에서 먼저 로드한 이미지 키
     },
     {
-        id: 'equipment_dungeon',
-        name: '장비 던전',
+        id: 'artifact_dungeon',
+        name: '유물 던전',
         description: '단계: ',
-        sceneKey: 'EquipmentDungeonScene',
+        sceneKey: 'ArtifactDungeonScene',
         backgroundColor: 0x2a2a3a,
         bossBaseHp: 1000, // 보스 기본 HP
-        bossBaseReward: 10000, // 보스 기본 보상 (골드, 현재 미사용 - 나중에 장비 보상 시스템으로 변경 예정)
+        bossBaseReward: 10000, // 보스 기본 보상 (골드, 현재 미사용 - 나중에 유물 보상 시스템으로 변경 예정)
         // 보스 HP 계산 (단계당 1.5배 증가) - 골드 던전과 동일
         getBossHp: (level: number) => {
             return Math.floor(1000 * Math.pow(1.5, level - 1));
         },
-        // 보스 보상 계산 (단계당 1.2배 증가) - 나중에 장비 보상 시스템으로 변경 예정
+        // 보스 보상 계산 (단계당 1.2배 증가) - 나중에 유물 보상 시스템으로 변경 예정
         getBossReward: (level: number) => {
             return Math.floor(1000 * Math.pow(1.5, level - 1)) * 100;
         },
         timeLimit: 10 // 10초 내에 보스 처치 필요 - 골드 던전과 동일
         // backgroundImageKey 사용 예시:
-        // backgroundImageKey: 'equipment_dungeon_bg' // AssetLoader에서 먼저 로드한 이미지 키
+        // backgroundImageKey: 'artifact_dungeon_bg' // AssetLoader에서 먼저 로드한 이미지 키
     }
 ];

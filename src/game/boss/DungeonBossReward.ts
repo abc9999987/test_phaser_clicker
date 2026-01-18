@@ -13,15 +13,15 @@ export const DungeonBossReward = {
         bossX: number,
         bossY: number
     ): void {
-        if (dungeonConfig.id === 'equipment_dungeon') {
-            // 장비 던전: 골드 보상 지급하지 않음
-            // TODO: 나중에 장비 보상 시스템 추가 예정
+        if (dungeonConfig.id === 'artifact_dungeon') {
+            // 유물 던전: 골드 보상 지급하지 않음
+            // TODO: 나중에 유물 보상 시스템 추가 예정
             // 보상 계산 예시:
             // let reward = 0;
             // if (dungeonConfig.getBossReward) {
             //     reward = dungeonConfig.getBossReward(dungeonLevel);
             // }
-            // 장비 보상 지급 로직 추가 (예: EquipmentManager.giveEquipment(reward))
+            // 유물 보상 지급 로직 추가 (예: ArtifactManager.giveArtifact(reward))
         } else {
             // 골드 던전 등: 골드 보상 지급
             this.giveGoldReward(scene, dungeonConfig, dungeonLevel, bossX, bossY);

@@ -19,8 +19,8 @@ export const DungeonBossRenderer = {
         let y = gameHeight * 0.33;
         
         // 골드 던전 보스인 경우 애니메이션 사용
-        // 장비 던전도 골드 던전과 동일한 보스 이미지/애니메이션 사용 (나중에 리소스 변경 예정)
-        if (dungeonConfig.id === 'gold_dungeon' || dungeonConfig.id === 'equipment_dungeon') {
+        // 유물 던전도 골드 던전과 동일한 보스 이미지/애니메이션 사용 (나중에 리소스 변경 예정)
+        if (dungeonConfig.id === 'gold_dungeon' || dungeonConfig.id === 'artifact_dungeon') {
             y = gameHeight * 0.29;
             return this.createAnimatedBoss(scene, x, y, baseScale);
         } else {
@@ -28,7 +28,7 @@ export const DungeonBossRenderer = {
         }
     },
     
-    // 애니메이션 보스 생성 (골드/장비 던전)
+    // 애니메이션 보스 생성 (골드/유물 던전)
     createAnimatedBoss(
         scene: Phaser.Scene,
         x: number,
@@ -53,7 +53,7 @@ export const DungeonBossRenderer = {
         const goldBoss = scene.add.sprite(x, y, 'gold_boss_1') as Phaser.GameObjects.Sprite;
         goldBoss.play('gold_boss_anim');
         
-        // 골드/장비 던전 보스는 크기를 1/4로 (기본 2배의 1/2 = 1/4)
+            // 골드/유물 던전 보스는 크기를 1/4로 (기본 2배의 1/2 = 1/4)
         goldBoss.setScale(baseScale * 0.5);
         
         return goldBoss;

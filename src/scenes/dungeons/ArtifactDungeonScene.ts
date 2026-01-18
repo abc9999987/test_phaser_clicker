@@ -9,15 +9,15 @@ import { UIManager } from '../../ui/UIManager';
 import { DungeonConfigs } from '../../config/dungeonConfig';
 import { Responsive } from '../../utils/Responsive';
 
-// 장비 던전 씬
-export class EquipmentDungeonScene extends BaseDungeonScene {
+// 유물 던전 씬
+export class ArtifactDungeonScene extends BaseDungeonScene {
     autoFireTimer?: Phaser.Time.TimerEvent;
     dungeonTimer?: Phaser.Time.TimerEvent;
     dungeonTimerStartTime?: number;
     isFailed: boolean = false; // 실패 상태 플래그
     
     constructor() {
-        super('EquipmentDungeonScene');
+        super('ArtifactDungeonScene');
     }
     
     // 던전별 에셋 로드
@@ -28,9 +28,9 @@ export class EquipmentDungeonScene extends BaseDungeonScene {
     
     // 던전별 초기화
     protected initializeDungeon(): void {
-        const dungeonConfig = DungeonConfigs.find(d => d.id === 'equipment_dungeon');
+        const dungeonConfig = DungeonConfigs.find(d => d.id === 'artifact_dungeon');
         if (!dungeonConfig) {
-            console.error('장비 던전 설정을 찾을 수 없습니다.');
+            console.error('유물 던전 설정을 찾을 수 없습니다.');
             return;
         }
         
