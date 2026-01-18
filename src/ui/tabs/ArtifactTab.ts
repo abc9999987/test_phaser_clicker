@@ -78,7 +78,7 @@ export const ArtifactTab = {
         // 유물 카드 생성 (패딩 계산을 위해 먼저 실행)
         const artifactCardWidth = scrollAreaWidth * 0.98;
         const artifactCardHeight = scrollAreaHeight * 0.12;
-        const artifactCardSpacing = scrollAreaHeight * 0.01;
+        const artifactCardSpacing = scrollAreaHeight * 0.02;
         const cardX = 0; // 스크롤 컨테이너 기준 0
         
         // 첫 번째 카드가 잘리지 않도록 상단/하단 패딩 추가
@@ -96,7 +96,8 @@ export const ArtifactTab = {
         // 마스크 생성 (스크롤 영역을 벗어나지 않도록)
         // 마스크는 contentContainer 기준으로 생성, 카드 위치에 맞춤
         const maskGraphics = scene.add.graphics();
-        maskGraphics.fillStyle(0xffffff);
+        // 마스크는 보이지 않지만, 혹시 보일 경우를 대비해 어두운 색상 사용
+        maskGraphics.fillStyle(0x1a1a1a); // 어두운 배경색 (카드 배경과 어울림)
         maskGraphics.fillRect(
             scrollAreaX - scrollAreaWidth / 2,
             maskStartY - artifactCardHeight * 0.55,
@@ -105,6 +106,19 @@ export const ArtifactTab = {
         );
         const mask = maskGraphics.createGeometryMask();
         state.scrollContainer.setMask(mask);
+        
+        // 스크롤 영역 배경 추가 (어울리는 어두운 색상)
+        const scrollBackground = scene.add.graphics();
+        scrollBackground.fillStyle(0x1a1a1a, 0.8); // 어두운 배경색, 약간 투명
+        scrollBackground.fillRoundedRect(
+            scrollAreaX - scrollAreaWidth / 2,
+            scrollAreaStartY,
+            scrollAreaWidth,
+            scrollAreaHeight,
+            8
+        );
+        scrollBackground.setDepth(-1); // 마스크와 컨테이너 뒤에 배치
+        contentContainer.add(scrollBackground);
         
         contentContainer.add(maskGraphics); // 마스크 그래픽 먼저 추가 (렌더링 순서)
         contentContainer.add(state.scrollContainer);
@@ -170,27 +184,60 @@ export const ArtifactTab = {
         
         // 1. 유물 이미지 (64x64 크기)
         const imageSize = height * 0.7;
+        const imageBorderSize = imageSize + padding * 0.8; // 테두리 포함 크기
+        const imageX = currentX + imageBorderSize / 2; // 이미지가 들어갈 사각형의 중심 X
+        const imageY = centerY;
+        
+        // 이미지 배경 사각형 (테두리용)
+        const imageBg = scene.add.graphics();
+        imageBg.fillStyle(0x1a1a1a, 1); // 어두운 배경색
+        imageBg.fillRect(
+            currentX,
+            centerY - imageBorderSize / 2,
+            imageBorderSize,
+            imageBorderSize
+        );
+        // 테두리 그리기
+        imageBg.lineStyle(2, 0x4a4a5a, 1); // 테두리 색상 (회색)
+        imageBg.strokeRect(
+            currentX,
+            centerY - imageBorderSize / 2,
+            imageBorderSize,
+            imageBorderSize
+        );
+        cardContainer.add(imageBg);
+        
         // 이미지가 로드되지 않았을 경우를 대비한 처리
         let artifactImage: Phaser.GameObjects.Image;
-        const spriteSheetTexture = scene.textures.get(artifactConfig.spriteSheetKey);
         
-        // 프레임이 존재하는지 확인 (스프라이트시트에서 프레임을 찾음)
-        // 프레임은 텍스처의 frames 속성에 있음
-        if (spriteSheetTexture && spriteSheetTexture.frames && (spriteSheetTexture.frames as any)[artifactConfig.spriteKey]) {
+        // imageKey를 사용하여 직접 이미지 로드
+        const imageKey = artifactConfig.imageKey;
+        
+        // 이미지가 존재하는지 확인
+        if (scene.textures.exists(imageKey)) {
             // 이미지가 존재하는 경우
-            artifactImage = scene.add.image(currentX, centerY, artifactConfig.spriteKey);
-            artifactImage.setDisplaySize(imageSize, imageSize);
-            artifactImage.setOrigin(0, 0.5);
+            try {
+                artifactImage = scene.add.image(imageX, imageY, imageKey);
+                artifactImage.setDisplaySize(imageSize, imageSize);
+                artifactImage.setOrigin(0.5, 0.5); // 중심 정렬로 변경
+            } catch (error) {
+                console.error(`[유물 이미지] 이미지 생성 실패: ${imageKey}`, error);
+                // 에러 발생 시 기본 이미지 사용
+                artifactImage = scene.add.image(imageX, imageY, 'weapon');
+                artifactImage.setDisplaySize(imageSize, imageSize);
+                artifactImage.setOrigin(0.5, 0.5);
+                artifactImage.setTint(0x888888);
+            }
         } else {
             // 이미지가 없으면 기본 이미지나 빈 이미지 사용
-            console.warn(`유물 이미지를 찾을 수 없습니다: ${artifactConfig.spriteKey} (스프라이트시트: ${artifactConfig.spriteSheetKey})`);
-            artifactImage = scene.add.image(currentX, centerY, 'weapon'); // 기본 이미지 사용
+            console.warn(`유물 이미지를 찾을 수 없습니다: ${imageKey}`);
+            artifactImage = scene.add.image(imageX, imageY, 'weapon'); // 기본 이미지 사용
             artifactImage.setDisplaySize(imageSize, imageSize);
-            artifactImage.setOrigin(0, 0.5);
+            artifactImage.setOrigin(0.5, 0.5);
             artifactImage.setTint(0x888888); // 회색으로 표시
         }
         cardContainer.add(artifactImage);
-        currentX += imageSize + itemSpacing;
+        currentX += imageBorderSize + itemSpacing; // 테두리 포함 크기만큼 이동
 
         // 2. 유물 이름
         const nameFontSize = Responsive.getFontSize(scene, 14);
@@ -230,7 +277,7 @@ export const ArtifactTab = {
 
         // 5. 강화 확률: n%
         const chanceFontSize = Responsive.getFontSize(scene, 12);
-        const chanceText = scene.add.text(currentX, centerY, `강화 확률: ${upgradeChance}%`, {
+        const chanceText = scene.add.text(currentX, centerY, `${upgradeChance}%`, {
             fontSize: chanceFontSize,
             color: '#90ee90',
             fontFamily: 'Arial',

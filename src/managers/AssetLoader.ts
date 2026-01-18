@@ -30,6 +30,12 @@ export const AssetLoader = {
         scene.load.image('gold_boss_2', 'assets/enemy/gold_boss_2.png');
         scene.load.image('gold_boss_3', 'assets/enemy/gold_boss_3.png');
         scene.load.image('gold_boss_4', 'assets/enemy/gold_boss_4.png');
+
+        // 유물 이미지 로드
+        scene.load.image('artifact_01', 'assets/artifact/artifact_01.png');
+        scene.load.image('artifact_02', 'assets/artifact/artifact_02.png');
+        scene.load.image('artifact_03', 'assets/artifact/artifact_03.png');
+        scene.load.image('artifact_04', 'assets/artifact/artifact_04.png');
         
         // 유물 스프라이트시트 로드 (1024x1024, 4x3 그리드 = 12개 프레임)
         scene.load.image('item_gold_set', 'assets/item/item_gold_set.png');
