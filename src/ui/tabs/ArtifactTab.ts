@@ -100,7 +100,7 @@ export const ArtifactTab = {
 
         // 유물 카드 생성 (패딩 계산을 위해 먼저 실행)
         const artifactCardWidth = scrollAreaWidth * 0.98;
-        const artifactCardHeight = scrollAreaHeight * 0.12;
+        const artifactCardHeight = scrollAreaHeight * 0.16; // 높이 증가 (0.12 -> 0.16)
         const artifactCardSpacing = scrollAreaHeight * 0.02;
         const cardX = 0; // 스크롤 컨테이너 기준 0
         
@@ -186,11 +186,17 @@ export const ArtifactTab = {
         const cardRadius = 12;
         const padding = 10;
         
-        // 현재 레벨 (초기값 0, 나중에 GameState와 연동)
-        const currentLevel = 0;
+        // 현재 레벨 (GameState에서 가져오기)
+        const currentLevel = GameState.getArtifactLevel(artifactConfig.id);
         
         // 강화 확률 계산 (maxLevel - 현재 level)
         const upgradeChance = artifactConfig.maxLevel - currentLevel;
+        
+        // 루비 소모량 계산 (0->1 ~ 9->10: 10개, 10->11 ~ 19->20: 20개, ...)
+        const getUpgradeCost = (level: number): number => {
+            return Math.floor(level / 10) * 10 + 10;
+        };
+        const upgradeCost = getUpgradeCost(currentLevel);
 
         // 카드 배경
         const cardBg = scene.add.graphics();
@@ -200,23 +206,24 @@ export const ArtifactTab = {
         cardBg.strokeRoundedRect(-width / 2, -height / 2, width, height, cardRadius);
         cardContainer.add(cardBg);
 
-        // 레이아웃: 왼쪽부터 순서대로 배치
-        const centerY = 0;
-        const itemSpacing = padding * 1.2;
+        // 레이아웃: 2줄로 배치
+        const topLineY = -height * 0.15; // 첫 번째 줄 Y 위치
+        const bottomLineY = height * 0.15; // 두 번째 줄 Y 위치
+        const itemSpacing = padding * 1.0; // 요소 간 간격 (줄임)
         let currentX = -width / 2 + padding;
         
-        // 1. 유물 이미지 (64x64 크기)
-        const imageSize = height * 0.7;
+        // 1. 유물 이미지 (2줄에 걸쳐 배치)
+        const imageSize = height * 0.6; // 이미지 크기 약간 줄임
         const imageBorderSize = imageSize + padding * 0.8; // 테두리 포함 크기
         const imageX = currentX + imageBorderSize / 2; // 이미지가 들어갈 사각형의 중심 X
-        const imageY = centerY;
+        const imageY = 0; // 이미지는 중앙에 배치
         
         // 이미지 배경 사각형 (테두리용)
         const imageBg = scene.add.graphics();
         imageBg.fillStyle(0x1a1a1a, 1); // 어두운 배경색
         imageBg.fillRect(
             currentX,
-            centerY - imageBorderSize / 2,
+            imageY - imageBorderSize / 2,
             imageBorderSize,
             imageBorderSize
         );
@@ -224,7 +231,7 @@ export const ArtifactTab = {
         imageBg.lineStyle(2, 0x4a4a5a, 1); // 테두리 색상 (회색)
         imageBg.strokeRect(
             currentX,
-            centerY - imageBorderSize / 2,
+            imageY - imageBorderSize / 2,
             imageBorderSize,
             imageBorderSize
         );
@@ -262,9 +269,12 @@ export const ArtifactTab = {
         cardContainer.add(artifactImage);
         currentX += imageBorderSize + itemSpacing; // 테두리 포함 크기만큼 이동
 
+        // 첫 번째 줄: 이름, valueType: value, (레벨/maxLevel)
+        let firstLineX = currentX;
+        
         // 2. 유물 이름
-        const nameFontSize = Responsive.getFontSize(scene, 14);
-        const nameText = scene.add.text(currentX, centerY, artifactConfig.name, {
+        const nameFontSize = Responsive.getFontSize(scene, 11); // 폰트 크기 줄임
+        const nameText = scene.add.text(firstLineX, topLineY, artifactConfig.name, {
             fontSize: nameFontSize,
             color: '#ffffff',
             fontFamily: 'Arial',
@@ -272,11 +282,11 @@ export const ArtifactTab = {
         });
         nameText.setOrigin(0, 0.5);
         cardContainer.add(nameText);
-        currentX += nameText.width + itemSpacing;
+        firstLineX += nameText.width + itemSpacing;
 
         // 3. valueType: value (예: "공격력%: 10")
-        const valueFontSize = Responsive.getFontSize(scene, 12);
-        const valueText = scene.add.text(currentX, centerY, `${artifactConfig.valueType}: ${artifactConfig.value}`, {
+        const valueFontSize = Responsive.getFontSize(scene, 10); // 폰트 크기 줄임
+        const valueText = scene.add.text(firstLineX, topLineY, `${artifactConfig.valueType}: ${artifactConfig.value}`, {
             fontSize: valueFontSize,
             color: '#ffd700',
             fontFamily: 'Arial',
@@ -284,11 +294,11 @@ export const ArtifactTab = {
         });
         valueText.setOrigin(0, 0.5);
         cardContainer.add(valueText);
-        currentX += valueText.width + itemSpacing;
+        firstLineX += valueText.width + itemSpacing;
 
         // 4. (현재단계/maxLevel) 예: "(0/100)"
-        const levelFontSize = Responsive.getFontSize(scene, 12);
-        const levelText = scene.add.text(currentX, centerY, `(${currentLevel}/${artifactConfig.maxLevel})`, {
+        const levelFontSize = Responsive.getFontSize(scene, 10); // 폰트 크기 줄임
+        const levelText = scene.add.text(firstLineX, topLineY, `(${currentLevel}/${artifactConfig.maxLevel})`, {
             fontSize: levelFontSize,
             color: '#b0b0b0',
             fontFamily: 'Arial',
@@ -296,11 +306,13 @@ export const ArtifactTab = {
         });
         levelText.setOrigin(0, 0.5);
         cardContainer.add(levelText);
-        currentX += levelText.width + itemSpacing;
 
+        // 두 번째 줄: 강화 확률, 루비 소모량, 강화 버튼
+        let secondLineX = currentX;
+        
         // 5. 강화 확률: n%
-        const chanceFontSize = Responsive.getFontSize(scene, 12);
-        const chanceText = scene.add.text(currentX, centerY, `${upgradeChance}%`, {
+        const chanceFontSize = Responsive.getFontSize(scene, 10); // 폰트 크기 줄임
+        const chanceText = scene.add.text(secondLineX, bottomLineY, `강화 확률: ${upgradeChance}%`, {
             fontSize: chanceFontSize,
             color: '#90ee90',
             fontFamily: 'Arial',
@@ -308,13 +320,25 @@ export const ArtifactTab = {
         });
         chanceText.setOrigin(0, 0.5);
         cardContainer.add(chanceText);
+        secondLineX += chanceText.width + itemSpacing;
         
-        // 6. 강화 버튼 (오른쪽 끝에 배치)
+        // 5-1. 루비 소모량 표시
+        const costFontSize = Responsive.getFontSize(scene, 10); // 폰트 크기 줄임
+        const costText = scene.add.text(secondLineX, bottomLineY, `루비: ${upgradeCost}`, {
+            fontSize: costFontSize,
+            color: '#ff6b9d',
+            fontFamily: 'Arial',
+            font: `500 ${costFontSize} Arial`
+        });
+        costText.setOrigin(0, 0.5);
+        cardContainer.add(costText);
+        
+        // 6. 강화 버튼 (오른쪽 끝에 배치, 중앙 정렬)
         const buttonWidth = width * 0.12;
-        const buttonHeight = height * 0.5;
+        const buttonHeight = height * 0.4; // 버튼 높이 약간 줄임
         const buttonRadius = 8;
         const buttonX = width / 2 - padding - buttonWidth / 2;
-        const buttonY = centerY;
+        const buttonY = 0; // 버튼은 중앙에 배치
 
         const buttonBg = scene.add.graphics();
         buttonBg.fillStyle(0x4169e1, 1);
@@ -328,9 +352,44 @@ export const ArtifactTab = {
         upgradeButton.setInteractive({ useHandCursor: true });
         upgradeButton.setDepth(101);
         
-        // 강화 버튼 클릭 이벤트 (나중에 기능 추가 예정)
+        // 강화 버튼 클릭 이벤트
         upgradeButton.on('pointerdown', () => {
-            // TODO: 강화 기능 구현
+            // 현재 레벨 다시 가져오기 (동적으로 업데이트)
+            const currentArtifactLevel = GameState.getArtifactLevel(artifactConfig.id);
+            
+            // 최대 레벨 체크
+            if (currentArtifactLevel >= artifactConfig.maxLevel) {
+                return; // 이미 최대 레벨
+            }
+            
+            // 루비 소모량 확인 및 차감
+            const cost = getUpgradeCost(currentArtifactLevel);
+            if (!GameState.spendRubies(cost)) {
+                // 루비 부족
+                return;
+            }
+            
+            // 강화 확률 체크
+            const chance = artifactConfig.maxLevel - currentArtifactLevel;
+            const success = Math.random() * 100 < chance;
+            
+            if (success) {
+                // 강화 성공
+                GameState.incrementArtifactLevel(artifactConfig.id);
+                
+                // UI 업데이트
+                const newLevel = GameState.getArtifactLevel(artifactConfig.id);
+                const newChance = artifactConfig.maxLevel - newLevel;
+                const newCost = getUpgradeCost(newLevel);
+                
+                levelText.setText(`(${newLevel}/${artifactConfig.maxLevel})`);
+                chanceText.setText(`강화 확률: ${newChance}%`);
+                costText.setText(`루비: ${newCost}`);
+                
+                // 성공 피드백 (선택사항)
+                // Effects나 알림 표시 가능
+            }
+            // 실패 시 루비만 차감되고 레벨은 증가하지 않음
         });
 
         upgradeButton.on('pointerover', () => {

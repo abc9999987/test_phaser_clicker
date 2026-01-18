@@ -114,5 +114,17 @@ export const GameState = {
     canEnterArtifactDungeon: () => ArtifactDungeonManager.canEnterArtifactDungeon(),
     canSweepArtifactDungeon: (dungeonLevel: number) => ArtifactDungeonManager.canSweepArtifactDungeon(dungeonLevel),
     useSweepAttempt: () => ArtifactDungeonManager.useSweepAttempt(),
-    checkAndResetArtifactDungeonAttempts: () => ArtifactDungeonManager.checkAndResetDailyAttempts()
+    checkAndResetArtifactDungeonAttempts: () => ArtifactDungeonManager.checkAndResetDailyAttempts(),
+    
+    // 유물 레벨 관리
+    getArtifactLevel: (artifactId: number) => GameStateCore.artifactLevels[artifactId] || 0,
+    setArtifactLevel: (artifactId: number, level: number) => {
+        GameStateCore.artifactLevels[artifactId] = level;
+        GameStateCore.save();
+    },
+    incrementArtifactLevel: (artifactId: number) => {
+        const currentLevel = GameStateCore.artifactLevels[artifactId] || 0;
+        GameStateCore.artifactLevels[artifactId] = currentLevel + 1;
+        GameStateCore.save();
+    }
 };

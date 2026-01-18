@@ -20,6 +20,7 @@ export interface SaveData {
     skillAutoUse?: Record<string, boolean>; // 스킬 자동 사용 상태
     dungeonLevels?: Record<string, number>; // 던전 단계 (던전 ID -> 단계)
     skillLevels?: Record<string, number>; // 스킬 레벨 (스킬 ID -> 레벨)
+    artifactLevels?: Record<number, number>; // 유물 레벨 (유물 ID -> 레벨)
     // 유물 던전 일일 제한
     artifactDungeonLastResetDate?: string; // YYYY-MM-DD (한국 시간 기준)
     artifactDungeonUsedAttempts?: number; // 오늘 사용한 횟수 (0-5)
@@ -46,6 +47,7 @@ export const GameStateCore = {
     activeBuffs: {} as Record<string, { startTime: number; endTime: number }>,  // 활성 버프 (skillId -> { startTime, endTime })
     dungeonLevels: {} as Record<string, number>,  // 던전 단계 (던전 ID -> 단계)
     skillLevels: {} as Record<string, number>,  // 스킬 레벨 (스킬 ID -> 레벨)
+    artifactLevels: {} as Record<number, number>,  // 유물 레벨 (유물 ID -> 레벨)
     // 유물 던전 일일 제한
     artifactDungeonLastResetDate: null as string | null,  // YYYY-MM-DD (한국 시간 기준)
     artifactDungeonUsedAttempts: 0,  // 오늘 사용한 횟수 (0-5)
@@ -72,6 +74,7 @@ export const GameStateCore = {
             skillAutoUse: this.skillAutoUse,
             dungeonLevels: this.dungeonLevels,
             skillLevels: this.skillLevels,
+            artifactLevels: this.artifactLevels,
             artifactDungeonLastResetDate: this.artifactDungeonLastResetDate || undefined,
             artifactDungeonUsedAttempts: this.artifactDungeonUsedAttempts,
             artifactDungeonLastResetTimestamp: this.artifactDungeonLastResetTimestamp || undefined,
@@ -114,6 +117,7 @@ export const GameStateCore = {
                 this.skillAutoUse = data.skillAutoUse || {};
                 this.dungeonLevels = data.dungeonLevels || {};
                 this.skillLevels = data.skillLevels || {};
+                this.artifactLevels = data.artifactLevels || {};
                 this.artifactDungeonLastResetDate = data.artifactDungeonLastResetDate || null;
                 this.artifactDungeonUsedAttempts = data.artifactDungeonUsedAttempts || 0;
                 this.artifactDungeonLastResetTimestamp = data.artifactDungeonLastResetTimestamp || null;
@@ -167,6 +171,7 @@ export const GameStateCore = {
             this.skillAutoUse = saveData.skillAutoUse ?? {};
             this.dungeonLevels = saveData.dungeonLevels ?? {};
             this.skillLevels = saveData.skillLevels ?? {};
+            this.artifactLevels = saveData.artifactLevels ?? {};
             this.artifactDungeonLastResetDate = saveData.artifactDungeonLastResetDate ?? null;
             this.artifactDungeonUsedAttempts = saveData.artifactDungeonUsedAttempts ?? 0;
             this.artifactDungeonLastResetTimestamp = saveData.artifactDungeonLastResetTimestamp ?? null;

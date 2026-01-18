@@ -1,7 +1,7 @@
 // 숫자 표기 변환 유틸리티
 export const NumberFormatter = {
     // 상수 미리 계산
-    경: 1e20,
+    해: 1e20,
     
     /**
      * 숫자를 한글/알파벳 단위로 변환
@@ -21,7 +21,7 @@ export const NumberFormatter = {
         }
         
         // 경 단위 (10^20)까지는 한글 표기
-        if (num < this.경) {
+        if (num < this.해) {
             return this.formatKorean(num);
         } else {
             return this.formatAlphabet(num);
@@ -40,8 +40,8 @@ export const NumberFormatter = {
         
         // 단위 배열 (값이 큰 순서대로)
         const units = [
-            { value: 1e20, name: '경' },      // 10^20
-            { value: 1e16, name: '해' },      // 10^16
+            { value: 1e20, name: '해' },      // 10^20
+            { value: 1e16, name: '경' },      // 10^16
             { value: 1e12, name: '조' },      // 10^12
             { value: 1e8, name: '억' },       // 10^8
             { value: 1e4, name: '만' }        // 10^4
@@ -74,7 +74,7 @@ export const NumberFormatter = {
      */
     formatAlphabet(num: number): string {
         // 경을 기준으로 몇 배인지 계산
-        const ratio = num / this.경;
+        const ratio = num / this.해;
         
         // ratio가 1 미만이면 경보다 작은 경우 (이론적으로는 발생하지 않아야 함)
         if (ratio < 1) {
