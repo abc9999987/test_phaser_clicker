@@ -89,7 +89,6 @@ export class ArtifactDungeonScene extends BaseDungeonScene {
         }
 
         const attackSpeed = GameState.getAttackSpeedValue();
-        console.log('attackSpeed', attackSpeed);
         // 공격 속도가 활성화되어 있으면 타이머 시작
         if (attackSpeed > 0) {
             const fireInterval = 1000 / attackSpeed;
