@@ -1,7 +1,6 @@
 import Phaser from 'phaser';
 import { GameState } from '../managers/GameState';
 import { SkillManager } from '../managers/SkillManager';
-import { ArtifactConfigs } from '../config/artifactConfig';
 
 // 투사체 타입 정의
 export interface ProjectileType extends Phaser.GameObjects.Image {
@@ -11,6 +10,7 @@ export interface ProjectileType extends Phaser.GameObjects.Image {
     projectileType: 'manual' | 'auto';
     isProjectile: boolean;
     isCrit: boolean; // 치명타 여부
+    isSuperCrit: boolean; // 슈퍼 치명타 여부
 }
 
 // 투사체 관리 (오브젝트 풀링 방식 - 수동/자동 분리)
@@ -45,6 +45,7 @@ export const Projectile = {
             projectile.setActive(false);
             projectile.isProjectile = true;
             projectile.isCrit = false;
+            projectile.isSuperCrit = false;
             projectile.projectileType = 'manual';
             this.manualPool.push(projectile);
         }
@@ -60,6 +61,7 @@ export const Projectile = {
             projectile.setActive(false);
             projectile.isProjectile = true;
             projectile.isCrit = false;
+            projectile.isSuperCrit = false;
             projectile.projectileType = 'auto';
             this.autoPool.push(projectile);
         }
@@ -87,6 +89,7 @@ export const Projectile = {
         projectile.setDepth(10);
         projectile.isProjectile = true;
         projectile.isCrit = false;
+        projectile.isSuperCrit = false;
         projectile.projectileType = type;
         pool.push(projectile);
         return projectile;
@@ -120,9 +123,29 @@ export const Projectile = {
         projectile.velocityY = Math.sin(angle) * speed;
         
         // 치명타 계산
-        const critChance = GameState.critChance;
-        const isCrit = Math.random() * 100 < critChance;
+        const critChance = GameState.getCritChanceValue();
         const baseDamage = GameState.getAttackPowerValue();
+        let isCrit = false;
+        let isSuperCrit = false;
+        
+        // 크리티컬 판정 로직
+        if (critChance > 100) {
+            // 100 초과 시 슈퍼 크리티컬 가능
+            const superCritChance = critChance - 100;
+            const roll = Math.random() * 100;
+            
+            if (roll < superCritChance) {
+                // 슈퍼 크리티컬 발생 (critChance - 100 확률)
+                isSuperCrit = true;
+                isCrit = true; // 슈퍼 크리티컬은 크리티컬로도 취급
+            } else {
+                // 일반 크리티컬 발생 (100% 확률)
+                isCrit = true;
+            }
+        } else {
+            // 100 이하: 일반 크리티컬만 판정
+            isCrit = Math.random() * 100 < critChance;
+        }
         
         // 버프 배수 적용 (분노 스킬 등)
         let buffMultiplier = 1;
@@ -132,10 +155,26 @@ export const Projectile = {
             buffMultiplier = SkillManager.getSkillPower('buff_attack_damage');
         }
 
-        let finalDamage = isCrit ? Math.round(baseDamage * (1.5 + (GameState.critDamage / 100))) : baseDamage;
-        finalDamage = Math.round(finalDamage * buffMultiplier);    
+        // 데미지 계산
+        const critDamageValue = GameState.getCritDamageValue();
+        const critMultiplier = 1.5 + (critDamageValue / 100); // 일반 크리티컬 배율
+        
+        let finalDamage: number;
+        if (isSuperCrit) {
+            // 슈퍼 크리티컬: 일반 크리티컬 배율을 제곱
+            finalDamage = Math.round(baseDamage * critMultiplier * critMultiplier);
+        } else if (isCrit) {
+            // 일반 크리티컬
+            finalDamage = Math.round(baseDamage * critMultiplier);
+        } else {
+            // 일반 공격
+            finalDamage = baseDamage;
+        }
+        
+        finalDamage = Math.round(finalDamage * buffMultiplier);
         projectile.damage = finalDamage;
         projectile.isCrit = isCrit;
+        projectile.isSuperCrit = isSuperCrit;
         projectile.projectileType = type;
         
         this.active.push(projectile);
@@ -190,6 +229,8 @@ export const Projectile = {
             projectile.setPosition(0, 0);
             projectile.velocityX = 0;
             projectile.velocityY = 0;
+            projectile.isCrit = false;
+            projectile.isSuperCrit = false;
             
             // 텍스처를 기본값으로 복원 (weapon2 등 다른 텍스처가 설정되었을 수 있음)
             try {

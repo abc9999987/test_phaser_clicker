@@ -113,11 +113,12 @@ export const Enemy = {
         // projectile.damage는 이미 치명타 계산이 완료된 값
         const damage = projectile.damage || GameState.getAttackPowerValue();
         const isCrit = projectile.isCrit || false;
-        this.applyDamage(scene, damage, false, isCrit); // isSkill=false, isCrit 전달
+        const isSuperCrit = projectile.isSuperCrit || false;
+        this.applyDamage(scene, damage, false, isCrit, isSuperCrit); // isSkill=false, isCrit, isSuperCrit 전달
     },
 
     // 외부에서 직접 데미지를 줄 때 사용 (스킬 등)
-    applyDamage(scene: Phaser.Scene, damage: number, isSkill: boolean = false, isCrit: boolean = false): void {
+    applyDamage(scene: Phaser.Scene, damage: number, isSkill: boolean = false, isCrit: boolean = false, isSuperCrit: boolean = false): void {
         if (!this.enemy || this.isDefeated) return;
 
         // HP 감소
@@ -145,8 +146,8 @@ export const Enemy = {
             ease: 'Power2'
         });
 
-        // 데미지 파티클 효과 (기본 흰색, 치명타 빨간색, 스킬은 별도 처리)
-        Effects.createDamageParticle(scene, this.enemy.x, this.enemy.y, damage, isSkill, isCrit);
+        // 데미지 파티클 효과 (기본 흰색, 치명타 빨간색, 슈퍼 치명타 금색, 스킬은 별도 처리)
+        Effects.createDamageParticle(scene, this.enemy.x, this.enemy.y, damage, isSkill, isCrit, isSuperCrit);
     },
     
     // 적 처치 시 처리

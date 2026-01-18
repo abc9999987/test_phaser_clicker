@@ -108,11 +108,12 @@ export const DungeonBoss = {
 
         const damage = projectile.damage || GameState.getAttackPowerValue();
         const isCrit = projectile.isCrit || false;
-        this.applyDamage(scene, damage, false, isCrit);
+        const isSuperCrit = projectile.isSuperCrit || false;
+        this.applyDamage(scene, damage, false, isCrit, isSuperCrit);
     },
     
     // 외부에서 직접 데미지를 줄 때 사용 (스킬 등)
-    applyDamage(scene: Phaser.Scene, damage: number, isSkill: boolean = false, isCrit: boolean = false): void {
+    applyDamage(scene: Phaser.Scene, damage: number, isSkill: boolean = false, isCrit: boolean = false, isSuperCrit: boolean = false): void {
         if (!this.boss || this.isDefeated) return;
 
         // HP 감소
@@ -139,7 +140,7 @@ export const DungeonBoss = {
         // });
 
         // 데미지 파티클 효과
-        Effects.createDamageParticle(scene, this.boss.x, this.boss.y, damage, isSkill, isCrit);
+        Effects.createDamageParticle(scene, this.boss.x, this.boss.y, damage, isSkill, isCrit, isSuperCrit);
     },
     
     // 보스 처치 시 처리

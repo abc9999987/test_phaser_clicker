@@ -25,17 +25,17 @@ export const StatManager = {
     },
 
     getAttackSpeedValue(): number {
-        const attackSpeed = GameStateCore.attackSpeed + GameState.getArtifactLevel(2);
+        const attackSpeed = GameStateCore.attackSpeed + (GameState.getArtifactLevel(2) * ArtifactConfigs[1].value);
         return attackSpeed;
     },
 
     getCritChanceValue(): number {
-        const critChance = GameStateCore.critChance + GameState.getArtifactLevel(3);
+        const critChance = GameStateCore.critChance + (GameState.getArtifactLevel(3) * ArtifactConfigs[2].value);
         return critChance;
     },
 
     getCritDamageValue(): number {
-        const critDamage = GameStateCore.critDamage + GameState.getArtifactLevel(4);
+        const critDamage = GameStateCore.critDamage + (GameState.getArtifactLevel(4) * ArtifactConfigs[3].value);
         return critDamage;
     },
     
@@ -43,6 +43,16 @@ export const StatManager = {
     getAttackPowerUpgradeCost(): number {
         // 구간별 설정 (임계값, multiplier, 지수) - 큰 값부터 정렬
         const costTiers = [
+            { threshold: 300000, multiplier: 3900, exponent: 4.8 },
+            { threshold: 290000, multiplier: 3800, exponent: 4.7 },
+            { threshold: 280000, multiplier: 3700, exponent: 4.6 },
+            { threshold: 270000, multiplier: 3600, exponent: 4.5 },
+            { threshold: 260000, multiplier: 3500, exponent: 4.4 },
+            { threshold: 250000, multiplier: 3400, exponent: 4.3 },
+            { threshold: 240000, multiplier: 3300, exponent: 4.2 },
+            { threshold: 230000, multiplier: 3200, exponent: 4.1 },
+            { threshold: 220000, multiplier: 3100, exponent: 4 },
+            { threshold: 210000, multiplier: 3000, exponent: 3.9 },
             { threshold: 200000, multiplier: 2900, exponent: 3.8 },
             { threshold: 190000, multiplier: 2800, exponent: 3.7 },
             { threshold: 180000, multiplier: 2700, exponent: 3.6 },

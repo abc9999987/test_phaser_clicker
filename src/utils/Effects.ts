@@ -244,9 +244,9 @@ export const Effects = {
     },
     
     // 데미지 파티클 효과 생성
-    createDamageParticle(scene: Phaser.Scene, x: number, y: number, damage: number, isSkill: boolean = false, isCrit: boolean = false): void {
+    createDamageParticle(scene: Phaser.Scene, x: number, y: number, damage: number, isSkill: boolean = false, isCrit: boolean = false, isSuperCrit: boolean = false): void {
         // 스킬 데미지는 더 크고 강조된 스타일
-        // 치명타는 빨간색, 기본은 흰색
+        // 슈퍼 치명타는 연보라색, 일반 치명타는 빨간색, 기본은 흰색
         let fontSize: number;
         let color: string;
         let strokeColor: string | undefined;
@@ -258,8 +258,14 @@ export const Effects = {
             color = '#ff4444'; // 빨간색
             strokeColor = '#ffffff';
             strokeThickness = 3;
+        } else if (isSuperCrit) {
+            // 슈퍼 치명타 데미지
+            fontSize = 28;
+            color = '#1E90FF'; // 연보라색
+            strokeColor = '#00008B'; // 진한 보라색 테두리
+            strokeThickness = 2;
         } else if (isCrit) {
-            // 치명타 데미지
+            // 일반 치명타 데미지
             fontSize = 24;
             color = '#ff0000'; // 빨간색
             strokeColor = undefined;
@@ -281,8 +287,8 @@ export const Effects = {
         damageText.setOrigin(0.5);
         
         // 스킬 데미지는 더 크게 위로 올라가고, 약간의 스케일 애니메이션 추가
-        const targetY = y - (isSkill ? 70 : isCrit ? 60 : 50);
-        const scale = isSkill ? 1.2 : isCrit ? 1.1 : 1.0;
+        const targetY = y - (isSkill ? 70 : isSuperCrit ? 65 : isCrit ? 60 : 50);
+        const scale = isSkill ? 1.2 : isSuperCrit ? 1.103 : isCrit ? 1.1 : 1.0;
         
         scene.tweens.add({
             targets: damageText,
@@ -290,7 +296,7 @@ export const Effects = {
             scaleX: scale,
             scaleY: scale,
             alpha: 0,
-            duration: isSkill ? 1000 : isCrit ? 900 : 800,
+            duration: isSkill ? 1000 : isSuperCrit ? 950 : isCrit ? 900 : 800,
             ease: 'Power2',
             onComplete: () => damageText.destroy()
         });

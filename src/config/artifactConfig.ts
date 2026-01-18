@@ -45,7 +45,7 @@ export const ArtifactConfigs: ArtifactConfig[] = [
     {
         id: 3,
         name: '비싼 투구',
-        value: 10,
+        value: 1,
         valueType: ArtifactValueType.CritChance,
         imageKey: 'artifact_03',
         maxLevel: 100
@@ -53,7 +53,7 @@ export const ArtifactConfigs: ArtifactConfig[] = [
     {
         id: 4,
         name: '비싼 목걸이',
-        value: 10,
+        value: 1,
         valueType: ArtifactValueType.CritDamage,
         imageKey: 'artifact_04',
         maxLevel: 100

@@ -61,7 +61,7 @@ export const StatsTab = {
         // 치명타 확률 텍스트
         const critChanceFontSize = Responsive.getFontSize(scene, 20);
         const critChanceY = attackPowerY + uiAreaHeight * 0.06;
-        state.critChanceText = scene.add.text(gameWidth * 0.1, critChanceY, `치명타 확률: ${GameState.critChance}%`, {
+        state.critChanceText = scene.add.text(gameWidth * 0.1, critChanceY, `치명타 확률: ${GameState.getCritChanceValue()}%`, {
             fontSize: critChanceFontSize,
             color: '#e0e0e0',
             fontFamily: 'Arial',
@@ -72,7 +72,7 @@ export const StatsTab = {
         // 치명타 데미지 텍스트
         const critDamageFontSize = Responsive.getFontSize(scene, 20);
         const critDamageY = critChanceY + uiAreaHeight * 0.06;
-        state.critDamageText = scene.add.text(gameWidth * 0.1, critDamageY, `치명타 데미지: ${GameState.critDamage}%`, {
+        state.critDamageText = scene.add.text(gameWidth * 0.1, critDamageY, `치명타 데미지: ${GameState.getCritDamageValue()}%`, {
             fontSize: critDamageFontSize,
             color: '#e0e0e0',
             fontFamily: 'Arial',
@@ -100,7 +100,12 @@ export const StatsTab = {
         
         // 치명타 확률 텍스트 업데이트 (Stats 탭에만 표시)
         if (state.critChanceText && activeTabIndex === 0) {
-            state.critChanceText.setText(`치명타 확률: ${GameState.critChance}%`);
+            state.critChanceText.setText(`치명타 확률: ${GameState.getCritChanceValue()}%`);
+        }
+
+        // 치명타 데미지 텍스트 업데이트 (Stats 탭에만 표시)
+        if (state.critDamageText && activeTabIndex === 0) {
+            state.critDamageText.setText(`치명타 데미지: ${GameState.getCritDamageValue()}%`);
         }
     }
 };
