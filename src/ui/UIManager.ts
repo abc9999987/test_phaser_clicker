@@ -7,7 +7,7 @@ import { StatsTab, StatsTabState } from './tabs/StatsTab';
 import { UpgradeTab, UpgradeTabState } from './tabs/UpgradeTab';
 import { SkillTab, SkillTabState } from './tabs/SkillTab';
 import { DungeonTab, DungeonTabState } from './tabs/DungeonTab';
-import { LockTab } from './tabs/LockTab';
+import { ArtifactTab, ArtifactTabState } from './tabs/ArtifactTab';
 import { MenuButtonConfigs } from './menu/MenuButtonConfig';
 
 // UI 관리자
@@ -76,6 +76,15 @@ export const UIManager = {
         dungeonCards: [] as Phaser.GameObjects.Container[]
     } as DungeonTabState,
     
+    artifactTabState: {
+        artifactCards: [] as Phaser.GameObjects.Container[],
+        scrollContainer: null as Phaser.GameObjects.Container | null,
+        scrollArea: null as Phaser.GameObjects.Rectangle | null,
+        scrollStartY: 0,
+        scrollStartContainerY: 0,
+        isScrolling: false
+    } as ArtifactTabState,
+    
     // UI 생성 (아래쪽 절반 영역에 배치)
     create(scene: Phaser.Scene): void {
         const gameWidth = scene.scale.width;
@@ -106,7 +115,15 @@ export const UIManager = {
             this.tabSystemState.tabContents,
             DungeonTab.createDungeonCard
         );
-        LockTab.createLockTab(scene, gameWidth, uiAreaHeight, uiAreaStartY, 4, this.tabSystemState.tabContents);
+        ArtifactTab.createArtifactTab(
+            scene,
+            gameWidth,
+            uiAreaHeight,
+            uiAreaStartY,
+            4,
+            this.artifactTabState,
+            this.tabSystemState.tabContents
+        );
         
         // 초기 탭 활성화
         this.switchTab(0);

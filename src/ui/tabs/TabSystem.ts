@@ -28,7 +28,7 @@ export const TabSystem = {
         state.tabTexts = [];
         state.tabContents = [];
         
-        const tabLabels = ['Stats', 'Upgrade', 'Skill', '던전', 'Lock'];
+        const tabLabels = ['Stats', 'Upgrade', 'Skill', '던전', '유물'];
         const tabFontSize = Responsive.getFontSize(scene, 12);
         
         for (let i = 0; i < tabCount; i++) {
