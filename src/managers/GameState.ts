@@ -72,6 +72,7 @@ export const GameState = {
     getAttackSpeedValue: () => StatManager.getAttackSpeedValue(),
     getCritChanceValue: () => StatManager.getCritChanceValue(),
     getCritDamageValue: () => StatManager.getCritDamageValue(),
+    getGoldRateValue: () => StatManager.getGoldRateValue(),
     getAttackPowerUpgradeCost: () => StatManager.getAttackPowerUpgradeCost(),
     getAttackSpeedUpgradeCost: () => StatManager.getAttackSpeedUpgradeCost(),
     getCritChanceUpgradeCost: () => StatManager.getCritChanceUpgradeCost(),

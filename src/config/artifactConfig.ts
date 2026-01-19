@@ -16,6 +16,7 @@ export enum ArtifactValueType {
     AttackSpeed = '공격속도',
     CritChance = '치명타확률',
     CritDamage = '치명타데미지',
+    AddGoldRate = '코인획득량',
 }
 
 export const AddArtifactRate = 0.1;
@@ -56,6 +57,14 @@ export const ArtifactConfigs: ArtifactConfig[] = [
         value: 1,
         valueType: ArtifactValueType.CritDamage,
         imageKey: 'artifact_04',
+        maxLevel: 100
+    },
+    {
+        id: 5,
+        name: '비싼 돈주머니',
+        value: 3,
+        valueType: ArtifactValueType.AddGoldRate,
+        imageKey: 'artifact_05',
         maxLevel: 100
     },
     // {

@@ -38,6 +38,12 @@ export const StatManager = {
         const critDamage = GameStateCore.critDamage + (GameState.getArtifactLevel(4) * ArtifactConfigs[3].value);
         return critDamage;
     },
+
+    getGoldRateValue(): number {
+        // 유물 ID 5의 레벨 * value = 코인 획득량 증가율 (%)
+        // 예: 레벨 10이면 10% 증가
+        return GameState.getArtifactLevel(5) * ArtifactConfigs[4].value;
+    },
     
     // 공격력 강화 비용 계산
     getAttackPowerUpgradeCost(): number {

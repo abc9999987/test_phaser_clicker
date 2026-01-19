@@ -4,6 +4,7 @@ import { Effects } from '../utils/Effects';
 import { GameState } from '../managers/GameState';
 import { ProjectileType } from './Projectile';
 import { UIManager } from '../ui/UIManager';
+import { StatManager } from '../managers/state/StatManager';
 
 // 적 관리
 export const Enemy = {
@@ -158,7 +159,10 @@ export const Enemy = {
         const wasBoss = this.isBoss;
         
         // 스테이지별 골드 지급 (적 체력과 동일) * 1.2
-        const goldReward = Math.floor(GameState.getEnemyGoldReward() * 1.2);
+        const baseGoldReward = GameState.getEnemyGoldReward() * 1.2;
+        // 유물 효과 적용 (코인 획득량 증가율)
+        const goldRateMultiplier = 1 + (StatManager.getGoldRateValue() / 100);
+        const goldReward = Math.floor(baseGoldReward * goldRateMultiplier);
         GameState.addCoins(goldReward);
         
         // 스테이지 진행 처리

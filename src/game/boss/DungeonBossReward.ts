@@ -2,6 +2,7 @@ import Phaser from 'phaser';
 import { Effects } from '../../utils/Effects';
 import { GameState } from '../../managers/GameState';
 import { DungeonConfig } from '../../config/dungeonConfig';
+import { StatManager } from '../../managers/state/StatManager';
 
 // 던전 보스 보상 처리
 export const DungeonBossReward = {
@@ -38,6 +39,10 @@ export const DungeonBossReward = {
             // 기본 계산: baseReward * (1.2 ^ (level - 1))
             reward = Math.floor(dungeonConfig.bossBaseReward * Math.pow(1.2, dungeonLevel - 1));
         }
+        
+        // 유물 효과 적용 (코인 획득량 증가율)
+        const goldRateMultiplier = 1 + (StatManager.getGoldRateValue() / 100);
+        reward = Math.floor(reward * goldRateMultiplier);
         
         // 보상 지급
         GameState.addCoins(reward);

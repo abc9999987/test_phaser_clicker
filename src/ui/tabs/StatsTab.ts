@@ -9,6 +9,7 @@ export interface StatsTabState {
     attackPowerText: Phaser.GameObjects.Text | null;
     critChanceText: Phaser.GameObjects.Text | null;
     critDamageText: Phaser.GameObjects.Text | null;
+    addGoldRateText: Phaser.GameObjects.Text | null;
 }
 
 export const StatsTab = {
@@ -79,6 +80,17 @@ export const StatsTab = {
             font: `500 ${critDamageFontSize} Arial`
         });
         contentContainer.add(state.critDamageText);
+
+        // 코인 획득량 텍스트
+        const addGoldRateFontSize = Responsive.getFontSize(scene, 20);
+        const addGoldRateY = critDamageY + uiAreaHeight * 0.06;
+        state.addGoldRateText = scene.add.text(gameWidth * 0.1, addGoldRateY, `코인 획득량: ${GameState.getGoldRateValue()}%`, {
+            fontSize: addGoldRateFontSize,
+            color: '#e0e0e0',
+            fontFamily: 'Arial',
+            font: `500 ${addGoldRateFontSize} Arial`
+        });
+        contentContainer.add(state.addGoldRateText);
         
         tabContents[0] = contentContainer;
     },
@@ -106,6 +118,11 @@ export const StatsTab = {
         // 치명타 데미지 텍스트 업데이트 (Stats 탭에만 표시)
         if (state.critDamageText && activeTabIndex === 0) {
             state.critDamageText.setText(`치명타 데미지: ${GameState.getCritDamageValue()}%`);
+        }
+
+        // 코인 획득량 텍스트 업데이트 (Stats 탭에만 표시)
+        if (state.addGoldRateText && activeTabIndex === 0) {
+            state.addGoldRateText.setText(`코인 획득량: ${GameState.getGoldRateValue()}%`);
         }
     }
 };
