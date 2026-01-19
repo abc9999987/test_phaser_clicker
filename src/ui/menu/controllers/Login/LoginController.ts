@@ -1,6 +1,6 @@
 // 로그인 컨트롤러
 import Phaser from 'phaser';
-import { LoginPopup, LoginPopupState } from './LoginPopup';
+import { LoginPopup, LoginPopupState, WarningPopupState } from './LoginPopup';
 import { ApiClient, ApiError } from '../../../../api/ApiClient';
 import { StorageKeys } from '../../../../config/StorageKeys';
 import { SaveData } from '../../../../managers/state/GameStateCore';
@@ -36,22 +36,41 @@ const loginPopupState: LoginPopupState = {
     passwordInput: null
 };
 
+// 경고 팝업 상태 (싱글톤)
+const warningPopupState: WarningPopupState = {
+    popupOverlay: null,
+    popupContainer: null,
+    isOpen: false
+};
+
 // API 엔드포인트 URL (환경에 따라 변경 가능)
 const LOGIN_API_URL = '/login'; // TODO: 실제 API URL로 변경
 
 export const LoginController = {
     // 로그인 버튼 클릭 시 동작
     handleLogin(scene: Phaser.Scene): void {
-        LoginPopup.showLoginPopup(
+        // 먼저 경고 팝업 표시
+        LoginPopup.showWarningPopup(
             scene,
-            loginPopupState,
-            async (id: string, password: string) => {
-                // 로그인 API 호출
-                await LoginController.performLogin(scene, id, password);
+            warningPopupState,
+            () => {
+                // 확인 버튼 클릭 시 로그인 팝업 표시
+                LoginPopup.showLoginPopup(
+                    scene,
+                    loginPopupState,
+                    async (id: string, password: string) => {
+                        // 로그인 API 호출
+                        await LoginController.performLogin(scene, id, password);
+                    },
+                    () => {
+                        // 취소 처리
+                        console.log('Login cancelled');
+                    }
+                );
             },
             () => {
                 // 취소 처리
-                console.log('Login cancelled');
+                console.log('Warning popup cancelled');
             }
         );
     },

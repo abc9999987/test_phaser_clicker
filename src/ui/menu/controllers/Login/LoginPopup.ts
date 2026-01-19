@@ -12,6 +12,13 @@ export interface LoginPopupState {
     passwordInput: HTMLInputElement | null;
 }
 
+// 경고 팝업 상태 인터페이스
+export interface WarningPopupState {
+    popupOverlay: Phaser.GameObjects.Rectangle | null;
+    popupContainer: Phaser.GameObjects.Container | null;
+    isOpen: boolean;
+}
+
 export const LoginPopup = {
     // 로그인 팝업 표시
     showLoginPopup(
@@ -157,6 +164,136 @@ export const LoginPopup = {
         LoginInputField.removeHTMLInput(state.passwordInput);
         state.idInput = null;
         state.passwordInput = null;
+        
+        // 애니메이션
+        LoginPopupComponents.playHideAnimation(
+            scene,
+            state.popupContainer,
+            state.popupOverlay,
+            () => {
+                state.popupContainer = null;
+                state.popupOverlay = null;
+                state.isOpen = false;
+                onCancel();
+            }
+        );
+    },
+    
+    // 경고 팝업 표시
+    showWarningPopup(
+        scene: Phaser.Scene,
+        state: WarningPopupState,
+        onConfirm: () => void,
+        onCancel: () => void
+    ): void {
+        if (state.isOpen) return;
+        
+        const gameWidth = scene.scale.width;
+        const gameHeight = scene.scale.height;
+        
+        // 오버레이 생성
+        const overlay = LoginPopupComponents.createOverlay(scene, gameWidth, gameHeight);
+        state.popupOverlay = overlay;
+        
+        // 팝업 컨테이너
+        const popupWidth = gameWidth * 0.45;
+        const popupHeight = gameHeight * 0.35;
+        const popupX = gameWidth / 2;
+        const popupY = gameHeight / 2;
+        
+        const popupContainer = scene.add.container(popupX, popupY);
+        popupContainer.setDepth(120);
+        
+        // 팝업 배경
+        const popupBg = LoginPopupComponents.createPopupBackground(scene, popupWidth, popupHeight);
+        popupContainer.add(popupBg);
+        
+        // 닫기 버튼
+        const closeButton = LoginPopupComponents.createCloseButton(
+            scene,
+            popupWidth,
+            popupHeight,
+            () => {
+                LoginPopup.hideWarningPopup(scene, state, onCancel);
+            }
+        );
+        popupContainer.add(closeButton);
+        
+        // 타이틀
+        const titleText = LoginPopupComponents.createTitle(scene, popupHeight, '경고');
+        popupContainer.add(titleText);
+        
+        // 경고 문구
+        const warningFontSize = Math.max(16, Math.floor(popupHeight * 0.05));
+        const warningY = -popupHeight / 2 + popupHeight * 0.35;
+        const warningText = scene.add.text(
+            0,
+            warningY,
+            '로그인 시 현재 데이터가 삭제되고\n클라우드 데이터를 바로 불러옵니다.',
+            {
+                fontSize: `${warningFontSize}px`,
+                color: '#ffd966',
+                fontFamily: 'Arial',
+                align: 'center',
+                wordWrap: { width: popupWidth * 0.85 }
+            }
+        );
+        warningText.setOrigin(0.5);
+        popupContainer.add(warningText);
+        
+        // 액션 버튼 (경고 텍스트 아래 충분한 간격 확보)
+        const buttonWidth = popupWidth * 0.25;
+        const buttonHeight = popupHeight * 0.12;
+        const buttonSpacing = popupWidth * 0.05;
+        // 경고 텍스트가 2줄이므로 텍스트 높이 + 여유 공간 고려
+        const warningTextHeight = warningFontSize * 2.5; // 2줄 + 여유 공간
+        const buttonY = warningY + warningTextHeight / 2 + popupHeight * 0.25;
+        
+        // 확인 버튼
+        const confirmButton = LoginPopupComponents.createButton(
+            scene,
+            -buttonWidth / 2 - buttonSpacing / 2,
+            buttonY,
+            buttonWidth,
+            buttonHeight,
+            '확인',
+            0x50c878,
+            () => {
+                LoginPopup.hideWarningPopup(scene, state, () => {});
+                onConfirm();
+            }
+        );
+        popupContainer.add(confirmButton);
+        
+        // 취소 버튼
+        const cancelButton = LoginPopupComponents.createButton(
+            scene,
+            buttonWidth / 2 + buttonSpacing / 2,
+            buttonY,
+            buttonWidth,
+            buttonHeight,
+            '취소',
+            0x555555,
+            () => {
+                LoginPopup.hideWarningPopup(scene, state, onCancel);
+            }
+        );
+        popupContainer.add(cancelButton);
+        
+        state.popupContainer = popupContainer;
+        state.isOpen = true;
+        
+        // 애니메이션
+        LoginPopupComponents.playShowAnimation(scene, popupContainer, overlay);
+    },
+    
+    // 경고 팝업 숨김
+    hideWarningPopup(
+        scene: Phaser.Scene,
+        state: WarningPopupState,
+        onCancel: () => void
+    ): void {
+        if (!state.isOpen) return;
         
         // 애니메이션
         LoginPopupComponents.playHideAnimation(

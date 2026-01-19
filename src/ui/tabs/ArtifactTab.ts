@@ -379,7 +379,8 @@ export const ArtifactTab = {
             
             // 강화 확률 체크
             const chance = artifactConfig.maxLevel - currentArtifactLevel;
-            const success = Math.random() * 100 < chance;
+            const newChance = artifactConfig.id !== 2 ? chance < 10 ? 10 : chance : chance;
+            const success = Math.random() * 100 < newChance;
             
             if (success) {
                 // 강화 성공
