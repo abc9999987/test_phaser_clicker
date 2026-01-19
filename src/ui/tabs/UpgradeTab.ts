@@ -129,7 +129,7 @@ export const UpgradeTab = {
 
         // 4. 치명타 데미지 강화 카드
         const critDamageCardY = cardStartY + (cardHeight + cardSpacing) * 3;
-        const critDamageCurrent = GameState.getCritDamageValue();
+        const critDamageCurrent = GameState.critDamage;
         const critDamageNext = critDamageCurrent + 1;
         const critDamageCost = GameState.getCritDamageUpgradeCost();
         const isCritDamageMax = critDamageCurrent >= 100;
@@ -149,7 +149,7 @@ export const UpgradeTab = {
             () => GameState.upgradeCritDamage(),
             () => GameState.getCritDamageUpgradeCost(),
             () => GameState.coins >= GameState.getCritDamageUpgradeCost(),
-            () => GameState.getCritDamageValue() >= 100,
+            () => GameState.critDamage >= 100,
             state
         );
         contentContainer.add(critDamageCard);
@@ -639,7 +639,7 @@ export const UpgradeTab = {
         if (state.critDamageCard) {
             const cardData = (state.critDamageCard as any).upgradeCardData;
             if (cardData) {
-                const currentStat = GameState.getCritDamageValue();
+                const currentStat = GameState.critDamage;
                 const isMaxLevel = cardData.isMaxLevel ? cardData.isMaxLevel() : false;
                 const cost = cardData.getCost();
                 const canAfford = !isMaxLevel && cardData.canAfford();
