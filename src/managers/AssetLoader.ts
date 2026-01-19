@@ -34,6 +34,7 @@ export const AssetLoader = {
         scene.load.image('artifact_02', 'assets/artifact/artifact_02.png');
         scene.load.image('artifact_03', 'assets/artifact/artifact_03.png');
         scene.load.image('artifact_04', 'assets/artifact/artifact_04.png');
+        scene.load.image('artifact_05', 'assets/artifact/artifact_05.png');
         
         // 유물 스프라이트시트 로드 (1024x1024, 4x3 그리드 = 12개 프레임)
         scene.load.image('item_gold_set', 'assets/item/item_gold_set.png');
