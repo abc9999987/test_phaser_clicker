@@ -18,6 +18,25 @@ export interface DungeonConfig {
      */
     backgroundImageKey?: string;
     backgroundColor?: number; // 배경 색상 (기본값: 0x2a2a3a)
+
+    /**
+     * 소탕 기능 활성화 여부
+     * true이면 일일 소탕 횟수, 최소 레벨 등의 설정을 사용함
+     */
+    enableSweep?: boolean;
+
+    /**
+     * 일일 소탕 가능 횟수 (던전별로 다르게 설정 가능)
+     * 설정되지 않은 경우 소탕 기능이 활성화되어도 기본값(예: 5회)을 사용하는 쪽으로
+     * DungeonSweepManager에서 처리할 수 있도록 optional로 둠
+     */
+    dailySweepLimit?: number;
+
+    /**
+     * 소탕 가능 최소 던전 레벨
+     * 기본적으로 2레벨 이상부터 소탕 가능하도록 설계
+     */
+    sweepMinLevel?: number;
     // 보스 정보
     bossBaseHp: number; // 보스 기본 HP
     bossBaseReward: number; // 보스 기본 보상 (골드)
@@ -49,6 +68,9 @@ export const DungeonConfigs: DungeonConfig[] = [
         description: '단계: ',
         sceneKey: 'GoldDungeonScene',
         backgroundColor: 0x2a2a3a,
+        enableSweep: true,
+        dailySweepLimit: 3,
+        sweepMinLevel: 2,
         bossBaseHp: 1000, // 보스 기본 HP
         bossBaseReward: 10000, // 보스 기본 보상
         // 보스 HP 계산 (단계당 1.5배 증가)
@@ -69,6 +91,9 @@ export const DungeonConfigs: DungeonConfig[] = [
         description: '단계: ',
         sceneKey: 'ArtifactDungeonScene',
         backgroundColor: 0x2a2a3a,
+        enableSweep: true,
+        dailySweepLimit: 5,
+        sweepMinLevel: 2,
         bossBaseHp: 1000, // 보스 기본 HP
         bossBaseReward: 10000, // 보스 기본 보상 (골드, 현재 미사용 - 나중에 유물 보상 시스템으로 변경 예정)
         // 보스 HP 계산 (단계당 1.5배 증가) - 골드 던전과 동일

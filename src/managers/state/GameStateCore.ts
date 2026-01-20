@@ -21,11 +21,27 @@ export interface SaveData {
     dungeonLevels?: Record<string, number>; // 던전 단계 (던전 ID -> 단계)
     skillLevels?: Record<string, number>; // 스킬 레벨 (스킬 ID -> 레벨)
     artifactLevels?: Record<number, number>; // 유물 레벨 (유물 ID -> 레벨)
-    // 유물 던전 일일 제한
+    // 유물 던전 일일 제한 (구조 변경 전 호환용)
     artifactDungeonLastResetDate?: string; // YYYY-MM-DD (한국 시간 기준)
     artifactDungeonUsedAttempts?: number; // 오늘 사용한 횟수 (0-5)
     artifactDungeonLastResetTimestamp?: number; // 마지막 리셋 시간 (한국 시간 기준)
     artifactDungeonSweepCount?: number; // 유물 던전 소탕 횟수 (누적)
+    /**
+     * 던전별 소탕 상태
+     * key: dungeonId
+     * value: {
+     *   lastResetDate?: string;
+     *   usedAttempts?: number;
+     *   lastResetTimestamp?: number;
+     *   sweepCount?: number;
+     * }
+     */
+    dungeonSweepStates?: Record<string, {
+        lastResetDate?: string | null;
+        usedAttempts?: number;
+        lastResetTimestamp?: number | null;
+        sweepCount?: number;
+    }>;
 }
 
 // 게임 상태 핵심 데이터
@@ -49,11 +65,18 @@ export const GameStateCore = {
     dungeonLevels: {} as Record<string, number>,  // 던전 단계 (던전 ID -> 단계)
     skillLevels: {} as Record<string, number>,  // 스킬 레벨 (스킬 ID -> 레벨)
     artifactLevels: {} as Record<number, number>,  // 유물 레벨 (유물 ID -> 레벨)
-    // 유물 던전 일일 제한
+    // 유물 던전 일일 제한 (구 구조, 마이그레이션용)
     artifactDungeonLastResetDate: null as string | null,  // YYYY-MM-DD (한국 시간 기준)
     artifactDungeonUsedAttempts: 0,  // 오늘 사용한 횟수 (0-5)
     artifactDungeonLastResetTimestamp: null as number | null,  // 마지막 리셋 시간 (한국 시간 기준)
     artifactDungeonSweepCount: 0,  // 유물 던전 소탕 횟수 (누적)
+    // 던전별 소탕 상태
+    dungeonSweepStates: {} as Record<string, {
+        lastResetDate?: string | null;
+        usedAttempts?: number;
+        lastResetTimestamp?: number | null;
+        sweepCount?: number;
+    }>,
     saveTimer: null as number | null,
     uuid: null as string | null,
     
@@ -81,6 +104,7 @@ export const GameStateCore = {
             artifactDungeonUsedAttempts: this.artifactDungeonUsedAttempts,
             artifactDungeonLastResetTimestamp: this.artifactDungeonLastResetTimestamp || undefined,
             artifactDungeonSweepCount: this.artifactDungeonSweepCount,
+            dungeonSweepStates: this.dungeonSweepStates,
             saveTime: Date.now(),
             // uuid: this.uuid, // uuid는 별도로 보내기 때문에 여기에 넣지 않음
         };
@@ -125,6 +149,7 @@ export const GameStateCore = {
                 this.artifactDungeonUsedAttempts = data.artifactDungeonUsedAttempts || 0;
                 this.artifactDungeonLastResetTimestamp = data.artifactDungeonLastResetTimestamp || null;
                 this.artifactDungeonSweepCount = data.artifactDungeonSweepCount || 0;
+                this.dungeonSweepStates = data.dungeonSweepStates || {};
                 this.uuid = data.uuid || null;
                 console.log('Game state loaded');
                 return true;
@@ -180,6 +205,7 @@ export const GameStateCore = {
             this.artifactDungeonUsedAttempts = saveData.artifactDungeonUsedAttempts ?? 0;
             this.artifactDungeonLastResetTimestamp = saveData.artifactDungeonLastResetTimestamp ?? null;
             this.artifactDungeonSweepCount = saveData.artifactDungeonSweepCount ?? 0;
+            this.dungeonSweepStates = saveData.dungeonSweepStates ?? this.dungeonSweepStates ?? {};
             this.uuid = saveData.uuid ?? null;
             console.log('Game state updated from server data');
         } catch (error) {

@@ -11,6 +11,7 @@ import { SkillStateManager } from './state/SkillStateManager';
 import { BuffManager } from './state/BuffManager';
 import { DungeonManager } from './state/DungeonManager';
 import { ArtifactDungeonManager } from './state/ArtifactDungeonManager';
+import { DungeonSweepManager } from './state/DungeonSweepManager';
 
 // 기존 인터페이스 유지를 위한 통합 GameState
 export const GameState = {
@@ -121,6 +122,18 @@ export const GameState = {
     checkAndResetArtifactDungeonAttempts: () => ArtifactDungeonManager.checkAndResetDailyAttempts(),
     incrementArtifactDungeonSweepCount: () => ArtifactDungeonManager.incrementSweepCount(),
     getArtifactDungeonSweepCount: () => ArtifactDungeonManager.getSweepCount(),
+
+    // 던전 공통 소탕 관리
+    getDungeonRemainingSweepAttempts: (dungeonId: string, dailyLimit?: number) => 
+        DungeonSweepManager.getRemainingAttempts(dungeonId, dailyLimit),
+    canSweepDungeon: (dungeonId: string, dungeonLevel: number, minLevel: number = 2, dailyLimit?: number) => 
+        DungeonSweepManager.canSweep(dungeonId, dungeonLevel, minLevel, dailyLimit),
+    useDungeonSweepAttempt: (dungeonId: string, dailyLimit?: number) => 
+        DungeonSweepManager.useSweepAttempt(dungeonId, dailyLimit),
+    incrementDungeonSweepCount: (dungeonId: string) => 
+        DungeonSweepManager.incrementSweepCount(dungeonId),
+    getDungeonSweepCount: (dungeonId: string) => 
+        DungeonSweepManager.getSweepCount(dungeonId),
     
     // 유물 레벨 관리
     getArtifactLevel: (artifactId: number) => GameStateCore.artifactLevels[artifactId] || 0,

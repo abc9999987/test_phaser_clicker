@@ -2,10 +2,11 @@
 import Phaser from 'phaser';
 import { Responsive } from '../../utils/Responsive';
 import { GameState } from '../../managers/GameState';
-import { DungeonConfigs } from '../../config/dungeonConfig';
+import { DungeonConfigs, DungeonConfig } from '../../config/dungeonConfig';
 import { Effects } from '../../utils/Effects';
 import { ArtifactConfigs, ArtifactConfig, AddArtifactRate } from '../../config/artifactConfig';
 import { UIManager } from '../UIManager';
+import { DungeonBossReward } from '../../game/boss/DungeonBossReward';
 import { ArtifactTab } from './ArtifactTab';
 
 export interface DungeonTabState {
@@ -71,7 +72,7 @@ export const DungeonTab = {
     // 개별 던전 카드 생성
     createDungeonCard(
         scene: Phaser.Scene,
-        dungeonConfig: any,
+        dungeonConfig: DungeonConfig,
         x: number,
         y: number,
         width: number,
@@ -154,12 +155,17 @@ export const DungeonTab = {
         const statusFontSize = Responsive.getFontSize(scene, 12);
         const descTextWidth = descText.width;
         const statusX = descX + descTextWidth + itemSpacing;
-        
-        // 유물 던전인 경우 남은 횟수 표시, 아니면 무제한
+
+        // 소탕 가능 던전인 경우 남은 횟수 표시, 아니면 무제한
         let statusTextContent = '무제한';
-        if (dungeonConfig.id === 'artifact_dungeon') {
-            const remainingAttempts = GameState.getArtifactDungeonRemainingAttempts();
-            statusTextContent = `남은 횟수: ${remainingAttempts}/5`;
+        if (dungeonConfig.enableSweep) {
+            const dailyLimit = dungeonConfig.dailySweepLimit;
+            const remainingAttempts = GameState.getDungeonRemainingSweepAttempts(dungeonConfig.id, dailyLimit);
+            if (dailyLimit !== undefined) {
+                statusTextContent = `남은 횟수: ${remainingAttempts}/${dailyLimit}`;
+            } else {
+                statusTextContent = `남은 횟수: ${remainingAttempts}`;
+            }
         }
         
         const statusText = scene.add.text(statusX, centerY, statusTextContent, {
@@ -171,21 +177,23 @@ export const DungeonTab = {
         statusText.setOrigin(0, 0.5);
         cardContainer.add(statusText);
 
-        // 4. 버튼 영역 (입장 버튼 + 소탕 버튼(유물 던전만))
+        const isArtifactDungeon = dungeonConfig.id === 'artifact_dungeon';
+
+        // 4. 버튼 영역 (입장 버튼 + 소탕 버튼(소탕 가능 던전만))
         const buttonHeight = height * 0.5;
         const buttonRadius = 8;
         const buttonSpacing = padding * 1.5; // 버튼 간 간격
         const rightPadding = padding * 0.5; // 오른쪽 패딩
         
-        // 유물 던전인 경우 소탕 버튼도 표시하므로 버튼 너비 조정
-        const isArtifactDungeon = dungeonConfig.id === 'artifact_dungeon';
+        // 소탕 가능 던전인 경우 소탕 버튼도 표시하므로 버튼 너비 조정
+        const isSweepDungeon = !!dungeonConfig.enableSweep;
         
         // 카드 오른쪽 끝 위치 (중심 기준)
         const cardRightEdge = width / 2 - rightPadding;
         
         // 버튼 너비 계산 (카드를 벗어나지 않도록)
         let actualButtonWidth: number;
-        if (isArtifactDungeon) {
+        if (isSweepDungeon) {
             // 두 버튼 + 간격이 카드 안에 들어가도록 계산
             // (cardRightEdge - (버튼2개 + 간격)) / 2 = 각 버튼 너비
             const maxTotalWidth = (cardRightEdge - 0) * 2; // 중심 0부터 오른쪽 끝까지
@@ -199,7 +207,7 @@ export const DungeonTab = {
         
         // 입장 버튼 위치 (소탕 버튼이 있으면 왼쪽으로 이동)
         let enterButtonX: number;
-        if (isArtifactDungeon) {
+        if (isSweepDungeon) {
             // 소탕 버튼이 카드 오른쪽 끝에 배치되므로, 입장 버튼은 그 왼쪽에 배치
             // 소탕 버튼 중심: cardRightEdge - actualButtonWidth / 2
             // 입장 버튼 중심: 소탕 버튼 중심 - actualButtonWidth - buttonSpacing
@@ -294,14 +302,19 @@ export const DungeonTab = {
             }
         }
 
-        // 소탕 버튼 (유물 던전만)
-        if (isArtifactDungeon) {
+        // 소탕 버튼 (소탕 가능 던전 공통)
+        if (isSweepDungeon) {
             // 소탕 버튼 위치 (입장 버튼 오른쪽에 배치, 카드 오른쪽 끝 기준)
             const sweepButtonX = cardRightEdge - actualButtonWidth / 2;
-            
-            // 소탕 가능 여부 확인
-            const currentDungeonLevel = GameState.getDungeonLevel('artifact_dungeon');
-            const canSweep = GameState.canSweepArtifactDungeon(currentDungeonLevel);
+
+            // 소탕 설정값
+            const dungeonId = dungeonConfig.id;
+            const currentDungeonLevel = GameState.getDungeonLevel(dungeonId);
+            const minSweepLevel = dungeonConfig.sweepMinLevel ?? 2;
+            const dailyLimit = dungeonConfig.dailySweepLimit;
+
+            // 소탕 가능 여부 확인 (공통 API)
+            const canSweep = GameState.canSweepDungeon(dungeonId, currentDungeonLevel, minSweepLevel, dailyLimit);
             
             // 소탕 버튼 배경 (활성화/비활성화에 따라 색상 변경)
             const sweepButtonBg = scene.add.graphics();
@@ -322,66 +335,92 @@ export const DungeonTab = {
             
             sweepButton.on('pointerdown', () => {
                 if (!canSweep) return;
-                
-                // 소탕 가능 여부 재확인
-                const level = GameState.getDungeonLevel('artifact_dungeon');
-                if (!GameState.canSweepArtifactDungeon(level)) {
+
+                // 소탕 가능 여부 재확인 (공통 API)
+                const level = GameState.getDungeonLevel(dungeonId);
+                if (!GameState.canSweepDungeon(dungeonId, level, minSweepLevel, dailyLimit)) {
                     return;
                 }
-                
-                // 보상 계산: (현재 층수 - 1) 루비
-                const reward = Math.max(0, level - 1);
-                
-                if (reward > 0) {
+
+                // 보상 계산
+                let rubyReward = 0;
+                let goldReward = 0;
+
+                if (isArtifactDungeon) {
+                    // 유물 던전: (현재 층수 - 1) 루비
+                    rubyReward = Math.max(0, level - 1);
+                } else if (dungeonId === 'gold_dungeon') {
+                    // 골드 던전: a안 유지
+                    // (현재 레벨 - 1)회 만큼, 현재 레벨 한 번 클리어 시 얻는 골드를 지급
+                    // (던전 보스 보상 계산과 동일한 스케일을 사용)
+                    goldReward = DungeonBossReward.getGoldRewardValue(dungeonConfig, level);
+                }
+
+                const hasReward = rubyReward > 0 || goldReward > 0;
+
+                if (hasReward) {
                     // 보상 지급
-                    GameState.addRubies(reward);
-                    
-                    // 횟수 차감
-                    if (GameState.useSweepAttempt()) {
+                    if (rubyReward > 0) {
+                        GameState.addRubies(rubyReward);
+                    }
+                    if (goldReward > 0) {
+                        GameState.addCoins(goldReward);
+                    }
+
+                    // 횟수 차감 (공통)
+                    if (GameState.useDungeonSweepAttempt(dungeonId, dailyLimit)) {
                         // 소탕 횟수 증가 (누적 통계)
-                        GameState.incrementArtifactDungeonSweepCount();
-                        
-                        // AddArtifactRate 확률로 유물 획득
+                        GameState.incrementDungeonSweepCount(dungeonId);
+
+                        // 유물 던전 전용: AddArtifactRate 확률로 유물 획득
                         let obtainedArtifact: ArtifactConfig | null = null;
-                        if (Math.random() < AddArtifactRate) {
-                            // maxLevel에 도달하지 않은 유물만 필터링
+                        if (isArtifactDungeon && rubyReward > 0 && Math.random() < AddArtifactRate) {
                             const availableArtifacts = ArtifactConfigs.filter(artifact => {
                                 const currentLevel = GameState.getArtifactLevel(artifact.id);
                                 return currentLevel < artifact.maxLevel;
                             });
-                            
-                            // 업그레이드 가능한 유물이 있을 때만 선택
+
                             if (availableArtifacts.length > 0) {
                                 const randomIndex = Math.floor(Math.random() * availableArtifacts.length);
                                 obtainedArtifact = availableArtifacts[randomIndex];
-                                // 유물 레벨 +1 증가
                                 GameState.incrementArtifactLevel(obtainedArtifact.id);
                             }
                         }
-                        
-                        // 성공 피드백 (루비 파티클 효과)
-                        Effects.createRubyParticle(scene, sweepButtonX, buttonY, reward);
-                        
-                        // 소탕 완료 팝업 표시 (유물 획득 시 이미지 포함)
-                        Effects.showSweepCompletePopup(scene, reward, obtainedArtifact);
-                        
-                        // UI 업데이트를 위해 던전 탭 재생성
-                        // (실제로는 UIManager.update()를 호출하거나 탭을 다시 그려야 함)
-                        // 일단 간단하게 상태 텍스트만 업데이트
-                        const remainingAttempts = GameState.getArtifactDungeonRemainingAttempts();
-                        statusText.setText(`남은 횟수: ${remainingAttempts}/5`);
-                        
-                        // 유물 획득 시 유물 탭 UI 업데이트
-                        if (obtainedArtifact) {
-                            // 유물 탭이 활성화되어 있으면 탭을 다시 그려서 레벨 업데이트 반영
+
+                        // 성공 피드백
+                        if (rubyReward > 0) {
+                            Effects.createRubyParticle(scene, sweepButtonX, buttonY, rubyReward);
+                        }
+                        if (goldReward > 0) {
+                            Effects.createCoinParticle(scene, sweepButtonX, buttonY, goldReward);
+                        }
+
+                        // 던전 타입별 보상 팝업
+                        if (isArtifactDungeon) {
+                            // 유물 던전: 기존 루비/유물 팝업
+                            Effects.showSweepCompletePopup(scene, rubyReward, obtainedArtifact);
+                        } else if (dungeonId === 'gold_dungeon' && goldReward > 0) {
+                            // 골드 던전: 골드 소탕 팝업
+                            Effects.showGoldSweepCompletePopup(scene, goldReward);
+                        }
+
+                        // 상태 텍스트 업데이트 (공통)
+                        const remainingAttempts = GameState.getDungeonRemainingSweepAttempts(dungeonId, dailyLimit);
+                        if (dailyLimit !== undefined) {
+                            statusText.setText(`남은 횟수: ${remainingAttempts}/${dailyLimit}`);
+                        } else {
+                            statusText.setText(`남은 횟수: ${remainingAttempts}`);
+                        }
+
+                        // 유물 탭 UI 업데이트 (유물 던전 한정)
+                        if (isArtifactDungeon && obtainedArtifact) {
                             if (UIManager.commonState.activeTabIndex === 4) {
-                                // 유물 탭 재생성
                                 const gameWidth = scene.scale.width;
                                 const gameHeight = scene.scale.height;
                                 const halfHeight = gameHeight * 0.5;
                                 const uiAreaHeight = gameHeight * 0.5;
                                 const uiAreaStartY = halfHeight;
-                                
+
                                 ArtifactTab.createArtifactTab(
                                     scene,
                                     gameWidth,
@@ -393,11 +432,10 @@ export const DungeonTab = {
                                 );
                             }
                         }
-                        
-                        // 소탕 버튼 상태 업데이트
-                        const newCanSweep = GameState.canSweepArtifactDungeon(level);
+
+                        // 소탕 버튼 상태 업데이트 (공통)
+                        const newCanSweep = GameState.canSweepDungeon(dungeonId, level, minSweepLevel, dailyLimit);
                         if (!newCanSweep) {
-                            // 비활성화 처리
                             sweepButton.removeInteractive();
                             sweepButtonBg.clear();
                             sweepButtonBg.fillStyle(0x555555, 1);
