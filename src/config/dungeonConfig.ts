@@ -110,7 +110,7 @@ export const DungeonConfigs: DungeonConfig[] = [
     },
     {
         id: 'feed_dungeon',
-        name: '먹이 던전',
+        name: '고기 던전',
         description: '단계: ',
         sceneKey: 'FeedDungeonScene',
         backgroundColor: 0x2a2a3a,
@@ -120,7 +120,7 @@ export const DungeonConfigs: DungeonConfig[] = [
         bossBaseHp: 1000,
         bossBaseReward: 10000,
         /**
-         * 먹이 던전 보스 HP:
+         * 고기 던전 보스 HP:
          * - n층 보스 HP = 유물 던전 보스 5n층 HP
          * - 유물/골드 던전과 동일한 공식(1000 * 1.5^(level-1))을 사용하되, level을 5n으로 매핑
          */

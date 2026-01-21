@@ -39,7 +39,7 @@ export const DungeonBossReward = {
             // 유물 던전: 루비 보상 지급 (현재 층수와 동일한 양)
             this.giveRubyReward(scene, dungeonLevel, bossX, bossY);
         } else if (dungeonConfig.id === 'feed_dungeon') {
-            // 먹이 던전: meat 보상 지급
+            // 고기 던전: meat 보상 지급
             this.giveMeatReward(scene, dungeonLevel, bossX, bossY);
         } else {
             // 골드 던전 등: 골드 보상 지급

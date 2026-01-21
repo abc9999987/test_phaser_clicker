@@ -357,7 +357,7 @@ export const DungeonTab = {
                     // (던전 보스 보상 계산과 동일한 스케일을 사용)
                     goldReward = DungeonBossReward.getGoldRewardValue(dungeonConfig, level);
                 } else if (isFeedDungeon) {
-                    // 먹이 던전: 층수 * 10 개의 고기
+                    // 고기 던전: 층수 * 10 개의 고기
                     meatReward = level * 10;
                 }
 

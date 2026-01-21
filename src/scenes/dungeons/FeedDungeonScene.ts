@@ -9,7 +9,7 @@ import { UIManager } from '../../ui/UIManager';
 import { DungeonConfigs } from '../../config/dungeonConfig';
 import { Responsive } from '../../utils/Responsive';
 
-// 먹이 던전 씬
+// 고기 던전 씬
 export class FeedDungeonScene extends BaseDungeonScene {
     autoFireTimer?: Phaser.Time.TimerEvent;
     dungeonTimer?: Phaser.Time.TimerEvent;
@@ -30,7 +30,7 @@ export class FeedDungeonScene extends BaseDungeonScene {
     protected initializeDungeon(): void {
         const dungeonConfig = DungeonConfigs.find(d => d.id === 'feed_dungeon');
         if (!dungeonConfig) {
-            console.error('먹이 던전 설정을 찾을 수 없습니다.');
+            console.error('고기 던전 설정을 찾을 수 없습니다.');
             return;
         }
         
