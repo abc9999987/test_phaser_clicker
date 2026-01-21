@@ -29,6 +29,9 @@ export const AssetLoader = {
         scene.load.image('gold_boss_3', 'assets/enemy/gold_boss_3.png');
         scene.load.image('gold_boss_4', 'assets/enemy/gold_boss_4.png');
 
+        // 먹이 던전(고기 던전) 보스 이미지 로드
+        scene.load.image('meat_boss', 'assets/enemy/meat_boss.png');
+
         // 유물 이미지 로드
         scene.load.image('artifact_01', 'assets/artifact/artifact_01.png');
         scene.load.image('artifact_02', 'assets/artifact/artifact_02.png');

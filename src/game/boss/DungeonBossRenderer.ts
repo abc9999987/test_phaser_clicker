@@ -18,11 +18,14 @@ export const DungeonBossRenderer = {
         let x = gameWidth * 0.15;
         let y = gameHeight * 0.33;
         
-        // 골드 던전 보스인 경우 애니메이션 사용
-        // 유물 던전도 골드 던전과 동일한 보스 이미지/애니메이션 사용 (나중에 리소스 변경 예정)
+        // 골드/유물 던전 보스인 경우 애니메이션 사용
         if (dungeonConfig.id === 'gold_dungeon' || dungeonConfig.id === 'artifact_dungeon') {
             y = gameHeight * 0.29;
             return this.createAnimatedBoss(scene, x, y, baseScale);
+        } else if (dungeonConfig.id === 'feed_dungeon') {
+            // 먹이 던전(고기 던전) 보스는 전용 이미지 사용
+            y = gameHeight * 0.30;
+            return this.createMeatBoss(scene, x, y, baseScale);
         } else {
             return this.createDefaultBoss(scene, x, y, baseScale);
         }
@@ -57,6 +60,33 @@ export const DungeonBossRenderer = {
         goldBoss.setScale(baseScale * 0.5);
         
         return goldBoss;
+    },
+    
+    // 먹이 던전 전용 보스 생성
+    createMeatBoss(
+        scene: Phaser.Scene,
+        x: number,
+        y: number,
+        baseScale: number
+    ): Phaser.GameObjects.Image {
+        const boss = scene.add.image(x, y, 'meat_boss');
+
+        // 기본 스케일 (사용자가 조정한 값 기준)
+        const base = baseScale * 0.5;
+        boss.setScale(base);
+
+        // 1배 ↔ 1.05배로 천천히 커졌다 작아지는 펄싱 애니메이션
+        scene.tweens.add({
+            targets: boss,
+            scaleX: base * 1.02,
+            scaleY: base * 1.02,
+            duration: 800,
+            yoyo: true,
+            repeat: -1,
+            ease: 'Sine.easeInOut'
+        });
+
+        return boss;
     },
     
     // 기본 보스 생성 (다른 던전)
