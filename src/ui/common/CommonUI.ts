@@ -276,10 +276,14 @@ export const CommonUI = {
         // 보스 타이머 업데이트
         if (state.bossTimerText && scene) {
             const isBossStage = GameState.isBossStage();
-            state.bossTimerText.setVisible(isBossStage);
-            
-            if (isBossStage && (scene as any).bossTimer && (scene as any).bossTimerStartTime !== undefined) {
-                const elapsed = scene.time.now - (scene as any).bossTimerStartTime;
+            const gameScene: any = scene as any;
+            const bossTimer = gameScene.bossTimer;
+
+            if (isBossStage && bossTimer && typeof bossTimer.getElapsed === 'function') {
+                state.bossTimerText.setVisible(true);
+
+                // 타이머 이벤트 자체의 경과 시간을 기준으로 남은 시간 계산
+                const elapsed = bossTimer.getElapsed();
                 const remaining = Math.max(0, 15000 - elapsed);
                 const seconds = Math.ceil(remaining / 1000);
                 
