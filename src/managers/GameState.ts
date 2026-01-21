@@ -20,6 +20,8 @@ export const GameState = {
     set coins(value: number) { GameStateCore.coins = value; },
     get rubies() { return GameStateCore.rubies; },
     set rubies(value: number) { GameStateCore.rubies = value; },
+    get meat() { return GameStateCore.meat; },
+    set meat(value: number) { GameStateCore.meat = value; },
     get attackPower() { return GameStateCore.attackPower; },
     set attackPower(value: number) { GameStateCore.attackPower = value; },
     get attackSpeed() { return GameStateCore.attackSpeed; },
@@ -58,6 +60,14 @@ export const GameState = {
     // 루비 관리
     addRubies: (amount: number) => RubyManager.addRubies(amount),
     spendRubies: (amount: number) => RubyManager.spendRubies(amount),
+    
+    // 고기(meat) 관리
+    getMeat: () => GameStateCore.meat,
+    addMeat: (amount: number) => {
+        if (amount <= 0) return;
+        GameStateCore.meat += amount;
+        GameStateCore.save();
+    },
     
     // 스테이지 관리
     getStageString: () => StageManager.getStageString(),

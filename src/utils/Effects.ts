@@ -6,44 +6,24 @@ import { ArtifactConfig, AddArtifactRate } from '../config/artifactConfig';
 export const Effects = {
     // 애니메이션 추적을 위한 맵 (타겟별 애니메이션 참조 저장)
     activeAnimations: new Map<Phaser.GameObjects.GameObject, Phaser.Tweens.Tween>(),
-    
-    // 코인 파티클 효과 생성 (황금색, + 형식)
-    createCoinParticle(scene: Phaser.Scene, x: number, y: number, amount: number = 1): void {
+
+    // 던전 보상 파티클 효과 생성
+    createDungeonRewardParticle(scene: Phaser.Scene, x: number, y: number, amount: number = 1, addText: string, color: string): void {
         // 소수점 제거하고 정수로 표시
         const displayAmount = Math.floor(amount);
-        const coin = scene.add.text(x, y, `+${NumberFormatter.formatNumber(displayAmount)}`, {
+        const targets = scene.add.text(x, y, `+${NumberFormatter.formatNumber(displayAmount)}${addText}`, {
             font: 'bold 20px Arial',
-            color: '#ffd700' // 황금색
+            color: color // 분홍색
         });
-        coin.setOrigin(0.5);
+        targets.setOrigin(0.5);
         
         scene.tweens.add({
-            targets: coin,
+            targets,
             y: y - 50,
             alpha: 0,
             duration: 800,
             ease: 'Power2',
-            onComplete: () => coin.destroy()
-        });
-    },
-    
-    // 루비 파티클 효과 생성 (분홍색, + 형식)
-    createRubyParticle(scene: Phaser.Scene, x: number, y: number, amount: number = 1): void {
-        // 소수점 제거하고 정수로 표시
-        const displayAmount = Math.floor(amount);
-        const ruby = scene.add.text(x, y, `+${NumberFormatter.formatNumber(displayAmount)} 루비`, {
-            font: 'bold 20px Arial',
-            color: '#ff6b9d' // 분홍색
-        });
-        ruby.setOrigin(0.5);
-        
-        scene.tweens.add({
-            targets: ruby,
-            y: y - 50,
-            alpha: 0,
-            duration: 800,
-            ease: 'Power2',
-            onComplete: () => ruby.destroy()
+            onComplete: () => targets.destroy()
         });
     },
     

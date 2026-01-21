@@ -191,7 +191,7 @@ export const Enemy = {
         });
         
         // 코인 파티클 효과
-        Effects.createCoinParticle(scene, this.enemy.x, this.enemy.y, goldReward);
+        Effects.createDungeonRewardParticle(scene, this.enemy.x, this.enemy.y, goldReward, '', '#ffd700');
     },
     
     // 적 리스폰

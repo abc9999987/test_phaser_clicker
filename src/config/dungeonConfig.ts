@@ -107,5 +107,31 @@ export const DungeonConfigs: DungeonConfig[] = [
         timeLimit: 10 // 10초 내에 보스 처치 필요 - 골드 던전과 동일
         // backgroundImageKey 사용 예시:
         // backgroundImageKey: 'artifact_dungeon_bg' // AssetLoader에서 먼저 로드한 이미지 키
+    },
+    {
+        id: 'feed_dungeon',
+        name: '먹이 던전',
+        description: '단계: ',
+        sceneKey: 'FeedDungeonScene',
+        backgroundColor: 0x2a2a3a,
+        enableSweep: true,
+        dailySweepLimit: 5,
+        sweepMinLevel: 2,
+        bossBaseHp: 1000,
+        bossBaseReward: 10000,
+        /**
+         * 먹이 던전 보스 HP:
+         * - n층 보스 HP = 유물 던전 보스 5n층 HP
+         * - 유물/골드 던전과 동일한 공식(1000 * 1.5^(level-1))을 사용하되, level을 5n으로 매핑
+         */
+        getBossHp: (level: number) => {
+            const mappedLevel = level * 5; // 유물 던전 5n층에 해당
+            return Math.floor(1000 * Math.pow(1.5, mappedLevel - 1));
+        },
+        // 보스 보상은 직접 사용하지 않고, DungeonBossReward에서 먹이(고기) 보상으로 처리
+        getBossReward: (_level: number) => {
+            return 0;
+        },
+        timeLimit: 10
     }
 ];

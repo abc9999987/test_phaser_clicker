@@ -9,6 +9,7 @@ import { MenuPopup, MenuPopupState } from '../menu/MenuPopup';
 export interface CommonUIState {
     coinText: Phaser.GameObjects.Text | null;
     rubyText: Phaser.GameObjects.Text | null;
+    meatText: Phaser.GameObjects.Text | null;
     stageText: Phaser.GameObjects.Text | null;
     killCountText: Phaser.GameObjects.Text | null;
     bossTimerText: Phaser.GameObjects.Text | null;
@@ -48,17 +49,71 @@ export const CommonUI = {
             fontFamily: 'Arial'
         });
         state.killCountText.setOrigin(0.5);
-        
-        // 골드 텍스트 (화면 상단 좌측)
-        const coinFontSize = Responsive.getFontSize(scene, 18);
-        state.coinText = scene.add.text(gameWidth * 0.01, halfHeight - gameHeight * 0.027, `코인: ${NumberFormatter.formatNumber(Math.floor(GameState.coins))}`, {
-            fontSize: coinFontSize,
+
+        // 화면 우상단 자원 표시 (골드 / 루비 / 고기)
+        const resourceFontSize = Responsive.getFontSize(scene, 16); // 예: '16px'
+        const numericResourceFontSize = parseFloat(resourceFontSize); // 아이콘 크기 계산용 숫자 값
+        const baseY = gameHeight * 0.072;
+        const marginRight = gameWidth * 0.95;
+        const rowSpacing = numericResourceFontSize * 1.1;
+        const iconSize = numericResourceFontSize * 0.9;
+        const innerSpacing = 4;
+
+        // 먼저 텍스트 객체를 생성 (x는 나중에 재배치)
+        state.coinText = scene.add.text(0, baseY, NumberFormatter.formatNumber(Math.floor(GameState.coins)), {
+            fontSize: resourceFontSize,
             color: '#ffd700',
             fontFamily: 'Arial',
-            font: `600 ${coinFontSize} Arial`,
-            stroke: '#b8860b',
-            strokeThickness: 1
+            font: `600 ${resourceFontSize} Arial`,
+            stroke: '#000000',
+            strokeThickness: 2
         });
+        state.coinText.setOrigin(0, 0.5);
+
+        state.rubyText = scene.add.text(0, baseY, NumberFormatter.formatNumber(Math.floor(GameState.rubies)), {
+            fontSize: resourceFontSize,
+            color: '#ff6b9d',
+            fontFamily: 'Arial',
+            font: `600 ${resourceFontSize} Arial`,
+            stroke: '#000000',
+            strokeThickness: 2
+        });
+        state.rubyText.setOrigin(0, 0.5);
+
+        state.meatText = scene.add.text(0, baseY, NumberFormatter.formatNumber(Math.floor(GameState.meat)), {
+            fontSize: resourceFontSize,
+            color: '#ffb366',
+            fontFamily: 'Arial',
+            font: `600 ${resourceFontSize} Arial`,
+            stroke: '#000000',
+            strokeThickness: 2
+        });
+        state.meatText.setOrigin(0, 0.5);
+
+        // 아이콘(간단한 벡터) + 텍스트 세로 정렬
+        const baseX = gameWidth - marginRight;
+
+        // 골드 (맨 위)
+        const coinIconX = baseX - iconSize / 2;
+        const coinIcon = scene.add.circle(coinIconX, baseY, iconSize / 2, 0xffd700);
+        coinIcon.setStrokeStyle(2, 0xb8860b, 1);
+        state.coinText.x = baseX + innerSpacing;
+
+        // 루비 (중간)
+        const rubyY = baseY + rowSpacing;
+        const rubyIconX = baseX - iconSize / 2;
+        const rubyIcon = scene.add.circle(rubyIconX, rubyY, iconSize / 2, 0xff6b9d);
+        rubyIcon.setStrokeStyle(2, 0xb03060, 1);
+        state.rubyText.y = rubyY;
+        state.rubyText.x = baseX + innerSpacing;
+
+        // 고기 (맨 아래)
+        const meatY = baseY + rowSpacing * 2;
+        const meatIconX = baseX - iconSize / 2;
+        const meatIcon = scene.add.circle(meatIconX, meatY, iconSize / 2, 0xcc4c39);
+        meatIcon.setStrokeStyle(2, 0x5a2018, 1);
+        state.meatText.y = meatY;
+        state.meatText.x = baseX + innerSpacing;
         
         // 보스 타이머 표시 (화면 상단 중앙, 보스 스테이지일 때만 표시)
         const timerFontSize = Responsive.getFontSize(scene, 24);
@@ -125,17 +180,69 @@ export const CommonUI = {
         });
         state.dungeonTimerText.setOrigin(0.5);
         state.dungeonTimerText.setVisible(false); // 기본적으로 숨김
-        
-        // 골드 텍스트 (화면 상단 좌측)
-        const coinFontSize = Responsive.getFontSize(scene, 24);
-        state.coinText = scene.add.text(gameWidth * 0.03, halfHeight - gameHeight * 0.035, `코인: ${NumberFormatter.formatNumber(Math.floor(GameState.coins))}`, {
-            fontSize: coinFontSize,
+
+        // 던전 씬에서도 동일한 우상단 자원 표시 사용
+        const resourceFontSize = Responsive.getFontSize(scene, 18);
+        const numericResourceFontSize = parseFloat(resourceFontSize);
+        const baseY = halfHeight - gameHeight * 0.035;
+        const marginRight = gameWidth * 0.02;
+        const rowSpacing = numericResourceFontSize * 1.1;
+        const iconSize = numericResourceFontSize * 0.9;
+        const innerSpacing = 4;
+
+        state.coinText = scene.add.text(0, baseY, NumberFormatter.formatNumber(Math.floor(GameState.coins)), {
+            fontSize: resourceFontSize,
             color: '#ffd700',
             fontFamily: 'Arial',
-            font: `600 ${coinFontSize} Arial`,
-            stroke: '#b8860b',
-            strokeThickness: 1
+            font: `600 ${resourceFontSize} Arial`,
+            stroke: '#000000',
+            strokeThickness: 2
         });
+        state.coinText.setOrigin(0, 0.5);
+
+        state.rubyText = scene.add.text(0, baseY, NumberFormatter.formatNumber(Math.floor(GameState.rubies)), {
+            fontSize: resourceFontSize,
+            color: '#ff6b9d',
+            fontFamily: 'Arial',
+            font: `600 ${resourceFontSize} Arial`,
+            stroke: '#000000',
+            strokeThickness: 2
+        });
+        state.rubyText.setOrigin(0, 0.5);
+
+        state.meatText = scene.add.text(0, baseY, NumberFormatter.formatNumber(Math.floor(GameState.meat)), {
+            fontSize: resourceFontSize,
+            color: '#ffb366',
+            fontFamily: 'Arial',
+            font: `600 ${resourceFontSize} Arial`,
+            stroke: '#000000',
+            strokeThickness: 2
+        });
+        state.meatText.setOrigin(0, 0.5);
+
+        const baseX = gameWidth - marginRight;
+
+        // 골드 (맨 위)
+        const coinIconX = baseX - iconSize / 2;
+        const coinIcon = scene.add.circle(coinIconX, baseY, iconSize / 2, 0xffd700);
+        coinIcon.setStrokeStyle(2, 0xb8860b, 1);
+        state.coinText.x = baseX + innerSpacing;
+
+        // 루비 (중간)
+        const rubyY = baseY + rowSpacing;
+        const rubyIconX = baseX - iconSize / 2;
+        const rubyIcon = scene.add.circle(rubyIconX, rubyY, iconSize / 2, 0xff6b9d);
+        rubyIcon.setStrokeStyle(2, 0xb03060, 1);
+        state.rubyText.y = rubyY;
+        state.rubyText.x = baseX + innerSpacing;
+
+        // 고기 (맨 아래)
+        const meatY = baseY + rowSpacing * 2;
+        const meatIconX = baseX - iconSize / 2;
+        const meatIcon = scene.add.circle(meatIconX, meatY, iconSize / 2, 0xcc4c39);
+        meatIcon.setStrokeStyle(2, 0x5a2018, 1);
+        state.meatText.y = meatY;
+        state.meatText.x = baseX + innerSpacing;
         
         // 보스 타이머 표시는 던전에서는 사용하지 않으므로 null로 설정
         state.bossTimerText = null;
@@ -163,7 +270,7 @@ export const CommonUI = {
         
         // 처치 카운트 표시 업데이트 (던전 씬에서는 null일 수 있음)
         if (state.killCountText) {
-            state.killCountText.setText(`다음 스테이지까지: ${GameState.killsInCurrentStage}/10 처치`);
+            state.killCountText.setText(`${GameState.killsInCurrentStage}/10 처치`);
         }
         
         // 보스 타이머 업데이트
@@ -210,12 +317,17 @@ export const CommonUI = {
         
         // 골드 텍스트 업데이트 (화면 상단 좌측)
         if (state.coinText) {
-            state.coinText.setText(`코인: ${NumberFormatter.formatNumber(Math.floor(GameState.coins))}`);
+            state.coinText.setText(NumberFormatter.formatNumber(Math.floor(GameState.coins)));
         }
         
         // 루비 텍스트 업데이트
         if (state.rubyText) {
-            state.rubyText.setText(`루비: ${NumberFormatter.formatNumber(Math.floor(GameState.rubies))}`);
+            state.rubyText.setText(NumberFormatter.formatNumber(Math.floor(GameState.rubies)));
+        }
+
+        // 고기 텍스트 업데이트
+        if (state.meatText) {
+            state.meatText.setText(NumberFormatter.formatNumber(Math.floor(GameState.meat)));
         }
     }
 };

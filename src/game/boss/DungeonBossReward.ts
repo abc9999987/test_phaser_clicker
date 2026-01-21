@@ -38,6 +38,9 @@ export const DungeonBossReward = {
         if (dungeonConfig.id === 'artifact_dungeon') {
             // 유물 던전: 루비 보상 지급 (현재 층수와 동일한 양)
             this.giveRubyReward(scene, dungeonLevel, bossX, bossY);
+        } else if (dungeonConfig.id === 'feed_dungeon') {
+            // 먹이 던전: meat 보상 지급
+            this.giveMeatReward(scene, dungeonLevel, bossX, bossY);
         } else {
             // 골드 던전 등: 골드 보상 지급
             this.giveGoldReward(scene, dungeonConfig, dungeonLevel, bossX, bossY);
@@ -63,7 +66,7 @@ export const DungeonBossReward = {
         GameState.save();
         
         // 코인 파티클 효과
-        Effects.createCoinParticle(scene, bossX, bossY, reward);
+        Effects.createDungeonRewardParticle(scene, bossX, bossY, reward, '', '#ffd700');
     },
     
     // 루비 보상 지급
@@ -83,6 +86,26 @@ export const DungeonBossReward = {
         GameState.save();
         
         // 루비 파티클 효과
-        Effects.createRubyParticle(scene, bossX, bossY, reward);
+        Effects.createDungeonRewardParticle(scene, bossX, bossY, reward, ' 루비', '#ff6b9d');
+    },
+
+    // 먹이(meat) 보상 지급
+    giveMeatReward(
+        scene: Phaser.Scene,
+        dungeonLevel: number,
+        bossX: number,
+        bossY: number
+    ): void {
+        // 보상 계산: 층수 * 10개
+        const reward = dungeonLevel * 10;
+
+        // 보상 지급
+        GameState.addMeat(reward);
+
+        // 즉시 저장 (GameState.addMeat에서 이미 저장하지만 명시적으로 한 번 더 호출 가능)
+        GameState.save();
+
+        // 고기 파티클 효과 (루비 스타일에 텍스트만 변경)
+        Effects.createDungeonRewardParticle(scene, bossX, bossY, reward, ' 고기', '#ff6b9d');
     }
 };

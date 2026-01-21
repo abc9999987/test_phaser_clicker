@@ -16,6 +16,7 @@ export const UIManager = {
     commonState: {
         coinText: null as Phaser.GameObjects.Text | null,
         rubyText: null as Phaser.GameObjects.Text | null,
+        meatText: null as Phaser.GameObjects.Text | null,
         stageText: null as Phaser.GameObjects.Text | null,
         killCountText: null as Phaser.GameObjects.Text | null,
         bossTimerText: null as Phaser.GameObjects.Text | null,

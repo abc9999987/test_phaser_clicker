@@ -178,6 +178,7 @@ export const DungeonTab = {
         cardContainer.add(statusText);
 
         const isArtifactDungeon = dungeonConfig.id === 'artifact_dungeon';
+        const isFeedDungeon = dungeonConfig.id === 'feed_dungeon';
 
         // 4. 버튼 영역 (입장 버튼 + 소탕 버튼(소탕 가능 던전만))
         const buttonHeight = height * 0.5;
@@ -345,6 +346,7 @@ export const DungeonTab = {
                 // 보상 계산
                 let rubyReward = 0;
                 let goldReward = 0;
+                let meatReward = 0;
 
                 if (isArtifactDungeon) {
                     // 유물 던전: (현재 층수 - 1) 루비
@@ -354,9 +356,12 @@ export const DungeonTab = {
                     // (현재 레벨 - 1)회 만큼, 현재 레벨 한 번 클리어 시 얻는 골드를 지급
                     // (던전 보스 보상 계산과 동일한 스케일을 사용)
                     goldReward = DungeonBossReward.getGoldRewardValue(dungeonConfig, level);
+                } else if (isFeedDungeon) {
+                    // 먹이 던전: 층수 * 10 개의 고기
+                    meatReward = level * 10;
                 }
 
-                const hasReward = rubyReward > 0 || goldReward > 0;
+                const hasReward = rubyReward > 0 || goldReward > 0 || meatReward > 0;
 
                 if (hasReward) {
                     // 보상 지급
@@ -365,6 +370,9 @@ export const DungeonTab = {
                     }
                     if (goldReward > 0) {
                         GameState.addCoins(goldReward);
+                    }
+                    if (meatReward > 0) {
+                        GameState.addMeat(meatReward);
                     }
 
                     // 횟수 차감 (공통)
@@ -386,13 +394,15 @@ export const DungeonTab = {
                                 GameState.incrementArtifactLevel(obtainedArtifact.id);
                             }
                         }
-
                         // 성공 피드백
                         if (rubyReward > 0) {
-                            Effects.createRubyParticle(scene, sweepButtonX, buttonY, rubyReward);
+                            Effects.createDungeonRewardParticle(scene, sweepButtonX, buttonY, rubyReward, ' 루비', '#ff6b9d');
                         }
                         if (goldReward > 0) {
-                            Effects.createCoinParticle(scene, sweepButtonX, buttonY, goldReward);
+                            Effects.createDungeonRewardParticle(scene, sweepButtonX, buttonY, goldReward, '', '#ffd700');
+                        }
+                        if (meatReward > 0) {
+                            Effects.createDungeonRewardParticle(scene, sweepButtonX, buttonY, meatReward, ' 고기', '#ff6b9d');
                         }
 
                         // 던전 타입별 보상 팝업
