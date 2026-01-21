@@ -109,10 +109,10 @@ export const DungeonConfigs: DungeonConfig[] = [
         // backgroundImageKey: 'artifact_dungeon_bg' // AssetLoader에서 먼저 로드한 이미지 키
     },
     {
-        id: 'feed_dungeon',
+        id: 'meat_dungeon',
         name: '고기 던전',
         description: '단계: ',
-        sceneKey: 'FeedDungeonScene',
+        sceneKey: 'MeatDungeonScene',
         backgroundColor: 0x2a2a3a,
         enableSweep: true,
         dailySweepLimit: 5,

@@ -10,14 +10,14 @@ import { DungeonConfigs } from '../../config/dungeonConfig';
 import { Responsive } from '../../utils/Responsive';
 
 // 고기 던전 씬
-export class FeedDungeonScene extends BaseDungeonScene {
+export class MeatDungeonScene extends BaseDungeonScene {
     autoFireTimer?: Phaser.Time.TimerEvent;
     dungeonTimer?: Phaser.Time.TimerEvent;
     dungeonTimerStartTime?: number;
     isFailed: boolean = false; // 실패 상태 플래그
     
     constructor() {
-        super('FeedDungeonScene');
+        super('MeatDungeonScene');
     }
     
     // 던전별 에셋 로드
@@ -28,7 +28,7 @@ export class FeedDungeonScene extends BaseDungeonScene {
     
     // 던전별 초기화
     protected initializeDungeon(): void {
-        const dungeonConfig = DungeonConfigs.find(d => d.id === 'feed_dungeon');
+        const dungeonConfig = DungeonConfigs.find(d => d.id === 'meat_dungeon');
         if (!dungeonConfig) {
             console.error('고기 던전 설정을 찾을 수 없습니다.');
             return;

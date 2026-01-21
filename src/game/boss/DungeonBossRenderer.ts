@@ -22,8 +22,8 @@ export const DungeonBossRenderer = {
         if (dungeonConfig.id === 'gold_dungeon' || dungeonConfig.id === 'artifact_dungeon') {
             y = gameHeight * 0.29;
             return this.createAnimatedBoss(scene, x, y, baseScale);
-        } else if (dungeonConfig.id === 'feed_dungeon') {
-            // 먹이 던전(고기 던전) 보스는 전용 이미지 사용
+        } else if (dungeonConfig.id === 'meat_dungeon') {
+            // 고기 던전 보스는 전용 이미지 사용
             y = gameHeight * 0.30;
             return this.createMeatBoss(scene, x, y, baseScale);
         } else {

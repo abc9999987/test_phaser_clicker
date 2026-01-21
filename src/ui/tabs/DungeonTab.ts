@@ -178,7 +178,7 @@ export const DungeonTab = {
         cardContainer.add(statusText);
 
         const isArtifactDungeon = dungeonConfig.id === 'artifact_dungeon';
-        const isFeedDungeon = dungeonConfig.id === 'feed_dungeon';
+        const isMeatDungeon = dungeonConfig.id === 'meat_dungeon';
 
         // 4. 버튼 영역 (입장 버튼 + 소탕 버튼(소탕 가능 던전만))
         const buttonHeight = height * 0.5;
@@ -356,7 +356,7 @@ export const DungeonTab = {
                     // (현재 레벨 - 1)회 만큼, 현재 레벨 한 번 클리어 시 얻는 골드를 지급
                     // (던전 보스 보상 계산과 동일한 스케일을 사용)
                     goldReward = DungeonBossReward.getGoldRewardValue(dungeonConfig, level);
-                } else if (isFeedDungeon) {
+                } else if (isMeatDungeon) {
                     // 고기 던전: 층수 * 10 개의 고기
                     meatReward = level * 10;
                 }
@@ -412,7 +412,7 @@ export const DungeonTab = {
                         } else if (dungeonId === 'gold_dungeon' && goldReward > 0) {
                             // 골드 던전: 골드 소탕 팝업
                             Effects.showGoldSweepCompletePopup(scene, goldReward);
-                        } else if (isFeedDungeon && meatReward > 0) {
+                        } else if (isMeatDungeon && meatReward > 0) {
                             // 먹이 던전: 고기 소탕 팝업
                             Effects.showMeatSweepCompletePopup(scene, meatReward);
                         }
