@@ -275,6 +275,59 @@ export const Effects = {
             }
         });
     },
+
+    // 먹이(고기) 던전 소탕 완료 팝업 표시
+    showMeatSweepCompletePopup(scene: Phaser.Scene, meat: number): void {
+        const gameWidth = scene.scale.width;
+        const gameHeight = scene.scale.height;
+        const centerX = gameWidth / 2;
+        const centerY = gameHeight / 2;
+
+        const popupHeight = 160;
+
+        // 팝업 배경 (반투명 검은색)
+        const popupBg = scene.add.graphics();
+        popupBg.fillStyle(0x000000, 0.8);
+        popupBg.fillRoundedRect(centerX - 200, centerY - popupHeight / 2, 400, popupHeight, 15);
+        popupBg.lineStyle(3, 0xff6b9d, 1); // 고기 색 느낌의 테두리
+        popupBg.strokeRoundedRect(centerX - 200, centerY - popupHeight / 2, 400, popupHeight, 15);
+        popupBg.setDepth(1000);
+
+        // 제목 텍스트
+        const titleText = scene.add.text(centerX, centerY - 40, '소탕 완료!', {
+            font: 'bold 28px Arial',
+            color: '#ff6b9d'
+        });
+        titleText.setOrigin(0.5);
+        titleText.setDepth(1001);
+
+        // 보상 텍스트
+        const rewardText = scene.add.text(
+            centerX,
+            centerY + 10,
+            `고기 ${NumberFormatter.formatNumber(Math.floor(meat))}개 획득`,
+            {
+                font: 'bold 24px Arial',
+                color: '#ffb366'
+            }
+        );
+        rewardText.setOrigin(0.5);
+        rewardText.setDepth(1001);
+
+        // 페이드 아웃 애니메이션
+        scene.tweens.add({
+            targets: [popupBg, titleText, rewardText],
+            alpha: 0,
+            duration: 500,
+            delay: 1500,
+            ease: 'Power2',
+            onComplete: () => {
+                popupBg.destroy();
+                titleText.destroy();
+                rewardText.destroy();
+            }
+        });
+    },
     
     // 데미지 파티클 효과 생성
     createDamageParticle(scene: Phaser.Scene, x: number, y: number, damage: number, isSkill: boolean = false, isCrit: boolean = false, isSuperCrit: boolean = false): void {

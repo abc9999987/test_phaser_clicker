@@ -412,6 +412,9 @@ export const DungeonTab = {
                         } else if (dungeonId === 'gold_dungeon' && goldReward > 0) {
                             // 골드 던전: 골드 소탕 팝업
                             Effects.showGoldSweepCompletePopup(scene, goldReward);
+                        } else if (isFeedDungeon && meatReward > 0) {
+                            // 먹이 던전: 고기 소탕 팝업
+                            Effects.showMeatSweepCompletePopup(scene, meatReward);
                         }
 
                         // 상태 텍스트 업데이트 (공통)
