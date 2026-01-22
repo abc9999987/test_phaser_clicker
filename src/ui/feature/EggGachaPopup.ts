@@ -697,40 +697,138 @@ export const EggGachaPopup = {
         const cardBack = (card as any).cardBack;
         const cardFront = (card as any).cardFront;
         
-        // 카드 스케일 애니메이션 (살짝 커졌다가 작아지기)
+        // 글로우 효과를 위한 그래픽 객체 생성
+        const glowGraphics = scene.add.graphics();
+        glowGraphics.setDepth(card.depth - 1);
+        card.parentContainer?.add(glowGraphics);
+        
+        // 초기 상태 저장
+        const originalX = card.x;
+        const originalY = card.y;
+        
+        // 1단계: 카드가 살짝 커지면서 위로 살짝 올라감
         scene.tweens.add({
             targets: card,
-            scaleX: 1.15,
-            scaleY: 1.15,
-            duration: 150,
-            ease: 'Sine.easeOut',
+            scaleX: 1.2,
+            scaleY: 1.2,
+            y: originalY - 20,
+            duration: 200,
+            ease: 'Back.easeOut',
             onUpdate: () => {
+                // 글로우 효과 업데이트
+                const progress = card.scaleX / 1.2;
+                const glowSize = card.width * card.scaleX * 1.3;
+                const glowAlpha = progress * 0.6;
+                
+                glowGraphics.clear();
+                glowGraphics.fillStyle(0xffff00, glowAlpha);
+                glowGraphics.fillCircle(originalX, originalY, glowSize / 2);
+                glowGraphics.fillStyle(0xffffff, glowAlpha * 0.5);
+                glowGraphics.fillCircle(originalX, originalY, glowSize / 2.5);
+            }
+        });
+        
+        // 2단계: 카드 회전하면서 뒤집기 (scaleX를 0으로)
+        scene.tweens.add({
+            targets: card,
+            scaleX: 0,
+            duration: 250,
+            delay: 200,
+            ease: 'Sine.easeInOut',
+            onUpdate: () => {
+                // 글로우 효과 강화
+                const progress = 1 - Math.abs(card.scaleX);
+                const glowSize = card.width * 1.5;
+                const glowAlpha = progress * 0.8;
+                
+                glowGraphics.clear();
+                // 황금색 글로우
+                glowGraphics.fillStyle(0xffd700, glowAlpha);
+                glowGraphics.fillCircle(originalX, originalY, glowSize / 2);
+                glowGraphics.fillStyle(0xffffff, glowAlpha * 0.7);
+                glowGraphics.fillCircle(originalX, originalY, glowSize / 2.3);
+                glowGraphics.fillStyle(0xffff00, glowAlpha * 0.5);
+                glowGraphics.fillCircle(originalX, originalY, glowSize / 2.8);
+                
                 // 중간 지점에서 카드 뒤집기
-                if (card.scaleX >= 1.1 && cardBack && cardBack.visible) {
+                if (card.scaleX <= 0.1 && cardBack && cardBack.visible) {
                     cardBack.setVisible(false);
                     if (cardFront) {
                         cardFront.setVisible(true);
                     }
                 }
-            },
-            onComplete: () => {
-                // 다시 원래 크기로
-                scene.tweens.add({
-                    targets: card,
-                    scaleX: 1,
-                    scaleY: 1,
-                    duration: 150,
-                    ease: 'Sine.easeIn'
-                });
             }
         });
         
-        // 모든 카드가 열렸는지 확인
-        const allOpened = state.openedCards.every(opened => opened);
-        if (allOpened && state.confirmButton) {
-            // 확인 버튼 표시
-            state.confirmButton.setVisible(true);
-        }
+        // 3단계: 카드가 다시 펼쳐지면서 원래 크기로 (scaleX를 1로)
+        scene.tweens.add({
+            targets: card,
+            scaleX: 1,
+            scaleY: 1,
+            y: originalY,
+            duration: 250,
+            delay: 450,
+            ease: 'Back.easeOut',
+            onUpdate: () => {
+                // 글로우 효과 감소
+                const progress = card.scaleX;
+                const glowSize = card.width * card.scaleX * 1.2;
+                const glowAlpha = (1 - progress) * 0.4;
+                
+                glowGraphics.clear();
+                if (glowAlpha > 0) {
+                    glowGraphics.fillStyle(0xffd700, glowAlpha);
+                    glowGraphics.fillCircle(originalX, originalY, glowSize / 2);
+                }
+            },
+            onComplete: () => {
+                // 4단계: 펄스 효과 (살짝 흔들리며 빛남)
+                scene.tweens.add({
+                    targets: card,
+                    scaleX: 1.08,
+                    scaleY: 1.08,
+                    duration: 100,
+                    ease: 'Sine.easeInOut',
+                    yoyo: true,
+                    repeat: 2,
+                    onUpdate: () => {
+                        // 약한 글로우 유지
+                        const pulseProgress = Math.abs(card.scaleX - 1) / 0.08;
+                        const glowSize = card.width * card.scaleX * 1.1;
+                        const glowAlpha = pulseProgress * 0.3;
+                        
+                        glowGraphics.clear();
+                        if (glowAlpha > 0) {
+                            glowGraphics.fillStyle(0xffffff, glowAlpha);
+                            glowGraphics.fillCircle(originalX, originalY, glowSize / 2);
+                        }
+                    },
+                    onComplete: () => {
+                        // 최종 정리
+                        glowGraphics.clear();
+                        glowGraphics.destroy();
+                        
+                        // 원래 위치로 복귀
+                        card.setScale(1, 1);
+                        card.setPosition(originalX, originalY);
+                        
+                        // 모든 카드가 열렸는지 확인
+                        const allOpened = state.openedCards.every(opened => opened);
+                        if (allOpened && state.confirmButton) {
+                            // 확인 버튼 표시 (페이드 인)
+                            state.confirmButton.setVisible(true);
+                            state.confirmButton.setAlpha(0);
+                            scene.tweens.add({
+                                targets: state.confirmButton,
+                                alpha: 1,
+                                duration: 300,
+                                ease: 'Sine.easeOut'
+                            });
+                        }
+                    }
+                });
+            }
+        });
     },
     
     // 확인 버튼 생성
