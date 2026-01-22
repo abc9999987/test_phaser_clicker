@@ -22,6 +22,7 @@ export interface SaveData {
     dungeonLevels?: Record<string, number>; // 던전 단계 (던전 ID -> 단계)
     skillLevels?: Record<string, number>; // 스킬 레벨 (스킬 ID -> 레벨)
     artifactLevels?: Record<number, number>; // 유물 레벨 (유물 ID -> 레벨)
+    eggGachaCounts?: Record<number, number>; // 알 뽑기 수량 (알 뽑기 ID -> 수량)
     // 유물 던전 일일 제한 (구조 변경 전 호환용)
     artifactDungeonLastResetDate?: string; // YYYY-MM-DD (한국 시간 기준)
     artifactDungeonUsedAttempts?: number; // 오늘 사용한 횟수 (0-5)
@@ -67,6 +68,7 @@ export const GameStateCore = {
     dungeonLevels: {} as Record<string, number>,  // 던전 단계 (던전 ID -> 단계)
     skillLevels: {} as Record<string, number>,  // 스킬 레벨 (스킬 ID -> 레벨)
     artifactLevels: {} as Record<number, number>,  // 유물 레벨 (유물 ID -> 레벨)
+    eggGachaCounts: {} as Record<number, number>,  // 알 뽑기 수량 (알 뽑기 ID -> 수량)
     // 유물 던전 일일 제한 (구 구조, 마이그레이션용)
     artifactDungeonLastResetDate: null as string | null,  // YYYY-MM-DD (한국 시간 기준)
     artifactDungeonUsedAttempts: 0,  // 오늘 사용한 횟수 (0-5)
@@ -108,6 +110,7 @@ export const GameStateCore = {
             artifactDungeonLastResetTimestamp: this.artifactDungeonLastResetTimestamp || undefined,
             artifactDungeonSweepCount: this.artifactDungeonSweepCount,
             dungeonSweepStates: this.dungeonSweepStates,
+            eggGachaCounts: this.eggGachaCounts,
             saveTime: Date.now(),
             // uuid: this.uuid, // uuid는 별도로 보내기 때문에 여기에 넣지 않음
         };
@@ -154,6 +157,7 @@ export const GameStateCore = {
                 this.artifactDungeonLastResetTimestamp = data.artifactDungeonLastResetTimestamp || null;
                 this.artifactDungeonSweepCount = data.artifactDungeonSweepCount || 0;
                 this.dungeonSweepStates = data.dungeonSweepStates || {};
+                this.eggGachaCounts = data.eggGachaCounts || {};
                 this.uuid = data.uuid || null;
                 console.log('Game state loaded');
                 return true;
@@ -211,6 +215,7 @@ export const GameStateCore = {
             this.artifactDungeonLastResetTimestamp = saveData.artifactDungeonLastResetTimestamp ?? null;
             this.artifactDungeonSweepCount = saveData.artifactDungeonSweepCount ?? 0;
             this.dungeonSweepStates = saveData.dungeonSweepStates ?? this.dungeonSweepStates ?? {};
+            this.eggGachaCounts = saveData.eggGachaCounts ?? this.eggGachaCounts ?? {};
             this.uuid = saveData.uuid ?? null;
             console.log('Game state updated from server data');
         } catch (error) {

@@ -12,6 +12,7 @@ import { BuffManager } from './state/BuffManager';
 import { DungeonManager } from './state/DungeonManager';
 import { ArtifactDungeonManager } from './state/ArtifactDungeonManager';
 import { DungeonSweepManager } from './state/DungeonSweepManager';
+import { EggGachaManager } from './state/EggGachaManager';
 
 // 기존 인터페이스 유지를 위한 통합 GameState
 export const GameState = {
@@ -155,5 +156,11 @@ export const GameState = {
         const currentLevel = GameStateCore.artifactLevels[artifactId] || 0;
         GameStateCore.artifactLevels[artifactId] = currentLevel + 1;
         GameStateCore.save();
-    }
+    },
+    
+    // 알 뽑기 관리
+    getEggGachaCount: (id: number) => EggGachaManager.getEggGachaCount(id),
+    incrementEggGachaCount: (id: number) => EggGachaManager.incrementEggGachaCount(id),
+    setEggGachaCount: (id: number, count: number) => EggGachaManager.setEggGachaCount(id, count),
+    getAllEggGachaCounts: () => EggGachaManager.getAllEggGachaCounts()
 };
