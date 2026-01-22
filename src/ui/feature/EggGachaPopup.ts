@@ -1,7 +1,6 @@
 // 알 뽑기 팝업 관리
 import Phaser from 'phaser';
 import { Responsive } from '../../utils/Responsive';
-import { GameState } from '../../managers/GameState';
 import { NumberFormatter } from '../../utils/NumberFormatter';
 
 // 알 뽑기 고기 비용 상수
@@ -16,7 +15,9 @@ export interface EggGachaPopupState {
     activeTab: 'draw' | 'list';
     isOpen: boolean;
     drawPanel: Phaser.GameObjects.Container | null;
-    infoText: Phaser.GameObjects.Text | null;
+    drawButton: Phaser.GameObjects.Container | null;
+    eggImage: Phaser.GameObjects.Image | null;
+    glowEffect: Phaser.GameObjects.Graphics | null;
 }
 
 export const EggGachaPopup = {
@@ -174,21 +175,48 @@ export const EggGachaPopup = {
         panelBg.strokeRoundedRect(-panelWidth / 2, -panelHeight / 2, panelWidth, panelHeight, 12);
         drawPanel.add(panelBg);
         
+        // egg_1.png 이미지 추가 (패널 중앙)
+        let eggImage: Phaser.GameObjects.Image | null = null;
+        if (scene.textures.exists('egg_1')) {
+            const eggImageSize = Math.min(panelWidth * 0.6, panelHeight * 0.6);
+            eggImage = scene.add.image(0, 0, 'egg_1');
+            eggImage.setDisplaySize(eggImageSize, eggImageSize);
+            eggImage.scaleX = 0.5;
+            eggImage.scaleY = 0.5;
+            drawPanel.add(eggImage);
+            
+            // 빛나는 효과용 글로우 그래픽 (초기에는 숨김)
+            const glowEffect = scene.add.graphics();
+            glowEffect.setVisible(false);
+            drawPanel.add(glowEffect);
+            state.glowEffect = glowEffect;
+        }
+        
+        state.eggImage = eggImage;
         popupContainer.add(drawPanel);
         state.drawPanel = drawPanel;
         
-        // 하단 정보 영역
-        const infoAreaY = panelY + panelHeight / 2 + popupHeight * 0.08;
-        const infoFontSize = Responsive.getFontSize(scene, 16);
-        const infoText = scene.add.text(0, infoAreaY, `뽑기 : 고기 ${NumberFormatter.formatNumber(EGG_GACHA_MEAT_COST)}개`, {
-            fontSize: infoFontSize,
-            color: '#ffffff',
-            fontFamily: 'Arial',
-            font: `400 ${infoFontSize} Arial`
-        });
-        infoText.setOrigin(0.5);
-        popupContainer.add(infoText);
-        state.infoText = infoText;
+        // 하단 뽑기 버튼 영역
+        const buttonAreaY = panelY + panelHeight / 2 + popupHeight * 0.08;
+        const buttonWidth = popupWidth * 0.5;
+        const buttonHeight = popupHeight * 0.1;
+        
+        const drawButton = EggGachaPopup.createDrawButton(
+            scene,
+            0,
+            buttonAreaY,
+            buttonWidth,
+            buttonHeight,
+            EGG_GACHA_MEAT_COST,
+            () => {
+                // 뽑기 기능 (추후 구현)
+                console.log('알 뽑기 실행');
+                // 빛나는 연출 시작
+                EggGachaPopup.playGlowAnimation(scene, state);
+            }
+        );
+        popupContainer.add(drawButton);
+        state.drawButton = drawButton;
         
         state.popupContainer = popupContainer;
         state.isOpen = true;
@@ -260,8 +288,16 @@ export const EggGachaPopup = {
             state.drawPanel = null;
         }
         
-        if (state.infoText) {
-            state.infoText = null;
+        if (state.drawButton) {
+            state.drawButton = null;
+        }
+        
+        if (state.eggImage) {
+            state.eggImage = null;
+        }
+        
+        if (state.glowEffect) {
+            state.glowEffect = null;
         }
         
         state.tabButtons = [];
@@ -319,5 +355,178 @@ export const EggGachaPopup = {
         }
         
         return tabContainer;
+    },
+    
+    // 뽑기 버튼 생성
+    createDrawButton(
+        scene: Phaser.Scene,
+        x: number,
+        y: number,
+        width: number,
+        height: number,
+        meatCost: number,
+        onClick: () => void
+    ): Phaser.GameObjects.Container {
+        const buttonContainer = scene.add.container(x, y);
+        
+        const buttonRadius = 12;
+        
+        // 버튼 배경
+        const buttonBg = scene.add.graphics();
+        buttonBg.fillStyle(0x4a4a5a, 1);
+        buttonBg.fillRoundedRect(-width / 2, -height / 2, width, height, buttonRadius);
+        buttonBg.lineStyle(2, 0x6a6a7a, 1);
+        buttonBg.strokeRoundedRect(-width / 2, -height / 2, width, height, buttonRadius);
+        buttonContainer.add(buttonBg);
+        
+        // 버튼 텍스트
+        const buttonFontSize = Responsive.getFontSize(scene, 14);
+        const buttonText = scene.add.text(0, 0, `뽑기 : 고기 ${NumberFormatter.formatNumber(meatCost)}개`, {
+            fontSize: buttonFontSize,
+            color: '#ffffff',
+            fontFamily: 'Arial',
+            font: `400 ${buttonFontSize} Arial`
+        });
+        buttonText.setOrigin(0.5);
+        buttonContainer.add(buttonText);
+        
+        // 클릭 영역
+        const clickArea = scene.add.rectangle(0, 0, width, height, 0x000000, 0);
+        clickArea.setInteractive({ useHandCursor: true });
+        
+        clickArea.on('pointerdown', () => {
+            onClick();
+        });
+        
+        clickArea.on('pointerover', () => {
+            buttonBg.clear();
+            buttonBg.fillStyle(0x5a5a6a, 1);
+            buttonBg.fillRoundedRect(-width / 2, -height / 2, width, height, buttonRadius);
+            buttonBg.lineStyle(2, 0x7a7a8a, 1);
+            buttonBg.strokeRoundedRect(-width / 2, -height / 2, width, height, buttonRadius);
+        });
+        
+        clickArea.on('pointerout', () => {
+            buttonBg.clear();
+            buttonBg.fillStyle(0x4a4a5a, 1);
+            buttonBg.fillRoundedRect(-width / 2, -height / 2, width, height, buttonRadius);
+            buttonBg.lineStyle(2, 0x6a6a7a, 1);
+            buttonBg.strokeRoundedRect(-width / 2, -height / 2, width, height, buttonRadius);
+        });
+        
+        buttonContainer.add(clickArea);
+        
+        return buttonContainer;
+    },
+    
+    // 빛나는 연출 애니메이션
+    playGlowAnimation(
+        scene: Phaser.Scene,
+        state: EggGachaPopupState
+    ): void {
+        if (!state.eggImage || !state.glowEffect) return;
+        
+        const eggImage = state.eggImage;
+        const glowEffect = state.glowEffect;
+        
+        // 기존 애니메이션 정지
+        scene.tweens.killTweensOf(eggImage);
+        scene.tweens.killTweensOf(glowEffect);
+        
+        // 글로우 효과 표시
+        glowEffect.setVisible(true);
+        
+        // 애니메이션 반복 횟수
+        const repeatCount = 1;
+        let currentRepeat = 0;
+        
+        const animateGlow = () => {
+            if (currentRepeat >= repeatCount) {
+                // 애니메이션 종료
+                glowEffect.setVisible(false);
+                glowEffect.clear();
+                // 원래 상태로 명시적으로 복원
+                eggImage.scaleX = 0.5;
+                eggImage.scaleY = 0.5;
+                eggImage.setAlpha(1);
+                eggImage.clearTint();
+                return;
+            }
+            
+            currentRepeat++;
+            
+            // 1. 스케일 + 알파 + 틴트 애니메이션 (펄스 효과)
+            // 초기 상태로 명시적으로 설정
+            const baseScale = 0.6;
+            eggImage.scaleX = baseScale;
+            eggImage.scaleY = baseScale;
+            eggImage.setAlpha(1);
+            eggImage.clearTint();
+            
+            // 펄스 애니메이션 (스케일을 살짝만 키움)
+            const maxScale = baseScale * 1.05; // 0.6 기준으로 5% 증가 = 0.63
+            scene.tweens.add({
+                targets: eggImage,
+                scaleX: maxScale,
+                scaleY: maxScale,
+                alpha: 0.95,
+                duration: 300,
+                ease: 'Sine.easeInOut',
+                yoyo: true,
+                repeat: 1,
+                onUpdate: () => {
+                    // 글로우 효과 업데이트 (더 부드러운 그라데이션)
+                    glowEffect.clear();
+                    const currentScale = eggImage.scaleX;
+                    const scaleProgress = (currentScale - baseScale) / (maxScale - baseScale);
+                    const currentGlowSize = eggImage.displayWidth * 1.4;
+                    
+                    // 부드러운 그라데이션 효과를 위한 여러 원 그리기 (더 많이)
+                    const glowLayers = 8;
+                    for (let i = 0; i < glowLayers; i++) {
+                        const progress = i / glowLayers;
+                        const radius = (currentGlowSize / 2) * (0.3 + progress * 0.7);
+                        const alpha = scaleProgress * 0.4 * (1 - progress * 0.8);
+                        
+                        // 노란색에서 흰색으로 그라데이션
+                        const colorMix = progress;
+                        const r = Math.floor(255 * (1 - colorMix * 0.3));
+                        const g = Math.floor(255 * (1 - colorMix * 0.1));
+                        const b = Math.floor(200 * (1 - colorMix * 0.5));
+                        const color = (r << 16) | (g << 8) | b;
+                        
+                        glowEffect.fillStyle(color, alpha);
+                        glowEffect.fillCircle(0, 0, radius);
+                    }
+                },
+                onComplete: () => {
+                    // 다음 반복 또는 종료
+                    if (currentRepeat < repeatCount) {
+                        scene.time.delayedCall(100, animateGlow);
+                    } else {
+                        glowEffect.setVisible(false);
+                        glowEffect.clear();
+                        // 원래 상태로 명시적으로 복원
+                        eggImage.scaleX = 0.5;
+                        eggImage.scaleY = 0.5;
+                        eggImage.setAlpha(1);
+                        eggImage.clearTint();
+                    }
+                }
+            });
+            
+            // 틴트 효과 (노란색으로 빛나는 효과)
+            scene.tweens.add({
+                targets: eggImage,
+                tint: 0xffff00,
+                duration: 200,
+                ease: 'Sine.easeInOut',
+                yoyo: true,
+                repeat: 1
+            });
+        };
+        
+        // 애니메이션 시작
+        animateGlow();
     }
 };

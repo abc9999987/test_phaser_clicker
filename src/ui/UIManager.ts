@@ -49,7 +49,7 @@ export const UIManager = {
             activeTab: 'draw',
             isOpen: false,
             drawPanel: null,
-            infoText: null
+            drawButton: null
         } as EggGachaPopupState
     } as CommonUIState,
     

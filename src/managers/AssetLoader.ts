@@ -42,6 +42,9 @@ export const AssetLoader = {
         // 유물 스프라이트시트 로드 (1024x1024, 4x3 그리드 = 12개 프레임)
         scene.load.image('item_gold_set', 'assets/item/item_gold_set.png');
         
+        // 알 뽑기 이미지 로드
+        scene.load.image('egg_1', 'assets/ui/egg_1.png');
+        
         // 로드 완료 후 프레임 생성 (create 단계에서 처리하도록 변경 필요 시)
         // 프레임 생성을 create 단계로 이동하거나, preload 완료 이벤트에서 처리
     },
