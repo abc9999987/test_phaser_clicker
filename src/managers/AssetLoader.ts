@@ -44,6 +44,12 @@ export const AssetLoader = {
         
         // 알 뽑기 이미지 로드
         scene.load.image('egg_1', 'assets/ui/egg_1.png');
+        scene.load.image('card_back', 'assets/ui/card_back.png');
+        scene.load.image('card_front_1', 'assets/ui/card_front_1.png');
+        scene.load.image('card_front_2', 'assets/ui/card_front_2.png');
+        scene.load.image('card_front_3', 'assets/ui/card_front_3.png');
+        scene.load.image('card_front_4', 'assets/ui/card_front_4.png');
+        scene.load.image('card_front_5', 'assets/ui/card_front_5.png');
         
         // 로드 완료 후 프레임 생성 (create 단계에서 처리하도록 변경 필요 시)
         // 프레임 생성을 create 단계로 이동하거나, preload 완료 이벤트에서 처리

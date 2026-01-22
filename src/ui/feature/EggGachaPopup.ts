@@ -2,6 +2,7 @@
 import Phaser from 'phaser';
 import { Responsive } from '../../utils/Responsive';
 import { NumberFormatter } from '../../utils/NumberFormatter';
+import { GameState } from '../../managers/GameState';
 
 // 알 뽑기 고기 비용 상수
 export const EGG_GACHA_MEAT_COST = 100;
@@ -18,6 +19,14 @@ export interface EggGachaPopupState {
     drawButton: Phaser.GameObjects.Container | null;
     eggImage: Phaser.GameObjects.Image | null;
     glowEffect: Phaser.GameObjects.Graphics | null;
+    // 카드 오픈 관련
+    cardOverlay: Phaser.GameObjects.Rectangle | null; // 마스킹 오버레이
+    cardContainer: Phaser.GameObjects.Container | null; // 카드 컨테이너
+    cards: Phaser.GameObjects.Container[]; // 카드 배열
+    rewards: { id: number }[]; // 결정된 보상 배열
+    openedCards: boolean[]; // 카드 오픈 여부
+    isCardOpening: boolean; // 카드 오픈 중인지
+    confirmButton: Phaser.GameObjects.Container | null; // 확인 버튼
 }
 
 export const EggGachaPopup = {
@@ -209,10 +218,15 @@ export const EggGachaPopup = {
             buttonHeight,
             EGG_GACHA_MEAT_COST,
             () => {
-                // 뽑기 기능 (추후 구현)
-                console.log('알 뽑기 실행');
+                // 뽑기 기능
                 // 빛나는 연출 시작
                 EggGachaPopup.playGlowAnimation(scene, state);
+                
+                // 보상 결정 (테스트용 하드코딩)
+                const rewards = [{ id: 1 }, { id: 2 }, { id: 3 }];
+                
+                // 카드 오픈 UI 표시
+                EggGachaPopup.showCardOpeningUI(scene, state, rewards);
             }
         );
         popupContainer.add(drawButton);
@@ -528,5 +542,307 @@ export const EggGachaPopup = {
         
         // 애니메이션 시작
         animateGlow();
+    },
+    
+    // 보상 결정 (테스트용 하드코딩, 추후 서버에서 받아올 예정)
+    determineRewards(): { id: number }[] {
+        // 테스트용: id 1, 2, 3 고정
+        return [{ id: 1 }, { id: 2 }, { id: 3 }];
+    },
+    
+    // 카드 오픈 UI 표시
+    showCardOpeningUI(
+        scene: Phaser.Scene,
+        state: EggGachaPopupState,
+        rewards: { id: number }[]
+    ): void {
+        if (state.isCardOpening) return;
+        
+        state.isCardOpening = true;
+        state.rewards = rewards;
+        state.openedCards = new Array(rewards.length).fill(false);
+        
+        const gameWidth = scene.scale.width;
+        const gameHeight = scene.scale.height;
+        
+        // 마스킹 오버레이 (불투명한 회색, 클릭 불가)
+        const overlay = scene.add.rectangle(
+            gameWidth / 2,
+            gameHeight / 2,
+            gameWidth,
+            gameHeight,
+            0x808080,
+            0.9
+        );
+        overlay.setDepth(500);
+        overlay.setInteractive({ useHandCursor: false });
+        state.cardOverlay = overlay;
+        
+        // 카드 컨테이너
+        const cardContainer = scene.add.container(gameWidth / 2, gameHeight / 2);
+        cardContainer.setDepth(501);
+        state.cardContainer = cardContainer;
+        
+        // 카드 배치 계산 (여백-카드-여백-카드-여백-카드-여백)
+        const cardCount = 3;
+        const marginRatio = 0.1; // 좌우 여백 10%
+        const availableWidth = gameWidth * (1 - marginRatio * 2); // 사용 가능한 너비
+        const cardSpacing = availableWidth / (cardCount * 2 - 1); // 카드 간 간격
+        const cardWidth = cardSpacing; // 카드 너비 = 간격
+        const cardHeight = cardWidth * 1.4; // 카드 높이 (비율 유지)
+        
+        const startX = -availableWidth / 2 + cardWidth / 2;
+        
+        // 카드 생성
+        rewards.forEach((reward, index) => {
+            const cardX = startX + index * (cardWidth + cardSpacing);
+            const card = EggGachaPopup.createCard(
+                scene,
+                cardX,
+                0,
+                cardWidth,
+                cardHeight,
+                reward.id,
+                index,
+                () => {
+                    EggGachaPopup.openCard(scene, card, reward.id, index, state);
+                }
+            );
+            cardContainer.add(card);
+            state.cards.push(card);
+        });
+        
+        // 확인 버튼 (초기에는 숨김)
+        const confirmButtonWidth = gameWidth * 0.3;
+        const confirmButtonHeight = gameHeight * 0.08;
+        const confirmButtonY = gameHeight * 0.35;
+        
+        const confirmButton = EggGachaPopup.createConfirmButton(
+            scene,
+            0,
+            confirmButtonY,
+            confirmButtonWidth,
+            confirmButtonHeight,
+            () => {
+                EggGachaPopup.hideCardOpeningUI(scene, state);
+            }
+        );
+        confirmButton.setVisible(false);
+        cardContainer.add(confirmButton);
+        state.confirmButton = confirmButton;
+    },
+    
+    // 카드 생성
+    createCard(
+        scene: Phaser.Scene,
+        x: number,
+        y: number,
+        width: number,
+        height: number,
+        cardId: number,
+        index: number,
+        onClick: () => void
+    ): Phaser.GameObjects.Container {
+        const cardContainer = scene.add.container(x, y);
+        
+        // 카드 배경 (card_back)
+        const cardBack = scene.add.image(0, 0, 'card_back');
+        cardBack.setDisplaySize(width, height);
+        cardBack.setOrigin(0.5);
+        cardContainer.add(cardBack);
+        
+        // 카드 앞면 (card_front_{id}) - 초기에는 숨김
+        const cardFrontKey = `card_front_${cardId}`;
+        let cardFront: Phaser.GameObjects.Image | null = null;
+        if (scene.textures.exists(cardFrontKey)) {
+            cardFront = scene.add.image(0, 0, cardFrontKey);
+            cardFront.setDisplaySize(width, height);
+            cardFront.setOrigin(0.5);
+            cardFront.setVisible(false);
+            cardContainer.add(cardFront);
+        }
+        
+        // 클릭 영역
+        const clickArea = scene.add.rectangle(0, 0, width, height, 0x000000, 0);
+        clickArea.setInteractive({ useHandCursor: true });
+        
+        clickArea.on('pointerdown', () => {
+            onClick();
+        });
+        
+        cardContainer.add(clickArea);
+        
+        // 카드 데이터 저장 (나중에 접근하기 위해)
+        (cardContainer as any).cardBack = cardBack;
+        (cardContainer as any).cardFront = cardFront;
+        (cardContainer as any).cardId = cardId;
+        (cardContainer as any).index = index;
+        
+        return cardContainer;
+    },
+    
+    // 카드 오픈 애니메이션
+    openCard(
+        scene: Phaser.Scene,
+        card: Phaser.GameObjects.Container,
+        _cardId: number,
+        index: number,
+        state: EggGachaPopupState
+    ): void {
+        // 이미 열린 카드는 무시
+        if (state.openedCards[index]) return;
+        
+        state.openedCards[index] = true;
+        
+        const cardBack = (card as any).cardBack;
+        const cardFront = (card as any).cardFront;
+        
+        // 카드 스케일 애니메이션 (살짝 커졌다가 작아지기)
+        scene.tweens.add({
+            targets: card,
+            scaleX: 1.15,
+            scaleY: 1.15,
+            duration: 150,
+            ease: 'Sine.easeOut',
+            onUpdate: () => {
+                // 중간 지점에서 카드 뒤집기
+                if (card.scaleX >= 1.1 && cardBack && cardBack.visible) {
+                    cardBack.setVisible(false);
+                    if (cardFront) {
+                        cardFront.setVisible(true);
+                    }
+                }
+            },
+            onComplete: () => {
+                // 다시 원래 크기로
+                scene.tweens.add({
+                    targets: card,
+                    scaleX: 1,
+                    scaleY: 1,
+                    duration: 150,
+                    ease: 'Sine.easeIn'
+                });
+            }
+        });
+        
+        // 모든 카드가 열렸는지 확인
+        const allOpened = state.openedCards.every(opened => opened);
+        if (allOpened && state.confirmButton) {
+            // 확인 버튼 표시
+            state.confirmButton.setVisible(true);
+        }
+    },
+    
+    // 확인 버튼 생성
+    createConfirmButton(
+        scene: Phaser.Scene,
+        x: number,
+        y: number,
+        width: number,
+        height: number,
+        onClick: () => void
+    ): Phaser.GameObjects.Container {
+        const buttonContainer = scene.add.container(x, y);
+        
+        const buttonRadius = 12;
+        
+        // 버튼 배경
+        const buttonBg = scene.add.graphics();
+        buttonBg.fillStyle(0x50c878, 1);
+        buttonBg.fillRoundedRect(-width / 2, -height / 2, width, height, buttonRadius);
+        buttonBg.lineStyle(2, 0x6ad888, 1);
+        buttonBg.strokeRoundedRect(-width / 2, -height / 2, width, height, buttonRadius);
+        buttonContainer.add(buttonBg);
+        
+        // 버튼 텍스트
+        const buttonFontSize = Responsive.getFontSize(scene, 18);
+        const buttonText = scene.add.text(0, 0, '확인', {
+            fontSize: buttonFontSize,
+            color: '#ffffff',
+            fontFamily: 'Arial',
+            font: `600 ${buttonFontSize} Arial`
+        });
+        buttonText.setOrigin(0.5);
+        buttonContainer.add(buttonText);
+        
+        // 클릭 영역
+        const clickArea = scene.add.rectangle(0, 0, width, height, 0x000000, 0);
+        clickArea.setInteractive({ useHandCursor: true });
+        
+        clickArea.on('pointerdown', () => {
+            onClick();
+        });
+        
+        clickArea.on('pointerover', () => {
+            buttonBg.clear();
+            buttonBg.fillStyle(0x60d888, 1);
+            buttonBg.fillRoundedRect(-width / 2, -height / 2, width, height, buttonRadius);
+            buttonBg.lineStyle(2, 0x7ae898, 1);
+            buttonBg.strokeRoundedRect(-width / 2, -height / 2, width, height, buttonRadius);
+        });
+        
+        clickArea.on('pointerout', () => {
+            buttonBg.clear();
+            buttonBg.fillStyle(0x50c878, 1);
+            buttonBg.fillRoundedRect(-width / 2, -height / 2, width, height, buttonRadius);
+            buttonBg.lineStyle(2, 0x6ad888, 1);
+            buttonBg.strokeRoundedRect(-width / 2, -height / 2, width, height, buttonRadius);
+        });
+        
+        buttonContainer.add(clickArea);
+        
+        return buttonContainer;
+    },
+    
+    // 카드 오픈 UI 닫기
+    hideCardOpeningUI(
+        scene: Phaser.Scene,
+        state: EggGachaPopupState
+    ): void {
+        // 보상 지급
+        if (state.rewards && state.rewards.length > 0) {
+            state.rewards.forEach(reward => {
+                GameState.incrementEggGachaCount(reward.id);
+            });
+        }
+        
+        // 애니메이션으로 페이드 아웃
+        if (state.cardOverlay) {
+            scene.tweens.add({
+                targets: state.cardOverlay,
+                alpha: 0,
+                duration: 200,
+                onComplete: () => {
+                    if (state.cardOverlay) {
+                        state.cardOverlay.destroy();
+                        state.cardOverlay = null;
+                    }
+                }
+            });
+        }
+        
+        if (state.cardContainer) {
+            scene.tweens.add({
+                targets: state.cardContainer,
+                alpha: 0,
+                scale: 0.8,
+                duration: 200,
+                onComplete: () => {
+                    if (state.cardContainer) {
+                        state.cardContainer.destroy();
+                        state.cardContainer = null;
+                    }
+                }
+            });
+        }
+        
+        // 상태 초기화
+        state.cards = [];
+        state.rewards = [];
+        state.openedCards = [];
+        state.isCardOpening = false;
+        if (state.confirmButton) {
+            state.confirmButton = null;
+        }
     }
 };
