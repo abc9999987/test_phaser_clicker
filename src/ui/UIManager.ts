@@ -30,6 +30,13 @@ export const UIManager = {
             isOpen: false,
             popupButtons: [],
             buttonConfigs: []
+        },
+        featureMenuPopupState: {
+            featureButton: null,
+            popupPanel: null,
+            isOpen: false,
+            featureButtons: [],
+            buttonConfigs: []
         }
     } as CommonUIState,
     

@@ -4,6 +4,7 @@ import { Responsive } from '../../utils/Responsive';
 import { GameState } from '../../managers/GameState';
 import { NumberFormatter } from '../../utils/NumberFormatter';
 import { MenuPopup, MenuPopupState } from '../menu/MenuPopup';
+import { FeatureMenuPopup, FeatureMenuPopupState } from '../feature/FeatureMenuPopup';
 
 // 공통 UI 상태 인터페이스
 export interface CommonUIState {
@@ -16,6 +17,7 @@ export interface CommonUIState {
     dungeonTimerText: Phaser.GameObjects.Text | null;
     activeTabIndex: number;
     menuPopupState: MenuPopupState;
+    featureMenuPopupState: FeatureMenuPopupState;
 }
 
 // 공통 UI 생성 및 업데이트
@@ -140,6 +142,9 @@ export const CommonUI = {
         
         // 메뉴 버튼 생성
         MenuPopup.createMenuButton(scene, state.menuPopupState);
+        
+        // Feature 버튼 생성
+        FeatureMenuPopup.createFeatureButton(scene, state.featureMenuPopupState);
     },
     
     // 공통 UI 요소 생성 (던전 씬용)

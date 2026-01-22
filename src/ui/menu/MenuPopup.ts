@@ -44,19 +44,15 @@ export const MenuPopup = {
         buttonBg.setDepth(20);
         menuButtonContainer.add(buttonBg);
         
-        // 햄버거 메뉴 아이콘 (3줄)
-        const lineWidth = buttonSize * 0.4;
-        const lineHeight = buttonSize * 0.08;
-        const lineSpacing = buttonSize * 0.15;
-        
-        const line1 = scene.add.rectangle(0, -lineSpacing, lineWidth, lineHeight, 0xffffff, 1);
-        const line2 = scene.add.rectangle(0, 0, lineWidth, lineHeight, 0xffffff, 1);
-        const line3 = scene.add.rectangle(0, lineSpacing, lineWidth, lineHeight, 0xffffff, 1);
-        
-        line1.setDepth(21);
-        line2.setDepth(21);
-        line3.setDepth(21);
-        menuButtonContainer.add([line1, line2, line3]);
+        // 톱니바퀴 아이콘 (⚙️)
+        const gearFontSize = Responsive.getFontSize(scene, buttonSize * 0.5);
+        const gearText = scene.add.text(0, 0, '⚙️', {
+            fontSize: gearFontSize,
+            fontFamily: 'Arial'
+        });
+        gearText.setOrigin(0.5);
+        gearText.setDepth(21);
+        menuButtonContainer.add(gearText);
         
         // 클릭 영역
         const clickArea = scene.add.rectangle(0, 0, buttonSize, buttonSize, 0x000000, 0);
