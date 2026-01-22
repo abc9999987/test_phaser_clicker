@@ -5,6 +5,7 @@ import { GameState } from '../../managers/GameState';
 import { NumberFormatter } from '../../utils/NumberFormatter';
 import { MenuPopup, MenuPopupState } from '../menu/MenuPopup';
 import { FeatureMenuPopup, FeatureMenuPopupState } from '../feature/FeatureMenuPopup';
+import { EggGachaPopupState } from '../feature/EggGachaPopup';
 
 // 공통 UI 상태 인터페이스
 export interface CommonUIState {
@@ -18,6 +19,7 @@ export interface CommonUIState {
     activeTabIndex: number;
     menuPopupState: MenuPopupState;
     featureMenuPopupState: FeatureMenuPopupState;
+    eggGachaPopupState: EggGachaPopupState;
 }
 
 // 공통 UI 생성 및 업데이트

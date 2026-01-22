@@ -5,6 +5,7 @@ import { Responsive } from '../../utils/Responsive';
 // Feature 버튼 설정 인터페이스
 export interface FeatureButtonConfig {
     icon: string; // 아이콘 텍스트 또는 이모지
+    label?: string; // 버튼 아래 표시할 텍스트 (예: "알 뽑기")
     onClick?: (scene: Phaser.Scene) => void;
     shouldShow?: () => boolean; // 버튼 표시 여부를 결정하는 함수 (없으면 항상 표시)
 }
@@ -210,6 +211,7 @@ export const FeatureMenuPopup = {
                 buttonY,
                 buttonSize,
                 config.icon,
+                config.label,
                 config.onClick
             );
             panelContainer.add(button);
@@ -276,31 +278,50 @@ export const FeatureMenuPopup = {
         y: number,
         size: number,
         icon: string,
+        label?: string,
         onClick?: (scene: Phaser.Scene) => void
     ): Phaser.GameObjects.Container {
         const buttonContainer = scene.add.container(x, y);
         
         const buttonRadius = 8;
         
+        // 라벨이 있으면 버튼 높이를 더 크게 조정
+        const hasLabel = !!label;
+        const buttonHeight = hasLabel ? size * 1.3 : size;
+        const iconY = hasLabel ? -buttonHeight * 0.15 : 0;
+        
         // 버튼 배경
         const buttonBg = scene.add.graphics();
         buttonBg.fillStyle(0x4a4a5a, 1);
-        buttonBg.fillRoundedRect(-size / 2, -size / 2, size, size, buttonRadius);
+        buttonBg.fillRoundedRect(-size / 2, -buttonHeight / 2, size, buttonHeight, buttonRadius);
         buttonBg.lineStyle(2, 0x6a6a7a, 1);
-        buttonBg.strokeRoundedRect(-size / 2, -size / 2, size, size, buttonRadius);
+        buttonBg.strokeRoundedRect(-size / 2, -buttonHeight / 2, size, buttonHeight, buttonRadius);
         buttonContainer.add(buttonBg);
         
         // 아이콘
         const iconFontSize = Responsive.getFontSize(scene, size * 0.5);
-        const iconText = scene.add.text(0, 0, icon, {
+        const iconText = scene.add.text(0, iconY, icon, {
             fontSize: iconFontSize,
             fontFamily: 'Arial'
         });
         iconText.setOrigin(0.5);
         buttonContainer.add(iconText);
         
+        // 라벨 텍스트 (아이콘 아래)
+        if (label) {
+            const labelFontSize = Responsive.getFontSize(scene, size * 0.2);
+            const labelText = scene.add.text(0, iconY + size * 0.53, label, {
+                fontSize: labelFontSize,
+                color: '#ffffff',
+                fontFamily: 'Arial',
+                font: `400 ${labelFontSize} Arial`
+            });
+            labelText.setOrigin(0.5);
+            buttonContainer.add(labelText);
+        }
+        
         // 클릭 영역
-        const clickArea = scene.add.rectangle(0, 0, size, size, 0x000000, 0);
+        const clickArea = scene.add.rectangle(0, 0, size, buttonHeight, 0x000000, 0);
         clickArea.setInteractive({ useHandCursor: true });
         
         clickArea.on('pointerdown', () => {
@@ -312,17 +333,17 @@ export const FeatureMenuPopup = {
         clickArea.on('pointerover', () => {
             buttonBg.clear();
             buttonBg.fillStyle(0x5a5a6a, 1);
-            buttonBg.fillRoundedRect(-size / 2, -size / 2, size, size, buttonRadius);
+            buttonBg.fillRoundedRect(-size / 2, -buttonHeight / 2, size, buttonHeight, buttonRadius);
             buttonBg.lineStyle(2, 0x7a7a8a, 1);
-            buttonBg.strokeRoundedRect(-size / 2, -size / 2, size, size, buttonRadius);
+            buttonBg.strokeRoundedRect(-size / 2, -buttonHeight / 2, size, buttonHeight, buttonRadius);
         });
         
         clickArea.on('pointerout', () => {
             buttonBg.clear();
             buttonBg.fillStyle(0x4a4a5a, 1);
-            buttonBg.fillRoundedRect(-size / 2, -size / 2, size, size, buttonRadius);
+            buttonBg.fillRoundedRect(-size / 2, -buttonHeight / 2, size, buttonHeight, buttonRadius);
             buttonBg.lineStyle(2, 0x6a6a7a, 1);
-            buttonBg.strokeRoundedRect(-size / 2, -size / 2, size, size, buttonRadius);
+            buttonBg.strokeRoundedRect(-size / 2, -buttonHeight / 2, size, buttonHeight, buttonRadius);
         });
         
         buttonContainer.add(clickArea);

@@ -9,6 +9,9 @@ import { SkillTab, SkillTabState } from './tabs/SkillTab';
 import { DungeonTab, DungeonTabState } from './tabs/DungeonTab';
 import { ArtifactTab, ArtifactTabState } from './tabs/ArtifactTab';
 import { MenuButtonConfigs } from './menu/MenuButtonConfig';
+import { EggGachaPopup, EggGachaPopupState } from './feature/EggGachaPopup';
+import { FeatureMenuPopup } from './feature/FeatureMenuPopup';
+import { FeatureMenuPopup } from './feature/FeatureMenuPopup';
 
 // UI 관리자
 export const UIManager = {
@@ -37,7 +40,17 @@ export const UIManager = {
             isOpen: false,
             featureButtons: [],
             buttonConfigs: []
-        }
+        },
+        eggGachaPopupState: {
+            popupOverlay: null,
+            popupContainer: null,
+            closeButton: null,
+            tabButtons: [],
+            activeTab: 'draw',
+            isOpen: false,
+            drawPanel: null,
+            infoText: null
+        } as EggGachaPopupState
     } as CommonUIState,
     
     tabSystemState: {
@@ -143,11 +156,29 @@ export const UIManager = {
         
         // 메뉴 팝업 버튼 설정
         this.setupMenuButtons(scene);
+        
+        // Feature 버튼 설정
+        this.setupFeatureButtons(scene);
     },
     
     // 메뉴 팝업 버튼 설정
     setupMenuButtons(_scene: Phaser.Scene): void {
         this.commonState.menuPopupState.buttonConfigs = MenuButtonConfigs;
+    },
+    
+    // Feature 버튼 설정
+    setupFeatureButtons(_scene: Phaser.Scene): void {
+        // 알 뽑기 버튼 추가
+        FeatureMenuPopup.addFeatureButton(
+            this.commonState.featureMenuPopupState,
+            {
+                icon: '🥚',
+                label: '알 뽑기',
+                onClick: (scene: Phaser.Scene) => {
+                    EggGachaPopup.show(scene, this.commonState.eggGachaPopupState);
+                }
+            }
+        );
     },
     
     // 던전 씬용 UI 생성
