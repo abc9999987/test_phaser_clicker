@@ -132,7 +132,13 @@ export const LoadingIndicator = {
         // 즉시 isVisible을 false로 설정하여 다음 show() 호출이 가능하도록 함
         state.isVisible = false;
         
-        // 페이드 아웃 애니메이션
+        // overlay는 즉시 제거 (클릭 차단 방지)
+        if (state.overlay) {
+            state.overlay.destroy();
+            state.overlay = null;
+        }
+        
+        // 페이드 아웃 애니메이션 (spinnerContainer만)
         if (state.spinnerContainer) {
             scene.tweens.add({
                 targets: state.spinnerContainer,
@@ -147,10 +153,6 @@ export const LoadingIndicator = {
                     }
                     
                     // 객체 제거
-                    if (state.overlay) {
-                        state.overlay.destroy();
-                        state.overlay = null;
-                    }
                     if (state.spinnerContainer) {
                         state.spinnerContainer.destroy();
                         state.spinnerContainer = null;
@@ -166,10 +168,6 @@ export const LoadingIndicator = {
             if (state.spinnerTween) {
                 state.spinnerTween.stop();
                 state.spinnerTween = null;
-            }
-            if (state.overlay) {
-                state.overlay.destroy();
-                state.overlay = null;
             }
             if (state.spinnerGraphics) {
                 state.spinnerGraphics.destroy();

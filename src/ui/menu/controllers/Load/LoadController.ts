@@ -13,6 +13,7 @@ interface LoadResponse extends ICommonResponse {
     data?: {
         playData: SaveData;
         uuid: string;
+        sid: string;
     };
 }
 
@@ -66,11 +67,17 @@ export const LoadController = {
                             response.data.playData.uuid = response.data.uuid;
                         }
 
+                        if (response.data?.sid) {
+                            response.data.playData.sid = response.data.sid;
+                        }
+
                         GameStateCore.updateFromLoginSaveData(response.data.playData);
                         // 로컬스토리지에 저장
                         GameStateCore.save();
                     } catch (updateError) {
                         console.error('Failed to update game state from server data:', updateError);
+                        LoginController.handleLogin(scene, false);
+                        return;
                     }
                 }
                 
@@ -106,6 +113,7 @@ export const LoadController = {
             } else {
                 console.error('Unknown error:', error);
             }
+            LoginController.handleLogin(scene, false);
             // 에러 발생 시에도 플래그 해제
             throw error; // 에러를 다시 throw하여 호출자가 처리할 수 있도록 함
         } finally {

@@ -3,6 +3,7 @@ import Phaser from 'phaser';
 import { Responsive } from '../../utils/Responsive';
 import { NumberFormatter } from '../../utils/NumberFormatter';
 import { GameState } from '../../managers/GameState';
+import { EggGachaController } from '../menu/controllers/EggGacha/EggGachaController';
 
 // 알 뽑기 고기 비용 상수
 export const EGG_GACHA_MEAT_COST = 100;
@@ -217,16 +218,22 @@ export const EggGachaPopup = {
             buttonWidth,
             buttonHeight,
             EGG_GACHA_MEAT_COST,
-            () => {
-                // 뽑기 기능
-                // 빛나는 연출 시작
-                EggGachaPopup.playGlowAnimation(scene, state);
-                
-                // 보상 결정 (테스트용 하드코딩)
-                const rewards = [{ id: 1 }, { id: 2 }, { id: 3 }];
-                
-                // 카드 오픈 UI 표시
-                EggGachaPopup.showCardOpeningUI(scene, state, rewards);
+            async () => {
+                try {
+                    // 빛나는 연출 시작
+                    EggGachaPopup.playGlowAnimation(scene, state);
+                    
+                    // 서버에서 보상 받아오기
+                    const rewards = await EggGachaController.performEggGacha(scene, EGG_GACHA_MEAT_COST);
+                    
+                    // 카드 오픈 UI 표시
+                    EggGachaPopup.showCardOpeningUI(scene, state, rewards);
+                } catch (error) {
+                    console.error('Egg gacha failed:', error);
+                    // TODO: 에러 메시지 표시 (팝업 등)
+                    const errorMessage = error instanceof Error ? error.message : '알 뽑기에 실패했습니다.';
+                    alert(errorMessage);
+                }
             }
         );
         popupContainer.add(drawButton);
@@ -542,12 +549,6 @@ export const EggGachaPopup = {
         
         // 애니메이션 시작
         animateGlow();
-    },
-    
-    // 보상 결정 (테스트용 하드코딩, 추후 서버에서 받아올 예정)
-    determineRewards(): { id: number }[] {
-        // 테스트용: id 1, 2, 3 고정
-        return [{ id: 1 }, { id: 2 }, { id: 3 }];
     },
     
     // 카드 오픈 UI 표시
