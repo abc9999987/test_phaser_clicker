@@ -42,7 +42,7 @@ export const LoadController = {
 
             console.log('requestData: ', requestData);
             if (!requestData.sid || requestData.sid === '') {
-                LoginController.handleLogin(scene, false);
+                LoginController.handleLogin(scene, false, true);
                 // skipRestart가 true면 Promise를 reject하여 GameScene에서 catch 처리
                 if (skipRestart) {
                     throw new Error('sid is required');
@@ -76,7 +76,7 @@ export const LoadController = {
                         GameStateCore.save();
                     } catch (updateError) {
                         console.error('Failed to update game state from server data:', updateError);
-                        LoginController.handleLogin(scene, false);
+                        LoginController.handleLogin(scene, false, true);
                         return;
                     }
                 }
@@ -91,7 +91,7 @@ export const LoadController = {
                     }
                 }
             } else if (response.status === 401 && response.message === 'sessionRefreshFailed') {
-                LoginController.handleLogin(scene, false);
+                LoginController.handleLogin(scene, false, true);
                 // skipRestart가 true면 Promise를 reject하여 GameScene에서 catch 처리
                 if (skipRestart) {
                     throw new Error('sessionRefreshFailed');
@@ -113,7 +113,7 @@ export const LoadController = {
             } else {
                 console.error('Unknown error:', error);
             }
-            LoginController.handleLogin(scene, false);
+            LoginController.handleLogin(scene, false, true);
             // 에러 발생 시에도 플래그 해제
             throw error; // 에러를 다시 throw하여 호출자가 처리할 수 있도록 함
         } finally {

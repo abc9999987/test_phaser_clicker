@@ -19,7 +19,7 @@ export const MenuButtonConfigs: PopupButtonConfig[] = [
     {
         text: 'Login',
         onClick: (scene: Phaser.Scene) => {
-            LoginController.handleLogin(scene);
+            LoginController.handleLogin(scene, true, false);
         }
         // 항상 표시 (조건 없음)
     },

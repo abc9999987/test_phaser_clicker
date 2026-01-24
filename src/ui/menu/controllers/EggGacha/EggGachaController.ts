@@ -5,6 +5,7 @@ import { GameStateCore } from '../../../../managers/state/GameStateCore';
 import { GameState } from '../../../../managers/GameState';
 import { SaveController } from '../Save/SaveController';
 import { ICommonResponse } from '../common/ICommonResponse';
+import { LoginController } from '../Login/LoginController';
 
 // 알 뽑기 API 요청 인터페이스
 interface EggGachaRequest {
@@ -92,22 +93,17 @@ export const EggGachaController = {
                 // 세션 만료: 고기 복구
                 GameState.meat = originalMeat;
                 GameState.save();
-                throw new Error('세션이 만료되었습니다. 다시 로그인해주세요.');
+                // 로그인 팝업 표시 (에러는 던지지 않음 - 팝업이 표시되므로)
+                LoginController.handleLogin(scene, false, true);
+                // 세션 만료를 나타내는 특별한 에러 타입으로 throw (호출자가 alert를 표시하지 않도록)
+                const sessionError = new Error('SESSION_EXPIRED');
+                (sessionError as any).isSessionExpired = true;
+                throw sessionError;
             } else {
-                // 기타 에러: 고기 복구
-                GameState.meat = originalMeat;
-                GameState.save();
                 throw new Error(response.message || '알 뽑기에 실패했습니다.');
             }
         } catch (error) {
             console.error('Egg gacha error:', error);
-            
-            // 모든 에러 발생 시 고기 복구 (아직 복구되지 않았다면)
-            if (GameState.meat !== originalMeat) {
-                GameState.meat = originalMeat;
-                GameState.save();
-            }
-            
             // 에러를 다시 throw하여 호출자가 처리할 수 있도록 함
             if (error instanceof ApiError) {
                 // ApiError는 네트워크 에러일 수 있으므로 사용자 친화적인 메시지로 변환
