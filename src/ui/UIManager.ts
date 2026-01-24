@@ -191,17 +191,24 @@ export const UIManager = {
     
     // Feature 버튼 설정
     setupFeatureButtons(_scene: Phaser.Scene): void {
-        // 알 뽑기 버튼 추가
-        FeatureMenuPopup.addFeatureButton(
-            this.commonState.featureMenuPopupState,
-            {
-                icon: '🥚',
-                label: '알 뽑기',
-                onClick: (scene: Phaser.Scene) => {
-                    EggGachaPopup.show(scene, this.commonState.eggGachaPopupState);
+        const state = this.commonState.featureMenuPopupState;
+        
+        // 이미 알 뽑기 버튼이 추가되어 있는지 확인
+        const hasEggGachaButton = state.buttonConfigs.some(config => config.label === '알 뽑기');
+        
+        if (!hasEggGachaButton) {
+            // 알 뽑기 버튼 추가
+            FeatureMenuPopup.addFeatureButton(
+                state,
+                {
+                    icon: '🥚',
+                    label: '알 뽑기',
+                    onClick: (scene: Phaser.Scene) => {
+                        EggGachaPopup.show(scene, this.commonState.eggGachaPopupState);
+                    }
                 }
-            }
-        );
+            );
+        }
     },
     
     // 던전 씬용 UI 생성
