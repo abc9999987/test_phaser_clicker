@@ -53,6 +53,16 @@ export const AssetLoader = {
         
         // 펫 이미지 로드
         scene.load.image('pet_fish_bread_tank', 'assets/character/k_fish_bread_tank.png');
+
+        // 만화 이미지 로드
+        scene.load.image('toon_1', 'assets/toon/toon_1.png');
+        scene.load.image('toon_2', 'assets/toon/toon_2.png');
+        scene.load.image('toon_3', 'assets/toon/toon_3.png');
+        scene.load.image('toon_4', 'assets/toon/toon_4.png');
+        scene.load.image('toon_5', 'assets/toon/toon_5.png');
+        scene.load.image('toon_6', 'assets/toon/toon_6.png');
+        scene.load.image('toon_7', 'assets/toon/toon_7.png');
+        scene.load.image('toon_8', 'assets/toon/toon_8.png');
         
         // 로드 완료 후 프레임 생성 (create 단계에서 처리하도록 변경 필요 시)
         // 프레임 생성을 create 단계로 이동하거나, preload 완료 이벤트에서 처리
