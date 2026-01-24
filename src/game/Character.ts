@@ -10,6 +10,7 @@ export const Character = {
     char: null as Phaser.GameObjects.Image | null,
     buffEffect: null as Phaser.GameObjects.Image | null,
     buffEffectAnimation: null as Phaser.Time.TimerEvent | null,
+    petImage: null as Phaser.GameObjects.Image | null, // 펫 이미지
     
     // 캐릭터 생성
     create(scene: Phaser.Scene): Phaser.GameObjects.Image {
@@ -29,7 +30,36 @@ export const Character = {
             this.onCharacterClick(scene);
         });
         
+        // 펫 이미지 표시 (id 1번을 가지고 있으면)
+        this.updatePetImage(scene);
+        
         return this.char;
+    },
+    
+    // 펫 이미지 업데이트
+    updatePetImage(scene: Phaser.Scene): void {
+        if (!this.char) return;
+        
+        // id 1번의 개수 확인 (GameState를 통해 접근)
+        const petCount = GameState.getEggGachaCount(1);
+        
+        if (petCount > 0) {
+            // 펫 이미지가 없으면 생성
+            if (!this.petImage) {
+                const scale = Responsive.getScale(scene);
+                this.petImage = scene.add.image(this.char.x, this.char.y, 'pet_fish_bread_tank');
+                // 캐릭터보다 작게 표시 (캐릭터의 30% 크기)
+                this.petImage.setScale(scale.uniform * 0.08);
+                this.petImage.setOrigin(0.5, 0.5);
+                this.petImage.setDepth(2); // 캐릭터 앞에 표시 (캐릭터는 depth 1)
+            }
+        } else {
+            // 펫 이미지가 있으면 제거
+            if (this.petImage) {
+                this.petImage.destroy();
+                this.petImage = null;
+            }
+        }
     },
     
     // 캐릭터 클릭 핸들러
@@ -133,6 +163,12 @@ export const Character = {
             if (this.buffEffect) {
                 this.buffEffect.x = this.char.x;
                 this.buffEffect.y = this.char.y;
+            }
+            
+            // 펫 이미지가 있으면 캐릭터와 함께 움직임
+            if (this.petImage) {
+                this.petImage.x = this.char.x * 1.1;
+                this.petImage.y = this.char.y * 1.1;
             }
         }
     },

@@ -24,8 +24,9 @@ export const StatManager = {
         const artifactMultiplier = ((GameState.getArtifactLevel(1) * ArtifactConfigs[0].value) / 100) + 1;
         const eggAddAttackPower = 1 + (GameState.getEggGachaCount(EggGachaConfigs[1].id) * (EggGachaConfigs[1].value as number) / 100);
         const eggAddAttackPower2 = 1 + (GameState.getEggGachaCount(EggGachaConfigs[2].id) * (EggGachaConfigs[2].value as number) / 100);
-       
-        return (startValue + position * increment) * (artifactMultiplier === 0 ? 1 : artifactMultiplier) * eggAddAttackPower * eggAddAttackPower2;
+        const petAddAttackPower = 1 + (GameState.getEggGachaCount(EggGachaConfigs[0].id) * (EggGachaConfigs[0].value as number) / 100);
+
+        return (startValue + position * increment) * (artifactMultiplier === 0 ? 1 : artifactMultiplier) * eggAddAttackPower * eggAddAttackPower2 * petAddAttackPower;
     },
 
     getAttackSpeedValue(): number {
