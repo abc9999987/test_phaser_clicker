@@ -9,6 +9,7 @@ export class LoadingScene extends Phaser.Scene {
     private tapHint?: Phaser.GameObjects.Container;
     private background?: Phaser.GameObjects.Graphics;
     private pageIndicator?: Phaser.GameObjects.Container;
+    private isTransitioning: boolean = false; // 씬 전환 중 플래그
 
     constructor() {
         super({ key: 'LoadingScene' });
@@ -22,6 +23,9 @@ export class LoadingScene extends Phaser.Scene {
     create(): void {
         const gameWidth = this.scale.width;
         const gameHeight = this.scale.height;
+
+        // 전환 플래그 초기화
+        this.isTransitioning = false;
 
         // 배경 생성 (세련된 그라데이션)
         this.background = this.add.graphics();
@@ -55,7 +59,10 @@ export class LoadingScene extends Phaser.Scene {
         clickArea.setInteractive({ useHandCursor: true });
         clickArea.setDepth(100);
         clickArea.on('pointerdown', () => {
-            this.nextPage();
+            // 전환 중이면 클릭 무시
+            if (!this.isTransitioning) {
+                this.nextPage();
+            }
         });
     }
 
@@ -297,12 +304,18 @@ export class LoadingScene extends Phaser.Scene {
     }
 
     nextPage(): void {
+        // 이미 전환 중이면 무시
+        if (this.isTransitioning) {
+            return;
+        }
+
         if (this.currentPage === 0) {
             // 5~8컷으로 이동
             this.currentPage = 1;
             this.showPage(1);
         } else {
             // GameScene으로 전환
+            this.isTransitioning = true;
             this.cameras.main.fadeOut(500, 0, 0, 0);
             this.cameras.main.once('camerafadeoutcomplete', () => {
                 this.scene.start('GameScene');
