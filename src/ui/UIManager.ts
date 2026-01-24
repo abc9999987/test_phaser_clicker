@@ -23,6 +23,7 @@ export const UIManager = {
         killCountText: null as Phaser.GameObjects.Text | null,
         bossTimerText: null as Phaser.GameObjects.Text | null,
         dungeonTimerText: null as Phaser.GameObjects.Text | null,
+        skipBossCheckbox: null as Phaser.GameObjects.Container | null,
         activeTabIndex: 0,
         menuPopupState: {
             menuButton: null,

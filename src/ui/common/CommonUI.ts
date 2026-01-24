@@ -16,6 +16,7 @@ export interface CommonUIState {
     killCountText: Phaser.GameObjects.Text | null;
     bossTimerText: Phaser.GameObjects.Text | null;
     dungeonTimerText: Phaser.GameObjects.Text | null;
+    skipBossCheckbox: Phaser.GameObjects.Container | null;
     activeTabIndex: number;
     menuPopupState: MenuPopupState;
     featureMenuPopupState: FeatureMenuPopupState;
@@ -53,6 +54,46 @@ export const CommonUI = {
             fontFamily: 'Arial'
         });
         state.killCountText.setOrigin(0.5);
+        
+        // 보스 스킵 체크박스 (처치 카운트 우측)
+        const checkboxSize = parseFloat(killCountFontSize) * 0.8;
+        // 텍스트가 "9/10 처치" 정도일 때의 예상 너비 사용 (대략 80px)
+        const estimatedTextWidth = 80;
+        const checkboxX = gameWidth / 2 + estimatedTextWidth / 2 + checkboxSize / 2 + 10;
+        const checkboxY = gameHeight * 0.11;
+        
+        const checkboxContainer = scene.add.container(checkboxX, checkboxY);
+        
+        // 체크박스 배경
+        const checkboxBg = scene.add.graphics();
+        checkboxBg.fillStyle(0x2a2a3a, 1);
+        checkboxBg.fillRect(-checkboxSize / 2, -checkboxSize / 2, checkboxSize, checkboxSize);
+        checkboxBg.lineStyle(2, 0x6a6a7a, 1);
+        checkboxBg.strokeRect(-checkboxSize / 2, -checkboxSize / 2, checkboxSize, checkboxSize);
+        checkboxContainer.add(checkboxBg);
+        
+        // 체크 마크 (초기에는 숨김)
+        const checkMark = scene.add.graphics();
+        checkMark.lineStyle(3, 0x4ade80, 1);
+        checkMark.beginPath();
+        checkMark.moveTo(-checkboxSize * 0.3, 0);
+        checkMark.lineTo(-checkboxSize * 0.1, checkboxSize * 0.2);
+        checkMark.lineTo(checkboxSize * 0.3, -checkboxSize * 0.2);
+        checkMark.strokePath();
+        checkMark.setVisible(GameState.skipBossStage);
+        checkboxContainer.add(checkMark);
+        
+        // 클릭 영역
+        const clickArea = scene.add.rectangle(0, 0, checkboxSize, checkboxSize, 0x000000, 0);
+        clickArea.setInteractive({ useHandCursor: true });
+        clickArea.on('pointerdown', () => {
+            GameState.skipBossStage = !GameState.skipBossStage;
+            checkMark.setVisible(GameState.skipBossStage);
+            GameState.save();
+        });
+        checkboxContainer.add(clickArea);
+        
+        state.skipBossCheckbox = checkboxContainer;
 
         // 화면 우상단 자원 표시 (골드 / 루비 / 고기)
         const resourceFontSize = Responsive.getFontSize(scene, 16); // 예: '16px'

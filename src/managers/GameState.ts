@@ -39,6 +39,8 @@ export const GameState = {
     set stage(value: number) { GameStateCore.stage = value; },
     get killsInCurrentStage() { return GameStateCore.killsInCurrentStage; },
     set killsInCurrentStage(value: number) { GameStateCore.killsInCurrentStage = value; },
+    get skipBossStage() { return GameStateCore.skipBossStage; },
+    set skipBossStage(value: boolean) { GameStateCore.skipBossStage = value; },
     get sp() { return GameStateCore.sp; },
     set sp(value: number) { GameStateCore.sp = value; },
     get learnedSkills() { return GameStateCore.learnedSkills; },
