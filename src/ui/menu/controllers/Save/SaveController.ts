@@ -5,6 +5,7 @@ import { GameStateCore, SaveData } from '../../../../managers/state/GameStateCor
 import { StorageKeys } from '../../../../config/StorageKeys';
 import { SaveSuccessPopup } from './SaveSuccessPopup';
 import { ICommonResponse } from '../common/ICommonResponse';
+import { LoginController } from '../Login/LoginController';
 
 // 저장 API 응답 인터페이스
 interface SaveResponse extends ICommonResponse {
@@ -14,7 +15,9 @@ interface SaveResponse extends ICommonResponse {
 // 저장 API 요청 인터페이스
 interface SaveRequest {
     uuid: string | null;
+    sid: string | null;
     playData: SaveData;
+    forceSave?: boolean;
 }
 
 // API 엔드포인트 URL (환경에 따라 변경 가능)
@@ -43,8 +46,14 @@ export const SaveController = {
             
             const requestData: SaveRequest = {
                 uuid: GameStateCore.uuid ?? null,
+                sid: GameStateCore.sid ?? null,
                 playData
             };
+
+            if (!requestData.sid) {
+                LoginController.handleLogin(scene, false);
+                return;
+            }
             
             // 토큰이 있으면 헤더에 추가
             const token = localStorage.getItem(StorageKeys.AUTH_TOKEN);
@@ -63,10 +72,12 @@ export const SaveController = {
             if (response.status === 200) {
                 console.log('Save successful:', response);
                 // 저장 성공 팝업 표시
-                SaveSuccessPopup.show(scene, saveSuccessPopupState, saveTime);
+                SaveSuccessPopup.show(scene, saveSuccessPopupState, saveTime, 'Data를 저장했습니다.');
+            } else if (response.status === 401 && response.message === 'sessionRefreshFailed') {
+                LoginController.handleLogin(scene, false);
             } else {
-                console.error('Save failed:', response.message);
-                // TODO: 실패 메시지 표시
+                console.error('Save failed:', requestData.uuid, response.message);
+                SaveSuccessPopup.show(scene, saveSuccessPopupState, saveTime, 'Data를 저장에 실패했습니다.');
             }
         } catch (error) {
             console.error('Save error:', error);

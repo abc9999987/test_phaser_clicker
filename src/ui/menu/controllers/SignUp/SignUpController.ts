@@ -10,6 +10,7 @@ import { ICommonResponse } from '../common/ICommonResponse';
 interface SignUpResponse extends ICommonResponse {
     data?: {
         uuid: string;
+        sid: string;
     };
 }
 
@@ -73,8 +74,13 @@ export const SignUpController = {
                 // 회원가입 성공시 uuid를 저장시킴
                 if (response.data?.uuid) {
                     GameStateCore.uuid = response.data.uuid;
-                    GameStateCore.save();
                 }
+
+                if (response.data?.sid) {
+                    GameStateCore.sid = response.data.sid;
+                }
+
+                GameStateCore.save();
                 // 팝업 닫기
                 LoginInputField.removeHTMLInput(signUpPopupState.idInput);
                 LoginInputField.removeHTMLInput(signUpPopupState.passwordInput);

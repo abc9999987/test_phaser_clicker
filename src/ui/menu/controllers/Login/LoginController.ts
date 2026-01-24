@@ -13,6 +13,7 @@ interface LoginResponse extends ICommonResponse {
     data?: {
         playData: SaveData;
         uuid: string;
+        sid: string;
     };
     token?: string;
     user?: {
@@ -48,11 +49,12 @@ const LOGIN_API_URL = '/login'; // TODO: 실제 API URL로 변경
 
 export const LoginController = {
     // 로그인 버튼 클릭 시 동작
-    handleLogin(scene: Phaser.Scene): void {
+    handleLogin(scene: Phaser.Scene, isBasicText?: boolean): void {
         // 먼저 경고 팝업 표시
         LoginPopup.showWarningPopup(
             scene,
             warningPopupState,
+            isBasicText,
             () => {
                 // 확인 버튼 클릭 시 로그인 팝업 표시
                 LoginPopup.showLoginPopup(
@@ -71,7 +73,7 @@ export const LoginController = {
             () => {
                 // 취소 처리
                 console.log('Warning popup cancelled');
-            }
+            },
         );
     },
     
@@ -97,19 +99,30 @@ export const LoginController = {
                 if (response.token) {
                     localStorage.setItem(StorageKeys.AUTH_TOKEN, response.token);
                 }
-                
+
                 // 서버에서 받은 게임 데이터로 GameState 업데이트
                 if (response.data?.playData) {
-                    try {
-                        if (response.data?.uuid) {
-                            response.data.playData.uuid = response.data.uuid;
+                    if (response.data?.playData.sid) {
+                        try {
+                            if (response.data?.uuid) {
+                                response.data.playData.uuid = response.data.uuid;
+                            }
+    
+                            if (response.data?.sid) {
+                                response.data.playData.sid = response.data.sid;
+                            }
+    
+                            GameStateCore.updateFromLoginSaveData(response.data.playData);
+                            // 로컬스토리지에 저장
+                            GameStateCore.save();
+                        } catch (updateError) {
+                            console.error('Failed to update game state from server data:', updateError);
                         }
-
-                        GameStateCore.updateFromLoginSaveData(response.data.playData);
-                        // 로컬스토리지에 저장
-                        GameStateCore.save();
-                    } catch (updateError) {
-                        console.error('Failed to update game state from server data:', updateError);
+                    } else {
+                        if (response.data?.sid) {
+                            // 저장되었던 sid가 완전히 없는 경우 update이후 첫 로그인임. 이 경우에는 sid를 새로 설정해주고 저장. 
+                            GameStateCore.updateSid(response.data.sid);
+                        }
                     }
                 }
                 

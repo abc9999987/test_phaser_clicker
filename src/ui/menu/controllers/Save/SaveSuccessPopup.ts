@@ -27,7 +27,8 @@ export const SaveSuccessPopup = {
     show(
         scene: Phaser.Scene,
         state: SaveSuccessPopupState,
-        saveTime: number
+        saveTime: number,
+        messageTextString: string
     ): void {
         if (state.isOpen) {
             return; // 이미 열려있으면 무시
@@ -87,7 +88,7 @@ export const SaveSuccessPopup = {
         popupContainer.add(dateTextObj);
         
         // 메시지 텍스트
-        const messageText = scene.add.text(0, 0, 'Data를 저장했습니다.', {
+        const messageText = scene.add.text(0, 0, messageTextString, {
             fontSize: Responsive.getFontSize(scene, 24),
             color: '#4a9eff',
             fontFamily: 'Arial',

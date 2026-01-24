@@ -183,6 +183,7 @@ export const LoginPopup = {
     showWarningPopup(
         scene: Phaser.Scene,
         state: WarningPopupState,
+        isBasicText: boolean = true,
         onConfirm: () => void,
         onCancel: () => void
     ): void {
@@ -226,10 +227,11 @@ export const LoginPopup = {
         // 경고 문구
         const warningFontSize = Math.max(16, Math.floor(popupHeight * 0.05));
         const warningY = -popupHeight / 2 + popupHeight * 0.35;
+        const popupWarningTestString = isBasicText === true ? '로그인 시 현재 데이터가 삭제되고\n클라우드 데이터를 바로 불러옵니다.' : '세션이 만료되어 저장을 진행할 수 없습니다.\n다시 로그인해 주세요.';
         const warningText = scene.add.text(
             0,
             warningY,
-            '로그인 시 현재 데이터가 삭제되고\n클라우드 데이터를 바로 불러옵니다.',
+            popupWarningTestString,
             {
                 fontSize: `${warningFontSize}px`,
                 color: '#ffd966',

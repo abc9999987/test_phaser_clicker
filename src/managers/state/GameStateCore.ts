@@ -3,6 +3,7 @@ import { StorageKeys } from '../../config/StorageKeys';
 
 export interface SaveData {
     uuid?: string | null;
+    sid?: string | null;
     coins: number;
     rubies: number; // 루비 재화
     meat?: number;  // 고기 자원 (선택 저장, 없으면 0)
@@ -83,6 +84,7 @@ export const GameStateCore = {
     }>,
     saveTimer: null as number | null,
     uuid: null as string | null,
+    sid: null as string | null,
     
     // 현재 게임 상태를 SaveData 객체로 반환 (저장하지 않음)
     getSaveData(): SaveData {
@@ -112,7 +114,7 @@ export const GameStateCore = {
             dungeonSweepStates: this.dungeonSweepStates,
             eggGachaCounts: this.eggGachaCounts,
             saveTime: Date.now(),
-            // uuid: this.uuid, // uuid는 별도로 보내기 때문에 여기에 넣지 않음
+            sid: this.sid,
         };
     },
     
@@ -121,6 +123,7 @@ export const GameStateCore = {
         try {
             const saveData = this.getSaveData();
             saveData.uuid = this.uuid; // uuid는 별도로 보내기 때문에 여기에 넣음
+            saveData.sid = this.sid; // sid는 별도로 보내기 때문에 여기에 넣음
             localStorage.setItem(StorageKeys.GAME_SAVE, JSON.stringify(saveData));
             console.log('Game state saved');
         } catch (error) {
@@ -159,6 +162,7 @@ export const GameStateCore = {
                 this.dungeonSweepStates = data.dungeonSweepStates || {};
                 this.eggGachaCounts = data.eggGachaCounts || {};
                 this.uuid = data.uuid || null;
+                this.sid = data.sid || null;
                 console.log('Game state loaded');
                 return true;
             }
@@ -190,7 +194,7 @@ export const GameStateCore = {
     
     // SaveData로부터 게임 상태 업데이트 (로그인 시 서버 데이터 동기화)
     // 없는 값은 제거되므로 꼭 Login으로 받은 Data에 대해서만 사용해야 함.
-    updateFromLoginSaveData(saveData: SaveData): void {
+    updateFromLoginSaveData(saveData: any): void {
         try {
             this.coins = saveData.coins ?? 0;
             this.rubies = saveData.rubies ?? 0;
@@ -217,9 +221,15 @@ export const GameStateCore = {
             this.dungeonSweepStates = saveData.dungeonSweepStates ?? this.dungeonSweepStates ?? {};
             this.eggGachaCounts = saveData.eggGachaCounts ?? this.eggGachaCounts ?? {};
             this.uuid = saveData.uuid ?? null;
+            this.sid = saveData.sid ?? null;
             console.log('Game state updated from server data');
         } catch (error) {
             console.error('Failed to update game state from save data:', error);
         }
+    },
+
+    updateSid(sid: string): void {
+        this.sid = sid;
+        this.save();
     }
 };
