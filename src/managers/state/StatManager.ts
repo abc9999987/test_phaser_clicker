@@ -3,6 +3,7 @@ import { GameStateCore } from './GameStateCore';
 import { CoinManager } from './CoinManager';
 import { GameState } from '../GameState';
 import { ArtifactConfigs } from '../../config/artifactConfig';
+import { EggGachaConfigs } from '../../config/eggGachaConfig';
 
 export const StatManager = {
     // 공격력 실제 값 계산 (레벨에 따른 공격력)
@@ -21,7 +22,10 @@ export const StatManager = {
         }
         // ArtifactConfigs[0]은 유물 공격력 %로 증가 (id: 1)
         const artifactMultiplier = ((GameState.getArtifactLevel(1) * ArtifactConfigs[0].value) / 100) + 1;
-        return (startValue + position * increment) * (artifactMultiplier === 0 ? 1 : artifactMultiplier);
+        const eggAddAttackPower = 1 + (GameState.getEggGachaCount(EggGachaConfigs[1].id) * (EggGachaConfigs[1].value as number) / 100);
+        const eggAddAttackPower2 = 1 + (GameState.getEggGachaCount(EggGachaConfigs[2].id) * (EggGachaConfigs[2].value as number) / 100);
+       
+        return (startValue + position * increment) * (artifactMultiplier === 0 ? 1 : artifactMultiplier) * eggAddAttackPower * eggAddAttackPower2;
     },
 
     getAttackSpeedValue(): number {
@@ -35,14 +39,17 @@ export const StatManager = {
     },
 
     getCritDamageValue(): number {
-        const critDamage = GameStateCore.critDamage + (GameState.getArtifactLevel(4) * ArtifactConfigs[3].value);
+        const eggAddCritDamage = 1 + ((GameState.getEggGachaCount(EggGachaConfigs[3].id) * (EggGachaConfigs[3].value as number)) / 100);
+        const critDamage = Math.floor(GameStateCore.critDamage + (GameState.getArtifactLevel(4) * ArtifactConfigs[3].value) * eggAddCritDamage);
         return critDamage;
     },
 
     getGoldRateValue(): number {
         // 유물 ID 5의 레벨 * value = 코인 획득량 증가율 (%)
         // 예: 레벨 10이면 10% 증가
-        return GameState.getArtifactLevel(5) * ArtifactConfigs[4].value;
+        const eggAddGoldRate = 1 + ((GameState.getEggGachaCount(EggGachaConfigs[4].id) * (EggGachaConfigs[4].value as number)) / 100);
+        const goldRate = Math.floor((GameState.getArtifactLevel(5) * ArtifactConfigs[4].value) * eggAddGoldRate);
+        return goldRate;
     },
     
     // 공격력 강화 비용 계산

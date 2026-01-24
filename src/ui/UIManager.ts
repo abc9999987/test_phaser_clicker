@@ -70,10 +70,8 @@ export const UIManager = {
     } as TabSystemState,
     
     statsTabState: {
-        autoFireText: null as Phaser.GameObjects.Text | null,
-        attackPowerText: null as Phaser.GameObjects.Text | null,
-        critChanceText: null as Phaser.GameObjects.Text | null,
-        critDamageText: null as Phaser.GameObjects.Text | null
+        statCards: [] as Phaser.GameObjects.Container[],
+        statTexts: [] as Phaser.GameObjects.Text[]
     } as StatsTabState,
     
     upgradeTabState: {

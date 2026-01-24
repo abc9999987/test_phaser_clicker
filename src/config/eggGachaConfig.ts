@@ -2,14 +2,16 @@
 export interface EggGachaConfig {
     id: number; // 알 뽑기 고유 ID (1~5)
     type: EggGachaType; // 알 뽑기 타입
+    value?: number;
 }
 
 export enum EggGachaType {
-    Pet = 'pet',
-    AttackPower = '공격력%',
-    AttackSpeed = '공격속도',
-    CritDamage = '치명타데미지',
-    AddGoldRate = '코인획득량'
+    Pet = '펫',
+    AttackPower = '알 공격력%',
+    AttackPower2 = '알 공격력2%',
+    AttackSpeed = '알 공격속도',
+    CritDamage = '알 치명타데미지',
+    AddGoldRate = '알 코인획득량'
 }
 
 // 알 뽑기 설정 목록
@@ -20,18 +22,22 @@ export const EggGachaConfigs: EggGachaConfig[] = [
     },
     {
         id: 2,
-        type: EggGachaType.AttackPower
+        type: EggGachaType.AttackPower,
+        value: 20,
     },
     {
         id: 3,
-        type: EggGachaType.AttackSpeed
+        type: EggGachaType.AttackPower2,
+        value: 20,
     },
     {
         id: 4,
-        type: EggGachaType.CritDamage
+        type: EggGachaType.CritDamage,
+        value: 20,
     },
     {
         id: 5,
-        type: EggGachaType.AddGoldRate
+        type: EggGachaType.AddGoldRate,
+        value: 20,
     }
 ];

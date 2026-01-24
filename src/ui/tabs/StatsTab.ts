@@ -1,15 +1,11 @@
 // Stats 탭 UI
 import Phaser from 'phaser';
 import { Responsive } from '../../utils/Responsive';
-import { GameState } from '../../managers/GameState';
-import { NumberFormatter } from '../../utils/NumberFormatter';
+import { STATS_ITEMS, StatsItem } from '../../config/statsTabConfig';
 
 export interface StatsTabState {
-    autoFireText: Phaser.GameObjects.Text | null;
-    attackPowerText: Phaser.GameObjects.Text | null;
-    critChanceText: Phaser.GameObjects.Text | null;
-    critDamageText: Phaser.GameObjects.Text | null;
-    addGoldRateText: Phaser.GameObjects.Text | null;
+    statCards: Phaser.GameObjects.Container[];  // 각 스탯 카드 컨테이너 배열
+    statTexts: Phaser.GameObjects.Text[];       // 각 스탯 값 텍스트 배열
 }
 
 export const StatsTab = {
@@ -26,7 +22,7 @@ export const StatsTab = {
         
         // 타이틀
         const titleFontSize = Responsive.getFontSize(scene, 22);
-        const titleY = uiAreaStartY + uiAreaHeight * 0.15;
+        const titleY = uiAreaStartY + uiAreaHeight * 0.1;
         const titleText = scene.add.text(gameWidth / 2, titleY, '내 정보', {
             fontSize: titleFontSize,
             color: '#ffffff',
@@ -36,61 +32,78 @@ export const StatsTab = {
         titleText.setOrigin(0.5);
         contentContainer.add(titleText);
         
-        // 공격 속도 텍스트
-        const attackSpeedFontSize = Responsive.getFontSize(scene, 20);
-        const attackSpeedY = titleY + uiAreaHeight * 0.15;
-
-        state.autoFireText = scene.add.text(gameWidth * 0.1, attackSpeedY, `공격 속도: ${GameState.getAttackSpeedValue()}/초`, {
-            fontSize: attackSpeedFontSize,
-            color: '#e0e0e0',
-            fontFamily: 'Arial',
-            font: `500 ${attackSpeedFontSize} Arial`
-        });
-        contentContainer.add(state.autoFireText);
+        // 카드 레이아웃 설정
+        const cardsPerRow = 2;  // 2열 그리드
+        const cardSpacing = gameWidth * 0.03;  // 카드 간 간격
+        const horizontalPadding = gameWidth * 0.08;  // 좌우 여백
+        const availableWidth = gameWidth - (horizontalPadding * 2);
+        const cardWidth = (availableWidth - cardSpacing) / cardsPerRow;
+        const cardHeight = uiAreaHeight * 0.12;
+        const cardRadius = 12;
         
-        // 공격력 텍스트
-        const attackPowerFontSize = Responsive.getFontSize(scene, 20);
-        const attackPowerY = attackSpeedY + uiAreaHeight * 0.06;
-        state.attackPowerText = scene.add.text(gameWidth * 0.1, attackPowerY, `공격력: ${NumberFormatter.formatNumber(GameState.getAttackPowerValue())}`, {
-            fontSize: attackPowerFontSize,
-            color: '#e0e0e0',
-            fontFamily: 'Arial',
-            font: `500 ${attackPowerFontSize} Arial`
-        });
-        contentContainer.add(state.attackPowerText);
+        // 카드 시작 위치
+        const startX = horizontalPadding + cardWidth / 2;
+        const startY = titleY + uiAreaHeight * 0.15;
         
-        // 치명타 확률 텍스트
-        const critChanceFontSize = Responsive.getFontSize(scene, 20);
-        const critChanceY = attackPowerY + uiAreaHeight * 0.06;
-        state.critChanceText = scene.add.text(gameWidth * 0.1, critChanceY, `치명타 확률: ${GameState.getCritChanceValue()}%`, {
-            fontSize: critChanceFontSize,
-            color: '#e0e0e0',
-            fontFamily: 'Arial',
-            font: `500 ${critChanceFontSize} Arial`
+        // 상태 초기화
+        state.statCards = [];
+        state.statTexts = [];
+        
+        // Config 배열을 순회하며 카드 생성
+        STATS_ITEMS.forEach((item: StatsItem, index: number) => {
+            const row = Math.floor(index / cardsPerRow);
+            const col = index % cardsPerRow;
+            
+            const cardX = startX + col * (cardWidth + cardSpacing);
+            const cardY = startY + row * (cardHeight + cardSpacing);
+            
+            // 카드 컨테이너 생성
+            const cardContainer = scene.add.container(cardX, cardY);
+            
+            // 그림자 효과 (약한 어두운 영역) - 먼저 추가하여 배경 뒤에 배치
+            const shadow = scene.add.graphics();
+            shadow.fillStyle(0x000000, 0.3);
+            shadow.fillRoundedRect(-cardWidth / 2 + 2, -cardHeight / 2 + 2, cardWidth, cardHeight, cardRadius);
+            cardContainer.add(shadow);
+            
+            // 카드 배경
+            const cardBg = scene.add.graphics();
+            cardBg.fillStyle(0x2a2a3a, 1);
+            cardBg.fillRoundedRect(-cardWidth / 2, -cardHeight / 2, cardWidth, cardHeight, cardRadius);
+            
+            // 테두리
+            cardBg.lineStyle(2, 0x4a4a5a, 1);
+            cardBg.strokeRoundedRect(-cardWidth / 2, -cardHeight / 2, cardWidth, cardHeight, cardRadius);
+            cardContainer.add(cardBg);
+            
+            // 라벨 텍스트 (작은 폰트, 회색)
+            const labelFontSize = Responsive.getFontSize(scene, 14);
+            const labelText = scene.add.text(0, -cardHeight * 0.25, item.label, {
+                fontSize: labelFontSize,
+                color: '#aaaaaa',
+                fontFamily: 'Arial',
+                font: `500 ${labelFontSize} Arial`
+            });
+            labelText.setOrigin(0.5);
+            cardContainer.add(labelText);
+            
+            // 값 텍스트 (큰 폰트, 흰색, 굵게)
+            const valueFontSize = Responsive.getFontSize(scene, 18);
+            const valueText = scene.add.text(0, cardHeight * 0.15, item.getDisplayValue(), {
+                fontSize: valueFontSize,
+                color: '#ffffff',
+                fontFamily: 'Arial',
+                font: `600 ${valueFontSize} Arial`
+            });
+            valueText.setOrigin(0.5);
+            cardContainer.add(valueText);
+            
+            // 상태에 저장
+            state.statCards.push(cardContainer);
+            state.statTexts.push(valueText);
+            
+            contentContainer.add(cardContainer);
         });
-        contentContainer.add(state.critChanceText);
-
-        // 치명타 데미지 텍스트
-        const critDamageFontSize = Responsive.getFontSize(scene, 20);
-        const critDamageY = critChanceY + uiAreaHeight * 0.06;
-        state.critDamageText = scene.add.text(gameWidth * 0.1, critDamageY, `치명타 데미지: ${GameState.getCritDamageValue()}%`, {
-            fontSize: critDamageFontSize,
-            color: '#e0e0e0',
-            fontFamily: 'Arial',
-            font: `500 ${critDamageFontSize} Arial`
-        });
-        contentContainer.add(state.critDamageText);
-
-        // 코인 획득량 텍스트
-        const addGoldRateFontSize = Responsive.getFontSize(scene, 20);
-        const addGoldRateY = critDamageY + uiAreaHeight * 0.06;
-        state.addGoldRateText = scene.add.text(gameWidth * 0.1, addGoldRateY, `코인 획득량: ${GameState.getGoldRateValue()}%`, {
-            fontSize: addGoldRateFontSize,
-            color: '#e0e0e0',
-            fontFamily: 'Arial',
-            font: `500 ${addGoldRateFontSize} Arial`
-        });
-        contentContainer.add(state.addGoldRateText);
         
         tabContents[0] = contentContainer;
     },
@@ -100,29 +113,15 @@ export const StatsTab = {
         state: StatsTabState,
         activeTabIndex: number
     ): void {
-        // 공격 속도 텍스트 업데이트 (Stats 탭에만 표시)
-        if (state.autoFireText && state.autoFireText.active && activeTabIndex === 0) {
-            state.autoFireText.setText(`공격 속도: ${GameState.getAttackSpeedValue()}/초`);
-        }
+        // Stats 탭이 활성화되어 있을 때만 업데이트
+        if (activeTabIndex !== 0) return;
         
-        // 공격력 텍스트 업데이트 (Stats 탭에만 표시)
-        if (state.attackPowerText && state.attackPowerText.active && activeTabIndex === 0) {
-            state.attackPowerText.setText(`공격력: ${NumberFormatter.formatNumber(GameState.getAttackPowerValue())}`);
-        }
-        
-        // 치명타 확률 텍스트 업데이트 (Stats 탭에만 표시)
-        if (state.critChanceText && state.critChanceText.active && activeTabIndex === 0) {
-            state.critChanceText.setText(`치명타 확률: ${GameState.getCritChanceValue()}%`);
-        }
-
-        // 치명타 데미지 텍스트 업데이트 (Stats 탭에만 표시)
-        if (state.critDamageText && state.critDamageText.active && activeTabIndex === 0) {
-            state.critDamageText.setText(`치명타 데미지: ${GameState.getCritDamageValue()}%`);
-        }
-
-        // 코인 획득량 텍스트 업데이트 (Stats 탭에만 표시)
-        if (state.addGoldRateText && state.addGoldRateText.active && activeTabIndex === 0) {
-            state.addGoldRateText.setText(`코인 획득량: ${GameState.getGoldRateValue()}%`);
-        }
+        // Config 배열을 순회하며 각 텍스트 업데이트
+        STATS_ITEMS.forEach((item: StatsItem, index: number) => {
+            const valueText = state.statTexts[index];
+            if (valueText && valueText.active) {
+                valueText.setText(item.getDisplayValue());
+            }
+        });
     }
 };
