@@ -271,17 +271,17 @@ export const CommonUI = {
         state: CommonUIState
     ): void {
         // 스테이지 표시 업데이트
-        if (state.stageText) {
+        if (state.stageText && state.stageText.active) {
             state.stageText.setText(GameState.getStageString());
         }
         
         // 처치 카운트 표시 업데이트 (던전 씬에서는 null일 수 있음)
-        if (state.killCountText) {
+        if (state.killCountText && state.killCountText.active) {
             state.killCountText.setText(`${GameState.killsInCurrentStage}/10 처치`);
         }
         
         // 보스 타이머 업데이트
-        if (state.bossTimerText && scene) {
+        if (state.bossTimerText && state.bossTimerText.active && scene) {
             const isBossStage = GameState.isBossStage();
             const gameScene: any = scene as any;
             const bossTimer = gameScene.bossTimer;
@@ -304,7 +304,7 @@ export const CommonUI = {
         }
         
         // 던전 타이머 업데이트
-        if (state.dungeonTimerText && scene) {
+        if (state.dungeonTimerText && state.dungeonTimerText.active && scene) {
             const dungeonTimer = (scene as any).dungeonTimer;
             const dungeonConfig = (scene as any).getDungeonConfig ? (scene as any).getDungeonConfig() : null;
             
@@ -327,17 +327,17 @@ export const CommonUI = {
         }
         
         // 골드 텍스트 업데이트 (화면 상단 좌측)
-        if (state.coinText) {
+        if (state.coinText && state.coinText.active) {
             state.coinText.setText(NumberFormatter.formatNumber(Math.floor(GameState.coins)));
         }
         
         // 루비 텍스트 업데이트
-        if (state.rubyText) {
+        if (state.rubyText && state.rubyText.active) {
             state.rubyText.setText(NumberFormatter.formatNumber(Math.floor(GameState.rubies)));
         }
 
         // 고기 텍스트 업데이트
-        if (state.meatText) {
+        if (state.meatText && state.meatText.active) {
             state.meatText.setText(NumberFormatter.formatNumber(Math.floor(GameState.meat)));
         }
     }

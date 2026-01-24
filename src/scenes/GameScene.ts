@@ -1,19 +1,24 @@
 import Phaser from 'phaser';
 import { AssetLoader } from '../managers/AssetLoader';
 import { GameState } from '../managers/GameState';
+import { GameStateCore } from '../managers/state/GameStateCore';
 import { SkillManager } from '../managers/SkillManager';
 import { Projectile } from '../game/Projectile';
 import { Background } from '../game/Background';
 import { Character } from '../game/Character';
 import { Enemy } from '../game/Enemy';
 import { UIManager } from '../ui/UIManager';
+import { LoadController } from '../ui/menu/controllers/Load/LoadController';
+import { SaveController } from '../ui/menu/controllers/Save/SaveController';
 
 // 메인 게임 씬
 export class GameScene extends Phaser.Scene {
     autoSaveTimer?: Phaser.Time.TimerEvent;
+    autoServerSaveTimer?: Phaser.Time.TimerEvent;
     autoFireTimer?: Phaser.Time.TimerEvent;
     bossTimer?: Phaser.Time.TimerEvent;
     bossTimerStartTime?: number;
+    private static hasLoadedFromServer: boolean = false;
     
     constructor() {
         super({ key: 'GameScene' });
@@ -69,8 +74,29 @@ export class GameScene extends Phaser.Scene {
         // 유물 던전 일일 리셋 체크
         GameState.checkAndResetArtifactDungeonAttempts();
         
-        // Phaser가 자동으로 preload 완료 후 create 호출하므로 바로 초기화
-        this.initializeGame();
+        // 게임 시작 시 서버에서 데이터 로드 (한 번만 실행)
+        if (!GameScene.hasLoadedFromServer) {
+            const uuid = GameStateCore.uuid;
+            const sid = GameStateCore.sid;
+            
+            if (uuid && sid) {
+                // 서버에서 데이터 로드
+                LoadController.load(this, uuid, sid, true).then(() => {
+                    // 서버 로드 완료 후 게임 초기화
+                    GameScene.hasLoadedFromServer = true;
+                    this.initializeGame();
+                }).catch(() => {
+                    // 서버 로드 실패 시에도 게임 초기화 (로컬 데이터 사용)
+                    this.initializeGame();
+                });
+            } else {
+                // uuid나 sid가 없으면 로컬 데이터만 사용
+                this.initializeGame();
+            }
+        } else {
+            // 이미 서버에서 로드했으면 바로 초기화
+            this.initializeGame();
+        }
     }
     
     initializeGame(): void {
@@ -84,6 +110,11 @@ export class GameScene extends Phaser.Scene {
         if (this.autoFireTimer) {
             this.autoFireTimer.remove();
             this.autoFireTimer = undefined;
+        }
+        
+        if (this.autoServerSaveTimer) {
+            this.autoServerSaveTimer.remove();
+            this.autoServerSaveTimer = undefined;
         }
         
         // 투사체 풀 초기화
@@ -128,16 +159,37 @@ export class GameScene extends Phaser.Scene {
             (this as any).shouldSelectDungeonTab = false;
         }
         
-        // 주기적 자동 저장 시작
+        // 주기적 자동 저장 시작 (로컬스토리지)
         this.startAutoSave();
+        
+        // 주기적 서버 자동 저장 시작 (10분마다)
+        this.startAutoServerSave();
     }
     
-    // 주기적 자동 저장 시작
+    // 주기적 자동 저장 시작 (로컬스토리지)
     startAutoSave(): void {
         this.autoSaveTimer = this.time.addEvent({
             delay: 10000, // 10초마다
             callback: () => {
                 GameState.save();
+            },
+            loop: true
+        });
+    }
+    
+    // 주기적 서버 자동 저장 시작 (10분마다)
+    startAutoServerSave(): void {
+        // 기존 타이머가 있으면 제거
+        if (this.autoServerSaveTimer) {
+            this.autoServerSaveTimer.remove();
+            this.autoServerSaveTimer = undefined;
+        }
+        
+        this.autoServerSaveTimer = this.time.addEvent({
+            delay: 60000, // 10분 = 600,000ms
+            callback: () => {
+                // 서버에 저장 (중복 요청 방지 로직이 SaveController에 있음)
+                SaveController.performSave(this, false);
             },
             loop: true
         });

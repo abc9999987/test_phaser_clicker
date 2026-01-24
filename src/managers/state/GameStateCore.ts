@@ -231,5 +231,10 @@ export const GameStateCore = {
     updateSid(sid: string): void {
         this.sid = sid;
         this.save();
+    },
+
+    updateUuid(uuid: string): void {
+        this.uuid = uuid;
+        this.save();
     }
 };

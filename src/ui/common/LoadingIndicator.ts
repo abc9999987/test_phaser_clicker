@@ -16,8 +16,26 @@ export const LoadingIndicator = {
         scene: Phaser.Scene,
         state: LoadingIndicatorState
     ): void {
+        // 이미 표시 중이면 기존 인디케이터를 먼저 정리
         if (state.isVisible) {
-            return; // 이미 표시 중이면 무시
+            // 기존 인디케이터 즉시 정리 (애니메이션 없이)
+            if (state.spinnerTween) {
+                state.spinnerTween.stop();
+                state.spinnerTween = null;
+            }
+            if (state.overlay) {
+                state.overlay.destroy();
+                state.overlay = null;
+            }
+            if (state.spinnerContainer) {
+                state.spinnerContainer.destroy();
+                state.spinnerContainer = null;
+            }
+            if (state.spinnerGraphics) {
+                state.spinnerGraphics.destroy();
+                state.spinnerGraphics = null;
+            }
+            state.isVisible = false;
         }
         
         const gameWidth = scene.scale.width;
@@ -111,6 +129,9 @@ export const LoadingIndicator = {
             return;
         }
         
+        // 즉시 isVisible을 false로 설정하여 다음 show() 호출이 가능하도록 함
+        state.isVisible = false;
+        
         // 페이드 아웃 애니메이션
         if (state.spinnerContainer) {
             scene.tweens.add({
@@ -138,8 +159,6 @@ export const LoadingIndicator = {
                         state.spinnerGraphics.destroy();
                         state.spinnerGraphics = null;
                     }
-                    
-                    state.isVisible = false;
                 }
             });
         } else {
@@ -156,7 +175,6 @@ export const LoadingIndicator = {
                 state.spinnerGraphics.destroy();
                 state.spinnerGraphics = null;
             }
-            state.isVisible = false;
         }
     }
 };

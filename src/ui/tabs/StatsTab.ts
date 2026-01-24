@@ -101,27 +101,27 @@ export const StatsTab = {
         activeTabIndex: number
     ): void {
         // 공격 속도 텍스트 업데이트 (Stats 탭에만 표시)
-        if (state.autoFireText && activeTabIndex === 0) {
+        if (state.autoFireText && state.autoFireText.active && activeTabIndex === 0) {
             state.autoFireText.setText(`공격 속도: ${GameState.getAttackSpeedValue()}/초`);
         }
         
         // 공격력 텍스트 업데이트 (Stats 탭에만 표시)
-        if (state.attackPowerText && activeTabIndex === 0) {
+        if (state.attackPowerText && state.attackPowerText.active && activeTabIndex === 0) {
             state.attackPowerText.setText(`공격력: ${NumberFormatter.formatNumber(GameState.getAttackPowerValue())}`);
         }
         
         // 치명타 확률 텍스트 업데이트 (Stats 탭에만 표시)
-        if (state.critChanceText && activeTabIndex === 0) {
+        if (state.critChanceText && state.critChanceText.active && activeTabIndex === 0) {
             state.critChanceText.setText(`치명타 확률: ${GameState.getCritChanceValue()}%`);
         }
 
         // 치명타 데미지 텍스트 업데이트 (Stats 탭에만 표시)
-        if (state.critDamageText && activeTabIndex === 0) {
+        if (state.critDamageText && state.critDamageText.active && activeTabIndex === 0) {
             state.critDamageText.setText(`치명타 데미지: ${GameState.getCritDamageValue()}%`);
         }
 
         // 코인 획득량 텍스트 업데이트 (Stats 탭에만 표시)
-        if (state.addGoldRateText && activeTabIndex === 0) {
+        if (state.addGoldRateText && state.addGoldRateText.active && activeTabIndex === 0) {
             state.addGoldRateText.setText(`코인 획득량: ${GameState.getGoldRateValue()}%`);
         }
     }

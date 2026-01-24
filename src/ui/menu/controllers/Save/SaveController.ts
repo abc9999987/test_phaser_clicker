@@ -31,6 +31,9 @@ const saveSuccessPopupState = {
     isOpen: false
 };
 
+// 중복 요청 방지를 위한 플래그
+let isSaveInProgress = false;
+
 export const SaveController = {
     // 저장 버튼 클릭 시 동작
     handleSave(scene: Phaser.Scene): void {
@@ -38,7 +41,15 @@ export const SaveController = {
     },
     
     // 저장 API 호출
-    async performSave(scene: Phaser.Scene): Promise<void> {
+    async performSave(scene: Phaser.Scene, showSuccessPopup: boolean = true): Promise<void> {
+        // 이미 요청이 진행 중이면 무시
+        if (isSaveInProgress) {
+            console.log('Save request already in progress, ignoring duplicate request');
+            return;
+        }
+        
+        isSaveInProgress = true;
+        
         try {
             // GameStateCore에서 현재 게임 상태 데이터 가져오기
             const playData = GameStateCore.getSaveData();
@@ -72,9 +83,12 @@ export const SaveController = {
             if (response.status === 200) {
                 console.log('Save successful:', response);
                 // 저장 성공 팝업 표시
-                SaveSuccessPopup.show(scene, saveSuccessPopupState, saveTime, 'Data를 저장했습니다.');
+                if (showSuccessPopup) {
+                    SaveSuccessPopup.show(scene, saveSuccessPopupState, saveTime, 'Data를 저장했습니다.');
+                }
             } else if (response.status === 401 && response.message === 'sessionRefreshFailed') {
                 LoginController.handleLogin(scene, false);
+                return;
             } else {
                 console.error('Save failed:', requestData.uuid, response.message);
                 SaveSuccessPopup.show(scene, saveSuccessPopupState, saveTime, 'Data를 저장에 실패했습니다.');
@@ -87,6 +101,9 @@ export const SaveController = {
             } else {
                 console.error('Unknown error:', error);
             }
+        } finally {
+            // 요청 완료 후 플래그 해제
+            isSaveInProgress = false;
         }
     }
 };

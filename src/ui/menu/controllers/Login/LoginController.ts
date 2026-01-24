@@ -123,6 +123,10 @@ export const LoginController = {
                             // 저장되었던 sid가 완전히 없는 경우 update이후 첫 로그인임. 이 경우에는 sid를 새로 설정해주고 저장. 
                             GameStateCore.updateSid(response.data.sid);
                         }
+
+                        if (response.data?.uuid) {
+                            GameStateCore.updateUuid(response.data.uuid);
+                        }
                     }
                 }
                 
