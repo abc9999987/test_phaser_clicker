@@ -30,7 +30,7 @@ export const ArtifactConfigs: ArtifactConfig[] = [
     {
         id: 1,
         name: '비싼 검',
-        value: 3,
+        value: 6, // 3 -> 6
         valueType: ArtifactValueType.AttackPower,
         imageKey: 'artifact_01',
         maxLevel: 100
@@ -54,7 +54,7 @@ export const ArtifactConfigs: ArtifactConfig[] = [
     {
         id: 4,
         name: '비싼 목걸이',
-        value: 1,
+        value: 2, // 1 -> 2
         valueType: ArtifactValueType.CritDamage,
         imageKey: 'artifact_04',
         maxLevel: 100
@@ -62,7 +62,7 @@ export const ArtifactConfigs: ArtifactConfig[] = [
     {
         id: 5,
         name: '비싼 돈주머니',
-        value: 3,
+        value: 6, // 3 -> 6
         valueType: ArtifactValueType.AddGoldRate,
         imageKey: 'artifact_05',
         maxLevel: 100
