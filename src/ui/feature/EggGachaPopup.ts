@@ -4,6 +4,7 @@ import { Responsive } from '../../utils/Responsive';
 import { NumberFormatter } from '../../utils/NumberFormatter';
 import { GameState } from '../../managers/GameState';
 import { EggGachaController } from '../menu/controllers/EggGacha/EggGachaController';
+import { EggGachaConfigs, EggGachaType } from '../../config/eggGachaConfig';
 
 // 알 뽑기 고기 비용 상수
 export const EGG_GACHA_MEAT_COST = 100;
@@ -17,6 +18,8 @@ export interface EggGachaPopupState {
     activeTab: 'draw' | 'list';
     isOpen: boolean;
     drawPanel: Phaser.GameObjects.Container | null;
+    listPanel: Phaser.GameObjects.Container | null;
+    listCards: Phaser.GameObjects.Container[]; // 리스트 카드 배열
     drawButton: Phaser.GameObjects.Container | null;
     eggImage: Phaser.GameObjects.Image | null;
     glowEffect: Phaser.GameObjects.Graphics | null;
@@ -147,7 +150,8 @@ export const EggGachaPopup = {
             '뽑기',
             true,
             () => {
-                // 탭 전환 (현재는 뽑기만 활성화)
+                // 탭 전환: 뽑기 탭으로
+                EggGachaPopup.switchTab(scene, state, 'draw');
             }
         );
         popupContainer.add(drawTab);
@@ -164,7 +168,8 @@ export const EggGachaPopup = {
             '리스트',
             false,
             () => {
-                // 추후 구현
+                // 탭 전환: 리스트 탭으로
+                EggGachaPopup.switchTab(scene, state, 'list');
             }
         );
         popupContainer.add(listTab);
@@ -173,7 +178,7 @@ export const EggGachaPopup = {
         // 중앙 패널 영역 (뽑기 결과 표시용)
         const panelY = tabAreaY + tabHeight / 2 + popupHeight * 0.27;
         const panelWidth = popupWidth * 0.9;
-        const panelHeight = popupHeight * 0.45;
+        const panelHeight = popupHeight * 0.45; // 리스트 탭을 위해 높이 증가 (45% -> 55%)
         
         const drawPanel = scene.add.container(0, panelY);
         
@@ -205,6 +210,18 @@ export const EggGachaPopup = {
         state.eggImage = eggImage;
         popupContainer.add(drawPanel);
         state.drawPanel = drawPanel;
+        
+        // 리스트 패널 생성 (초기에는 숨김)
+        const listPanel = EggGachaPopup.createListPanel(
+            scene,
+            panelY,
+            panelWidth,
+            panelHeight
+        );
+        listPanel.setVisible(false);
+        popupContainer.add(listPanel);
+        state.listPanel = listPanel;
+        state.listCards = [];
         
         // 하단 뽑기 버튼 영역
         const buttonAreaY = panelY + panelHeight / 2 + popupHeight * 0.08;
@@ -309,6 +326,12 @@ export const EggGachaPopup = {
             state.drawPanel = null;
         }
         
+        if (state.listPanel) {
+            state.listPanel = null;
+        }
+        
+        state.listCards = [];
+        
         if (state.drawButton) {
             state.drawButton = null;
         }
@@ -363,19 +386,212 @@ export const EggGachaPopup = {
         tabText.setOrigin(0.5);
         tabContainer.add(tabText);
         
-        // 클릭 영역 (활성화된 탭만 클릭 가능)
-        if (isActive) {
-            const clickArea = scene.add.rectangle(0, 0, width, height, 0x000000, 0);
-            clickArea.setInteractive({ useHandCursor: true });
-            
-            clickArea.on('pointerdown', () => {
-                onClick();
-            });
-            
-            tabContainer.add(clickArea);
-        }
+        // 클릭 영역 (모든 탭 클릭 가능)
+        const clickArea = scene.add.rectangle(0, 0, width, height, 0x000000, 0);
+        clickArea.setInteractive({ useHandCursor: true });
+        
+        clickArea.on('pointerdown', () => {
+            onClick();
+        });
+        
+        tabContainer.add(clickArea);
+        
+        // 탭 데이터 저장 (나중에 업데이트하기 위해)
+        (tabContainer as any).tabBg = tabBg;
+        (tabContainer as any).tabText = tabText;
+        (tabContainer as any).isActive = isActive;
+        (tabContainer as any).tabWidth = width;
+        (tabContainer as any).tabHeight = height;
         
         return tabContainer;
+    },
+    
+    // 탭 전환
+    switchTab(
+        scene: Phaser.Scene,
+        state: EggGachaPopupState,
+        tab: 'draw' | 'list'
+    ): void {
+        if (state.activeTab === tab) return;
+        
+        state.activeTab = tab;
+        
+        // 탭 버튼 업데이트
+        state.tabButtons.forEach((tabButton, index) => {
+            const tabBg = (tabButton as any).tabBg;
+            const tabText = (tabButton as any).tabText;
+            const isActive = (index === 0 && tab === 'draw') || (index === 1 && tab === 'list');
+            const width = (tabButton as any).tabWidth || 200;
+            const height = (tabButton as any).tabHeight || 50;
+            
+            if (tabBg && tabText) {
+                // 배경 색상 업데이트
+                tabBg.clear();
+                const bgColor = isActive ? 0x4a4a5a : 0x3a3a4a;
+                tabBg.fillStyle(bgColor, 1);
+                tabBg.fillRoundedRect(-width / 2, -height / 2, width, height, 8);
+                
+                // 테두리 색상 업데이트
+                const borderColor = isActive ? 0xff4444 : 0x5a5a6a;
+                tabBg.lineStyle(2, borderColor, 1);
+                tabBg.strokeRoundedRect(-width / 2, -height / 2, width, height, 8);
+                
+                // 텍스트 색상 업데이트
+                tabText.setColor(isActive ? '#ffffff' : '#aaaaaa');
+                
+                (tabButton as any).isActive = isActive;
+            }
+        });
+        
+        // 패널 표시/숨김
+        if (state.drawPanel) {
+            state.drawPanel.setVisible(tab === 'draw');
+        }
+        if (state.drawButton) {
+            state.drawButton.setVisible(tab === 'draw');
+        }
+        if (state.listPanel) {
+            state.listPanel.setVisible(tab === 'list');
+            // 리스트 탭으로 전환 시 카드 업데이트
+            if (tab === 'list') {
+                EggGachaPopup.updateListPanel(scene, state);
+            }
+        }
+    },
+    
+    // 리스트 패널 생성
+    createListPanel(
+        scene: Phaser.Scene,
+        panelY: number,
+        panelWidth: number,
+        panelHeight: number
+    ): Phaser.GameObjects.Container {
+        const listPanel = scene.add.container(0, panelY);
+        
+        // 패널 배경
+        const panelBg = scene.add.graphics();
+        panelBg.fillStyle(0x1a1a2a, 0.8);
+        panelBg.fillRoundedRect(-panelWidth / 2, -panelHeight / 2, panelWidth, panelHeight, 12);
+        panelBg.lineStyle(2, 0x3a3a4a, 1);
+        panelBg.strokeRoundedRect(-panelWidth / 2, -panelHeight / 2, panelWidth, panelHeight, 12);
+        listPanel.add(panelBg);
+        
+        // 스크롤 컨테이너 (카드들이 들어갈 영역)
+        const scrollContainer = scene.add.container(0, 0);
+        listPanel.add(scrollContainer);
+        (listPanel as any).scrollContainer = scrollContainer;
+        
+        return listPanel;
+    },
+    
+    // 리스트 패널 업데이트 (카드 생성)
+    updateListPanel(
+        scene: Phaser.Scene,
+        state: EggGachaPopupState
+    ): void {
+        if (!state.listPanel) return;
+        
+        const scrollContainer = (state.listPanel as any).scrollContainer as Phaser.GameObjects.Container;
+        if (!scrollContainer) return;
+        
+        // 기존 카드 제거
+        state.listCards.forEach(card => {
+            if (card) {
+                card.destroy();
+            }
+        });
+        state.listCards = [];
+        scrollContainer.removeAll(true);
+        
+        // 패널 크기 계산 (drawPanel과 동일한 크기)
+        const gameWidth = scene.scale.width;
+        const gameHeight = scene.scale.height;
+        const popupWidth = gameWidth * 0.6;
+        const popupHeight = gameHeight * 0.5;
+        const panelWidth = popupWidth * 0.9;
+        const panelHeight = popupHeight * 0.55; // 리스트 탭을 위해 높이 증가
+        
+        // 카드 크기 및 배치 계산 (균등 분배)
+        const cardsPerRow = 3;
+        const horizontalPadding = panelWidth * 0.06; // 좌우 여백 6%
+        const availableWidth = panelWidth - (horizontalPadding * 2); // 사용 가능한 너비
+        
+        // 카드 3개 + 간격 2개를 균등하게 분배
+        // 카드 너비를 간격의 2배로 설정하면: cardWidth * 3 + cardSpacing * 2 = availableWidth
+        // cardWidth = cardSpacing * 2 이므로: cardSpacing * 2 * 3 + cardSpacing * 2 = cardSpacing * 8 = availableWidth
+        const cardSpacing = availableWidth / 8; // 간격
+        const cardWidth = cardSpacing * 2; // 카드 너비 (간격의 2배)
+        const cardHeight = cardWidth * 1.3; // 카드 높이 (비율 증가로 더 크게)
+        
+        // 시작 X 위치 계산 (왼쪽 여백 + 첫 번째 카드 중심)
+        const startX = -panelWidth / 2 + horizontalPadding + cardWidth / 2;
+        const verticalPadding = panelHeight * 0.16; // 상하 여백 6%
+        const startY = -panelHeight / 2 + verticalPadding + cardHeight / 2;
+        
+        // 각 알 뽑기 설정에 대해 카드 생성
+        EggGachaConfigs.forEach((config, index) => {
+            const row = Math.floor(index / cardsPerRow);
+            const col = index % cardsPerRow;
+            
+            const cardX = startX + col * (cardWidth + cardSpacing);
+            const cardY = startY + row * (cardHeight + cardSpacing);
+            
+            const count = GameState.getEggGachaCount(config.id);
+            
+            const card = EggGachaPopup.createListCard(
+                scene,
+                cardX,
+                cardY,
+                cardWidth,
+                cardHeight,
+                config.id,
+                config.type,
+                count
+            );
+            
+            scrollContainer.add(card);
+            state.listCards.push(card);
+        });
+    },
+    
+    // 리스트 카드 생성
+    createListCard(
+        scene: Phaser.Scene,
+        x: number,
+        y: number,
+        width: number,
+        height: number,
+        cardId: number,
+        _cardType: EggGachaType,
+        count: number
+    ): Phaser.GameObjects.Container {
+        const cardContainer = scene.add.container(x, y);
+        
+        // 카드 앞면 이미지 (card_front_{id}) - 배경 없이 바로 표시
+        const cardFrontKey = `card_front_${cardId}`;
+        if (scene.textures.exists(cardFrontKey)) {
+            const cardImage = scene.add.image(0, 0, cardFrontKey);
+            // 이미지를 카드 영역에 맞게 크기 조정
+            const imageSize = Math.min(width, height) * 1.2;
+            cardImage.setDisplaySize(imageSize, imageSize * 1.2);
+            cardImage.setOrigin(0.5);
+            cardContainer.add(cardImage);
+        }
+        
+        // 횟수 텍스트만 표시 (이미지 하단에 배치)
+        const countFontSize = Responsive.getFontSize(scene, 12);
+        const countText = scene.add.text(0, height * 0.4, `x${NumberFormatter.formatNumber(count)}`, {
+            fontSize: countFontSize,
+            color: '#ffd700',
+            fontFamily: 'Arial',
+            font: `600 ${countFontSize} Arial`,
+            stroke: '#000000',
+            strokeThickness: 3
+        });
+        countText.setOrigin(0.5);
+        cardContainer.add(countText);
+        
+        return cardContainer;
     },
     
     // 뽑기 버튼 생성
