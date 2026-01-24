@@ -11,7 +11,6 @@ import { ArtifactTab, ArtifactTabState } from './tabs/ArtifactTab';
 import { MenuButtonConfigs } from './menu/MenuButtonConfig';
 import { EggGachaPopup, EggGachaPopupState } from './feature/EggGachaPopup';
 import { FeatureMenuPopup } from './feature/FeatureMenuPopup';
-import { FeatureMenuPopup } from './feature/FeatureMenuPopup';
 
 // UI 관리자
 export const UIManager = {
@@ -49,6 +48,8 @@ export const UIManager = {
             activeTab: 'draw',
             isOpen: false,
             drawPanel: null,
+            listPanel: null,
+            listCards: [],
             drawButton: null,
             eggImage: null,
             glowEffect: null,
@@ -71,7 +72,20 @@ export const UIManager = {
     
     statsTabState: {
         statCards: [] as Phaser.GameObjects.Container[],
-        statTexts: [] as Phaser.GameObjects.Text[]
+        statTexts: [] as Phaser.GameObjects.Text[],
+        detailButton: null as Phaser.GameObjects.Container | null,
+        statsDetailPopupState: {
+            popupOverlay: null,
+            popupContainer: null,
+            closeButton: null,
+            statCards: [],
+            scrollContainer: null,
+            scrollArea: null,
+            scrollStartY: 0,
+            scrollStartContainerY: 0,
+            isScrolling: false,
+            isOpen: false
+        }
     } as StatsTabState,
     
     upgradeTabState: {

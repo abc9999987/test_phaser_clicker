@@ -2,10 +2,13 @@
 import Phaser from 'phaser';
 import { Responsive } from '../../utils/Responsive';
 import { STATS_ITEMS, StatsItem } from '../../config/statsTabConfig';
+import { StatsDetailPopup, StatsDetailPopupState } from '../feature/StatsDetailPopup';
 
 export interface StatsTabState {
     statCards: Phaser.GameObjects.Container[];  // 각 스탯 카드 컨테이너 배열
     statTexts: Phaser.GameObjects.Text[];       // 각 스탯 값 텍스트 배열
+    detailButton: Phaser.GameObjects.Container | null;  // 상세 보기 버튼
+    statsDetailPopupState: StatsDetailPopupState;  // 상세 팝업 상태
 }
 
 export const StatsTab = {
@@ -31,6 +34,61 @@ export const StatsTab = {
         });
         titleText.setOrigin(0.5);
         contentContainer.add(titleText);
+        
+        // 상세 보기 버튼 (타이틀 오른쪽)
+        const buttonWidth = gameWidth * 0.15;
+        const buttonHeight = uiAreaHeight * 0.06;
+        const buttonX = gameWidth / 2 + titleText.width / 2 + buttonWidth / 2 + 20;
+        const buttonY = titleY;
+        
+        const detailButtonContainer = scene.add.container(buttonX, buttonY);
+        
+        // 버튼 배경
+        const buttonBg = scene.add.graphics();
+        buttonBg.fillStyle(0x4a4a5a, 1);
+        buttonBg.fillRoundedRect(-buttonWidth / 2, -buttonHeight / 2, buttonWidth, buttonHeight, 8);
+        buttonBg.lineStyle(2, 0x6a6a7a, 1);
+        buttonBg.strokeRoundedRect(-buttonWidth / 2, -buttonHeight / 2, buttonWidth, buttonHeight, 8);
+        detailButtonContainer.add(buttonBg);
+        
+        // 버튼 텍스트
+        const buttonFontSize = Responsive.getFontSize(scene, 14);
+        const buttonText = scene.add.text(0, 0, '상세 보기', {
+            fontSize: buttonFontSize,
+            color: '#ffffff',
+            fontFamily: 'Arial',
+            font: `500 ${buttonFontSize} Arial`
+        });
+        buttonText.setOrigin(0.5);
+        detailButtonContainer.add(buttonText);
+        
+        // 클릭 영역
+        const clickArea = scene.add.rectangle(0, 0, buttonWidth, buttonHeight, 0x000000, 0);
+        clickArea.setInteractive({ useHandCursor: true });
+        
+        clickArea.on('pointerdown', () => {
+            StatsDetailPopup.show(scene, state.statsDetailPopupState);
+        });
+        
+        clickArea.on('pointerover', () => {
+            buttonBg.clear();
+            buttonBg.fillStyle(0x5a5a6a, 1);
+            buttonBg.fillRoundedRect(-buttonWidth / 2, -buttonHeight / 2, buttonWidth, buttonHeight, 8);
+            buttonBg.lineStyle(2, 0x7a7a8a, 1);
+            buttonBg.strokeRoundedRect(-buttonWidth / 2, -buttonHeight / 2, buttonWidth, buttonHeight, 8);
+        });
+        
+        clickArea.on('pointerout', () => {
+            buttonBg.clear();
+            buttonBg.fillStyle(0x4a4a5a, 1);
+            buttonBg.fillRoundedRect(-buttonWidth / 2, -buttonHeight / 2, buttonWidth, buttonHeight, 8);
+            buttonBg.lineStyle(2, 0x6a6a7a, 1);
+            buttonBg.strokeRoundedRect(-buttonWidth / 2, -buttonHeight / 2, buttonWidth, buttonHeight, 8);
+        });
+        
+        detailButtonContainer.add(clickArea);
+        contentContainer.add(detailButtonContainer);
+        state.detailButton = detailButtonContainer;
         
         // 카드 레이아웃 설정
         const cardsPerRow = 2;  // 2열 그리드
