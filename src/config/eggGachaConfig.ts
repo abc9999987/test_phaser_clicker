@@ -21,7 +21,7 @@ export const EggGachaConfigs: EggGachaConfig[] = [
         id: 1,
         type: EggGachaType.Pet,
         value: 200,
-        text: '펫 공격력 증가 200%'
+        text: '1. 보유 시 멸치샷 쿨타임\n절반으로 감소\n2. 펫 공격력 증가 200%'
     },
     {
         id: 2,

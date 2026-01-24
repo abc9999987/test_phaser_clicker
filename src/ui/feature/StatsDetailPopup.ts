@@ -139,7 +139,7 @@ export const StatsDetailPopup = {
             scrollAreaX - scrollAreaWidth / 2,
             scrollAreaStartY,
             scrollAreaWidth,
-            scrollAreaHeight,
+            popupHeight * 0.85,
             8
         );
         scrollBackground.setDepth(-1);

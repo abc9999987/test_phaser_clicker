@@ -3,6 +3,8 @@ import Phaser from 'phaser';
 import { GameStateCore } from './GameStateCore';
 import { Character } from '../../game/Character';
 import { SkillStateManager } from './SkillStateManager';
+import { GameState } from '../GameState';
+import { EggGachaConfigs } from '../../config/eggGachaConfig';
 
 export const BuffManager = {
     // 버프 활성화
@@ -53,5 +55,9 @@ export const BuffManager = {
         
         const remaining = (buff.endTime - currentTime) / 1000; // 밀리초를 초로 변환
         return remaining > 0 ? remaining : 0;
+    },
+
+    hasPet(): boolean {
+        return GameState.getEggGachaCount(EggGachaConfigs[0].id) > 0 ? true : false;
     }
 };

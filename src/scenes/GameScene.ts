@@ -186,7 +186,7 @@ export class GameScene extends Phaser.Scene {
         }
         
         this.autoServerSaveTimer = this.time.addEvent({
-            delay: 60000, // 10분 = 600,000ms
+            delay: 600000, // 10분 = 600,000ms
             callback: () => {
                 // 서버에 저장 (중복 요청 방지 로직이 SaveController에 있음)
                 SaveController.performSave(this, false);

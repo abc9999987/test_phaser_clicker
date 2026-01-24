@@ -54,6 +54,7 @@ export const SkillManager = {
         if (lastUsed === undefined) return 0;
 
         const elapsed = (now - lastUsed) / 1000;
+        
         const remaining = config.cooldown - elapsed;
         return remaining > 0 ? remaining : 0;
     },

@@ -8,6 +8,17 @@ import { EggGachaConfigs } from '../../config/eggGachaConfig';
 export const StatManager = {
     // 공격력 실제 값 계산 (레벨에 따른 공격력)
     getAttackPowerValue(): number {
+        const baseAttackPower = this.getBaseAttackPower();
+        // ArtifactConfigs[0]은 유물 공격력 %로 증가 (id: 1)
+        const artifactMultiplier = ((GameState.getArtifactLevel(1) * ArtifactConfigs[0].value) / 100) + 1;
+        const eggAddAttackPower = 1 + (GameState.getEggGachaCount(EggGachaConfigs[1].id) * (EggGachaConfigs[1].value as number) / 100);
+        const eggAddAttackPower2 = 1 + (GameState.getEggGachaCount(EggGachaConfigs[2].id) * (EggGachaConfigs[2].value as number) / 100);
+        const petAddAttackPower = 1 + (GameState.getEggGachaCount(EggGachaConfigs[0].id) * (EggGachaConfigs[0].value as number) / 100);
+
+        return baseAttackPower * (artifactMultiplier === 0 ? 1 : artifactMultiplier) * eggAddAttackPower * eggAddAttackPower2 * petAddAttackPower;
+    },
+
+    getBaseAttackPower(): number {
         const level = GameStateCore.attackPower - 1; // attackPower는 1부터 시작하므로 0부터 시작하도록 변환
         const section = Math.floor(level / 10);
         const position = level % 10;
@@ -20,13 +31,8 @@ export const StatManager = {
             const prevLastValue = startValue + 9 * prevIncrement; // 이전 구간의 마지막 값
             startValue = prevLastValue + (s + 1); // 현재 구간 시작값 = 이전 마지막 + (section+1)
         }
-        // ArtifactConfigs[0]은 유물 공격력 %로 증가 (id: 1)
-        const artifactMultiplier = ((GameState.getArtifactLevel(1) * ArtifactConfigs[0].value) / 100) + 1;
-        const eggAddAttackPower = 1 + (GameState.getEggGachaCount(EggGachaConfigs[1].id) * (EggGachaConfigs[1].value as number) / 100);
-        const eggAddAttackPower2 = 1 + (GameState.getEggGachaCount(EggGachaConfigs[2].id) * (EggGachaConfigs[2].value as number) / 100);
-        const petAddAttackPower = 1 + (GameState.getEggGachaCount(EggGachaConfigs[0].id) * (EggGachaConfigs[0].value as number) / 100);
 
-        return (startValue + position * increment) * (artifactMultiplier === 0 ? 1 : artifactMultiplier) * eggAddAttackPower * eggAddAttackPower2 * petAddAttackPower;
+        return (startValue + position * increment)
     },
 
     getAttackSpeedValue(): number {

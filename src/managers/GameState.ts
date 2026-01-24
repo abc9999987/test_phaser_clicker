@@ -81,6 +81,7 @@ export const GameState = {
     
     // 스탯 관리
     getAttackPowerValue: () => StatManager.getAttackPowerValue(),
+    getBaseAttackPower: () => StatManager.getBaseAttackPower(),
     getAttackSpeedValue: () => StatManager.getAttackSpeedValue(),
     getCritChanceValue: () => StatManager.getCritChanceValue(),
     getCritDamageValue: () => StatManager.getCritDamageValue(),
@@ -120,6 +121,7 @@ export const GameState = {
     removeBuff: (skillId: string) => BuffManager.removeBuff(skillId),
     getBuffMultiplier: (skillId: string, currentTime: number) => BuffManager.getBuffMultiplier(skillId, currentTime),
     getBuffRemainingDuration: (skillId: string, currentTime: number) => BuffManager.getBuffRemainingDuration(skillId, currentTime),
+    hasPet: () => BuffManager.hasPet(),
     
     // 던전 관리
     getDungeonLevel: (dungeonId: string) => DungeonManager.getDungeonLevel(dungeonId),

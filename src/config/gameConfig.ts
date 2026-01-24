@@ -1,4 +1,5 @@
 import Phaser from 'phaser';
+import { GameState } from '../managers/GameState';
 
 export enum SkillType {
     ATTACK = 1,
@@ -42,7 +43,7 @@ export const SkillConfigs: SkillConfig[] = [
         id: 'buff_anchovy_shot',
         name: '멸치샷',
         skillType: SkillType.BUFF,
-        cooldown: 20,
+        cooldown: GameState.hasPet() === true  ? 20 : 10,
         duration: 10,
         skillPower: 2,
         spCost: 3   
