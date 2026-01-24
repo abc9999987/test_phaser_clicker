@@ -59,7 +59,9 @@ export const UIManager = {
             rewards: [],
             openedCards: [],
             isCardOpening: false,
-            confirmButton: null
+            confirmButton: null,
+            descriptionOverlay: null,
+            descriptionContainer: null
         } as EggGachaPopupState
     } as CommonUIState,
     

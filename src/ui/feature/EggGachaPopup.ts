@@ -31,6 +31,9 @@ export interface EggGachaPopupState {
     openedCards: boolean[]; // 카드 오픈 여부
     isCardOpening: boolean; // 카드 오픈 중인지
     confirmButton: Phaser.GameObjects.Container | null; // 확인 버튼
+    // 카드 설명 오버레이 관련
+    descriptionOverlay: Phaser.GameObjects.Rectangle | null;
+    descriptionContainer: Phaser.GameObjects.Container | null;
 }
 
 export const EggGachaPopup = {
@@ -286,6 +289,11 @@ export const EggGachaPopup = {
         state: EggGachaPopupState
     ): void {
         if (!state.isOpen) return;
+        
+        // 설명 오버레이가 열려있으면 먼저 닫기
+        if (state.descriptionOverlay) {
+            EggGachaPopup.hideDescriptionOverlay(scene, state);
+        }
         
         // 애니메이션: 페이드 아웃 + 스케일
         if (state.popupContainer) {
@@ -546,7 +554,8 @@ export const EggGachaPopup = {
                 cardHeight,
                 config.id,
                 config.type,
-                count
+                count,
+                state
             );
             
             scrollContainer.add(card);
@@ -563,7 +572,8 @@ export const EggGachaPopup = {
         height: number,
         cardId: number,
         _cardType: EggGachaType,
-        count: number
+        count: number,
+        state: EggGachaPopupState
     ): Phaser.GameObjects.Container {
         const cardContainer = scene.add.container(x, y);
         
@@ -591,7 +601,176 @@ export const EggGachaPopup = {
         countText.setOrigin(0.5);
         cardContainer.add(countText);
         
+        // 클릭 영역 추가
+        const clickArea = scene.add.rectangle(0, 0, width, height, 0x000000, 0);
+        clickArea.setInteractive({ useHandCursor: true });
+        clickArea.on('pointerdown', () => {
+            EggGachaPopup.showDescriptionOverlay(scene, state, cardId);
+        });
+        cardContainer.add(clickArea);
+        
         return cardContainer;
+    },
+    
+    // 카드 설명 오버레이 표시
+    showDescriptionOverlay(
+        scene: Phaser.Scene,
+        state: EggGachaPopupState,
+        cardId: number
+    ): void {
+        // 이미 열려있으면 먼저 닫기
+        if (state.descriptionOverlay) {
+            EggGachaPopup.hideDescriptionOverlay(scene, state);
+        }
+        
+        // EggGachaConfigs에서 해당 cardId의 config 찾기
+        const config = EggGachaConfigs.find(c => c.id === cardId);
+        if (!config || !config.text) return;
+        
+        const gameWidth = scene.scale.width;
+        const gameHeight = scene.scale.height;
+        
+        // 오버레이 (배경 어둡게)
+        const overlay = scene.add.rectangle(
+            gameWidth / 2,
+            gameHeight / 2,
+            gameWidth,
+            gameHeight,
+            0x000000,
+            0.7
+        );
+        overlay.setDepth(200);
+        overlay.setInteractive({ useHandCursor: false });
+        
+        // 오버레이 클릭 시 닫기
+        overlay.on('pointerdown', () => {
+            EggGachaPopup.hideDescriptionOverlay(scene, state);
+        });
+        
+        state.descriptionOverlay = overlay;
+        
+        // 설명 컨테이너
+        const containerWidth = gameWidth * 0.5;
+        const containerHeight = gameHeight * 0.3;
+        const containerX = gameWidth / 2;
+        const containerY = gameHeight / 2;
+        
+        const descriptionContainer = scene.add.container(containerX, containerY);
+        descriptionContainer.setDepth(201);
+        
+        // 배경
+        const bg = scene.add.graphics();
+        bg.fillStyle(0x2a2a3a, 0.95);
+        bg.fillRoundedRect(-containerWidth / 2, -containerHeight / 2, containerWidth, containerHeight, 16);
+        bg.lineStyle(3, 0x4a4a5a, 1);
+        bg.strokeRoundedRect(-containerWidth / 2, -containerHeight / 2, containerWidth, containerHeight, 16);
+        descriptionContainer.add(bg);
+        
+        // 닫기 버튼
+        const closeButtonSize = containerWidth * 0.08;
+        const closeButtonX = containerWidth / 2 - closeButtonSize / 2 - 10;
+        const closeButtonY = -containerHeight / 2 + closeButtonSize / 2 + 10;
+        
+        const closeButtonContainer = scene.add.container(closeButtonX, closeButtonY);
+        
+        const closeButtonBg = scene.add.graphics();
+        closeButtonBg.fillStyle(0x555555, 1);
+        closeButtonBg.fillRoundedRect(-closeButtonSize / 2, -closeButtonSize / 2, closeButtonSize, closeButtonSize, 6);
+        closeButtonBg.lineStyle(2, 0xffffff, 1);
+        closeButtonBg.strokeRoundedRect(-closeButtonSize / 2, -closeButtonSize / 2, closeButtonSize, closeButtonSize, 6);
+        closeButtonContainer.add(closeButtonBg);
+        
+        // X 아이콘
+        const xFontSize = Responsive.getFontSize(scene, 20);
+        const xText = scene.add.text(0, 0, '×', {
+            fontSize: xFontSize,
+            color: '#ffffff',
+            fontFamily: 'Arial',
+            font: `600 ${xFontSize} Arial`
+        });
+        xText.setOrigin(0.5);
+        closeButtonContainer.add(xText);
+        
+        // 닫기 버튼 클릭 영역
+        const closeClickArea = scene.add.rectangle(0, 0, closeButtonSize, closeButtonSize, 0x000000, 0);
+        closeClickArea.setInteractive({ useHandCursor: true });
+        closeClickArea.on('pointerdown', () => {
+            EggGachaPopup.hideDescriptionOverlay(scene, state);
+        });
+        closeButtonContainer.add(closeClickArea);
+        
+        descriptionContainer.add(closeButtonContainer);
+        
+        // 설명 텍스트
+        const textFontSize = Responsive.getFontSize(scene, 18);
+        const descriptionText = scene.add.text(0, 0, config.text, {
+            fontSize: textFontSize,
+            color: '#ffffff',
+            fontFamily: 'Arial',
+            font: `500 ${textFontSize} Arial`,
+            align: 'center',
+            wordWrap: { width: containerWidth * 0.8 }
+        });
+        descriptionText.setOrigin(0.5);
+        descriptionContainer.add(descriptionText);
+        
+        state.descriptionContainer = descriptionContainer;
+        
+        // 애니메이션: 페이드 인 + 스케일
+        descriptionContainer.setAlpha(0);
+        descriptionContainer.setScale(0.8);
+        
+        scene.tweens.add({
+            targets: descriptionContainer,
+            alpha: 1,
+            scale: 1,
+            duration: 200,
+            ease: 'Back.easeOut'
+        });
+        
+        overlay.setAlpha(0);
+        scene.tweens.add({
+            targets: overlay,
+            alpha: 0.7,
+            duration: 200
+        });
+    },
+    
+    // 카드 설명 오버레이 숨김
+    hideDescriptionOverlay(
+        scene: Phaser.Scene,
+        state: EggGachaPopupState
+    ): void {
+        // 애니메이션: 페이드 아웃 + 스케일
+        if (state.descriptionContainer) {
+            scene.tweens.add({
+                targets: state.descriptionContainer,
+                alpha: 0,
+                scale: 0.8,
+                duration: 150,
+                ease: 'Back.easeIn',
+                onComplete: () => {
+                    if (state.descriptionContainer) {
+                        state.descriptionContainer.destroy();
+                        state.descriptionContainer = null;
+                    }
+                }
+            });
+        }
+        
+        if (state.descriptionOverlay) {
+            scene.tweens.add({
+                targets: state.descriptionOverlay,
+                alpha: 0,
+                duration: 150,
+                onComplete: () => {
+                    if (state.descriptionOverlay) {
+                        state.descriptionOverlay.destroy();
+                        state.descriptionOverlay = null;
+                    }
+                }
+            });
+        }
     },
     
     // 뽑기 버튼 생성
