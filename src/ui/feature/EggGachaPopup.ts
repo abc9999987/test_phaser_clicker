@@ -250,6 +250,10 @@ export const EggGachaPopup = {
                     EggGachaPopup.showCardOpeningUI(scene, state, rewards);
                 } catch (error) {
                     console.error('Egg gacha failed:', error);
+                    // 세션 만료인 경우 로그인 팝업이 이미 표시되었으므로 alert를 표시하지 않음
+                    if (error instanceof Error && (error as any).isSessionExpired) {
+                        return;
+                    }
                     // TODO: 에러 메시지 표시 (팝업 등)
                     const errorMessage = error instanceof Error ? error.message : '알 뽑기에 실패했습니다.';
                     alert(errorMessage);

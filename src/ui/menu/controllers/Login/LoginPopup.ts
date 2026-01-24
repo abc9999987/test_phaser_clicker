@@ -24,6 +24,7 @@ export const LoginPopup = {
     showLoginPopup(
         scene: Phaser.Scene,
         state: LoginPopupState,
+        isNotShowCancelButton: boolean,
         onLogin: (id: string, password: string) => void,
         onCancel: () => void
     ): void {
@@ -50,15 +51,17 @@ export const LoginPopup = {
         popupContainer.add(popupBg);
         
         // 닫기 버튼
-        const closeButton = LoginPopupComponents.createCloseButton(
-            scene,
-            popupWidth,
-            popupHeight,
-            () => {
-                LoginPopup.hideLoginPopup(scene, state, onCancel);
-            }
-        );
-        popupContainer.add(closeButton);
+        if (isNotShowCancelButton === false) {
+            const closeButton = LoginPopupComponents.createCloseButton(
+                scene,
+                popupWidth,
+                popupHeight,
+                () => {
+                    LoginPopup.hideLoginPopup(scene, state, isNotShowCancelButton, onCancel);
+                }
+            );
+            popupContainer.add(closeButton);
+        }
         
         // 타이틀
         const titleText = LoginPopupComponents.createTitle(scene, popupHeight, '로그인');
@@ -127,15 +130,17 @@ export const LoginPopup = {
             () => {
                 const id = state.idInput?.value || '';
                 const password = state.passwordInput?.value || '';
-                LoginPopup.hideLoginPopup(scene, state, () => {});
+                LoginPopup.hideLoginPopup(scene, state, isNotShowCancelButton, () => {});
                 onLogin(id, password);
             },
             () => {
-                LoginPopup.hideLoginPopup(scene, state, onCancel);
+                LoginPopup.hideLoginPopup(scene, state, isNotShowCancelButton, onCancel);
             }
         );
         popupContainer.add(loginButton);
-        popupContainer.add(cancelButton);
+        if (isNotShowCancelButton === false) {
+            popupContainer.add(cancelButton);
+        }
         
         state.popupContainer = popupContainer;
         state.isOpen = true;
@@ -155,9 +160,11 @@ export const LoginPopup = {
     hideLoginPopup(
         scene: Phaser.Scene,
         state: LoginPopupState,
+        isNotShowCancelButton: boolean,
         onCancel: () => void
     ): void {
         if (!state.isOpen) return;
+        if (isNotShowCancelButton) return;
         
         // HTML Input 요소 제거
         LoginInputField.removeHTMLInput(state.idInput);
@@ -184,6 +191,7 @@ export const LoginPopup = {
         scene: Phaser.Scene,
         state: WarningPopupState,
         isBasicText: boolean = true,
+        isNotShowCancelButton: boolean,
         onConfirm: () => void,
         onCancel: () => void
     ): void {
@@ -209,16 +217,18 @@ export const LoginPopup = {
         const popupBg = LoginPopupComponents.createPopupBackground(scene, popupWidth, popupHeight);
         popupContainer.add(popupBg);
         
-        // 닫기 버튼
-        const closeButton = LoginPopupComponents.createCloseButton(
-            scene,
-            popupWidth,
-            popupHeight,
-            () => {
-                LoginPopup.hideWarningPopup(scene, state, onCancel);
-            }
-        );
-        popupContainer.add(closeButton);
+        if (isNotShowCancelButton === false) {
+            // 닫기 버튼
+            const closeButton = LoginPopupComponents.createCloseButton(
+                scene,
+                popupWidth,
+                popupHeight,
+                () => {
+                    LoginPopup.hideWarningPopup(scene, state, isNotShowCancelButton, onCancel);
+                }
+            );
+            popupContainer.add(closeButton);
+        }
         
         // 타이틀
         const titleText = LoginPopupComponents.createTitle(scene, popupHeight, '경고');
@@ -261,26 +271,28 @@ export const LoginPopup = {
             '확인',
             0x50c878,
             () => {
-                LoginPopup.hideWarningPopup(scene, state, () => {});
+                LoginPopup.hideWarningPopup(scene, state, isNotShowCancelButton, () => {});
                 onConfirm();
             }
         );
         popupContainer.add(confirmButton);
         
         // 취소 버튼
-        const cancelButton = LoginPopupComponents.createButton(
-            scene,
-            buttonWidth / 2 + buttonSpacing / 2,
-            buttonY,
-            buttonWidth,
-            buttonHeight,
-            '취소',
-            0x555555,
-            () => {
-                LoginPopup.hideWarningPopup(scene, state, onCancel);
-            }
-        );
-        popupContainer.add(cancelButton);
+        if (isNotShowCancelButton === false) {
+            const cancelButton = LoginPopupComponents.createButton(
+                scene,
+                buttonWidth / 2 + buttonSpacing / 2,
+                buttonY,
+                buttonWidth,
+                buttonHeight,
+                '취소',
+                0x555555,
+                () => {
+                    LoginPopup.hideWarningPopup(scene, state, isNotShowCancelButton, onCancel);
+                }
+            );
+            popupContainer.add(cancelButton);
+        }
         
         state.popupContainer = popupContainer;
         state.isOpen = true;
@@ -293,9 +305,11 @@ export const LoginPopup = {
     hideWarningPopup(
         scene: Phaser.Scene,
         state: WarningPopupState,
+        isNotShowCancelButton: boolean,
         onCancel: () => void
     ): void {
         if (!state.isOpen) return;
+        if (isNotShowCancelButton) return;
         
         // 애니메이션
         LoginPopupComponents.playHideAnimation(

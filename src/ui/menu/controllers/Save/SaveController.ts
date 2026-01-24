@@ -62,7 +62,7 @@ export const SaveController = {
             };
 
             if (!requestData.sid) {
-                LoginController.handleLogin(scene, false);
+                LoginController.handleLogin(scene, false, true);
                 return;
             }
             
@@ -87,7 +87,7 @@ export const SaveController = {
                     SaveSuccessPopup.show(scene, saveSuccessPopupState, saveTime, 'Data를 저장했습니다.');
                 }
             } else if (response.status === 401 && response.message === 'sessionRefreshFailed') {
-                LoginController.handleLogin(scene, false);
+                LoginController.handleLogin(scene, false, true);
                 return;
             } else {
                 console.error('Save failed:', requestData.uuid, response.message);
