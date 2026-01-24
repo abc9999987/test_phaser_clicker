@@ -46,16 +46,16 @@ export const StatManager = {
     },
 
     getCritDamageValue(): number {
-        const eggAddCritDamage = 1 + ((GameState.getEggGachaCount(EggGachaConfigs[3].id) * (EggGachaConfigs[3].value as number)) / 100);
-        const critDamage = Math.floor(GameStateCore.critDamage + (GameState.getArtifactLevel(4) * ArtifactConfigs[3].value) * eggAddCritDamage);
+        const eggAddCritDamage = (GameState.getEggGachaCount(EggGachaConfigs[3].id) * (EggGachaConfigs[3].value as number));
+        const critDamage = Math.floor(GameStateCore.critDamage + (GameState.getArtifactLevel(4) * ArtifactConfigs[3].value) + eggAddCritDamage);
         return critDamage;
     },
 
     getGoldRateValue(): number {
         // 유물 ID 5의 레벨 * value = 코인 획득량 증가율 (%)
         // 예: 레벨 10이면 10% 증가
-        const eggAddGoldRate = 1 + ((GameState.getEggGachaCount(EggGachaConfigs[4].id) * (EggGachaConfigs[4].value as number)) / 100);
-        const goldRate = Math.floor((GameState.getArtifactLevel(5) * ArtifactConfigs[4].value) * eggAddGoldRate);
+        const eggAddGoldRate = (GameState.getEggGachaCount(EggGachaConfigs[4].id) * (EggGachaConfigs[4].value as number));
+        const goldRate = Math.floor((GameState.getArtifactLevel(5) * ArtifactConfigs[4].value) + eggAddGoldRate);
         return goldRate;
     },
     
