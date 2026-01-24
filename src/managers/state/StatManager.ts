@@ -47,7 +47,7 @@ export const StatManager = {
 
     getCritDamageValue(): number {
         const eggAddCritDamage = (GameState.getEggGachaCount(EggGachaConfigs[3].id) * (EggGachaConfigs[3].value as number));
-        const critDamage = Math.floor(GameStateCore.critDamage + (GameState.getArtifactLevel(4) * ArtifactConfigs[3].value) + eggAddCritDamage);
+        const critDamage = Math.floor((GameStateCore.critDamage + eggAddCritDamage) * (((GameState.getArtifactLevel(4) * ArtifactConfigs[3].value) / 100) + 1));
         return critDamage;
     },
 

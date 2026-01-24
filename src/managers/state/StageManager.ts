@@ -14,6 +14,10 @@ export const StageManager = {
     
     // 보스 스테이지인지 확인 (10번째 적 = killsInCurrentStage === 9)
     isBossStage(): boolean {
+        // 보스 스킵이 체크되어 있으면 보스 스테이지가 아님
+        if (GameStateCore.skipBossStage) {
+            return false;
+        }
         return GameStateCore.killsInCurrentStage === 9;
     },
     
@@ -40,6 +44,13 @@ export const StageManager = {
     // 적 처치 시 호출 (스테이지 진행 처리)
     onEnemyDefeated(): void {
         GameStateCore.killsInCurrentStage++;
+        
+        if (GameStateCore.skipBossStage) {
+            // 보스 스킵이 체크되어 있으면 처치 카운트만 초기화 (스테이지는 변경하지 않음)
+            GameStateCore.killsInCurrentStage = 0;
+            GameStateCore.save();
+            return;
+        }
         
         // 10마리 처치 시 다음 스테이지로
         if (GameStateCore.killsInCurrentStage >= 10) {
