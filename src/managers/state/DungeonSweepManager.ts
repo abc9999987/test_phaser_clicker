@@ -62,7 +62,6 @@ export const DungeonSweepManager = {
             state.usedAttempts = 0;
             state.lastResetTimestamp = currentKoreaTimestamp;
             GameStateCore.debouncedSave();
-            console.log(`[던전 소탕] 일일 리셋 완료 (${dungeonId}): ${currentKoreaDate}`);
         }
     },
 

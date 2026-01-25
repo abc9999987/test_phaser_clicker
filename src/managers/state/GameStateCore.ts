@@ -128,7 +128,6 @@ export const GameStateCore = {
             saveData.uuid = this.uuid; // uuid는 별도로 보내기 때문에 여기에 넣음
             saveData.sid = this.sid; // sid는 별도로 보내기 때문에 여기에 넣음
             localStorage.setItem(StorageKeys.GAME_SAVE, JSON.stringify(saveData));
-            console.log('Game state saved');
         } catch (error) {
             console.error('Failed to save game state:', error);
         }

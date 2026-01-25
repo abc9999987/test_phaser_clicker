@@ -126,6 +126,9 @@ export class GameScene extends Phaser.Scene {
         // 캐릭터 생성
         Character.create(this);
         
+        // 펫 이미지 업데이트 (던전에서 돌아왔을 때 펫이 사라지는 문제 해결)
+        Character.updatePetImage(this);
+        
         // 적 생성 (위쪽 절반 영역에 배치)
         const enemyX = this.scale.width * 0.15;
         const enemyY = this.scale.height * 0.33;

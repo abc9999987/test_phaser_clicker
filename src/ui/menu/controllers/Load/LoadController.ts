@@ -40,7 +40,6 @@ export const LoadController = {
                 sid,
             };
 
-            console.log('requestData: ', requestData);
             if (!requestData.sid || requestData.sid === '') {
                 LoginController.handleLogin(scene, false, true);
                 // skipRestart가 true면 Promise를 reject하여 GameScene에서 catch 처리

@@ -81,7 +81,6 @@ export const SaveController = {
             );
             
             if (response.status === 200) {
-                console.log('Save successful:', response);
                 // 저장 성공 팝업 표시
                 if (showSuccessPopup) {
                     SaveSuccessPopup.show(scene, saveSuccessPopupState, saveTime, 'Data를 저장했습니다.');

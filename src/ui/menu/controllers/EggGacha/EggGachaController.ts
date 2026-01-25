@@ -31,7 +31,6 @@ export const EggGachaController = {
     ): Promise<{ id: number }[]> {
         // 이미 요청이 진행 중이면 무시
         if (isEggGachaInProgress) {
-            console.log('Egg gacha request already in progress, ignoring duplicate request');
             throw new Error('알 뽑기가 이미 진행 중입니다.');
         }
         

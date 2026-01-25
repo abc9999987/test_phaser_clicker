@@ -44,6 +44,12 @@ export const Character = {
         const petCount = GameState.getEggGachaCount(1);
         
         if (petCount > 0) {
+            // 기존 펫 이미지가 있지만 씬에 없으면 (던전에서 돌아왔을 때 등) 제거하고 재생성
+            if (this.petImage && (!this.petImage.scene || !this.petImage.active)) {
+                this.petImage.destroy();
+                this.petImage = null;
+            }
+            
             // 펫 이미지가 없으면 생성
             if (!this.petImage) {
                 const scale = Responsive.getScale(scene);

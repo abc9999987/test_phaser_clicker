@@ -29,7 +29,6 @@ export const ArtifactDungeonManager = {
                 };
                 GameStateCore.dungeonSweepStates = states;
                 GameStateCore.save();
-                console.log('[유물 던전] 기존 소탕 데이터 dungeonSweepStates로 마이그레이션 완료');
             }
         }
     },

@@ -14,6 +14,7 @@ export const Enemy = {
     hpBar: null as Phaser.GameObjects.Graphics | null,
     isDefeated: false,  // 처치 상태 플래그 (중복 처치 방지)
     isBoss: false,  // 보스 여부
+    pulseTween: null as Phaser.Tweens.Tween | null,  // 펄스 애니메이션 트윈
     
     // 적 생성
     create(scene: Phaser.Scene, baseX: number, baseY: number): Phaser.GameObjects.Image {
@@ -25,19 +26,13 @@ export const Enemy = {
         const x = (baseX / 390) * gameWidth;
         const y = (baseY / 844) * gameHeight;
         
-        this.enemy = scene.add.image(x, y, 'enemy');
-        
         // 보스 여부 확인
         this.isBoss = GameState.isBossStage();
+        this.enemy = scene.add.image(x, y, this.isBoss ? 'stage_enemy_1_boss' : 'stage_enemy_1');
         
         // 보스면 크기 2배, 아니면 기본 크기
-        const baseScale = 0.75 * scale.uniform;
-        this.enemy.setScale(this.isBoss ? baseScale * 2 : baseScale);
-        
-        // 보스면 색상 변경 (빨간색 틴트)
-        if (this.isBoss) {
-            this.enemy.setTint(0xff4444);
-        }
+        const baseScale = 0.13 * scale.uniform;
+        this.enemy.setScale(this.isBoss ? baseScale * 1.02 : baseScale);
         
         // 스테이지별 HP 설정
         this.maxHp = GameState.getEnemyHp();
@@ -46,6 +41,9 @@ export const Enemy = {
         
         // HP 바 생성
         this.createHpBar(scene);
+        
+        // 펄스 애니메이션 시작
+        this.startPulseAnimation(scene);
         
         return this.enemy;
     },
@@ -139,13 +137,13 @@ export const Enemy = {
         GameState.clickCount++;
 
         // 적이 맞았을 때 효과 (빨간색 깜빡임)
-        scene.tweens.add({
-            targets: this.enemy,
-            alpha: 0.5,
-            duration: 100,
-            yoyo: true,
-            ease: 'Power2'
-        });
+        // scene.tweens.add({
+        //     targets: this.enemy,
+        //     alpha: 0.5,
+        //     duration: 100,
+        //     yoyo: true,
+        //     ease: 'Power2'
+        // });
 
         // 데미지 파티클 효과 (기본 흰색, 치명타 빨간색, 슈퍼 치명타 금색, 스킬은 별도 처리)
         Effects.createDamageParticle(scene, this.enemy.x, this.enemy.y, damage, isSkill, isCrit, isSuperCrit);
@@ -176,6 +174,9 @@ export const Enemy = {
         // UI 업데이트
         UIManager.update(scene);
         
+        // 펄스 애니메이션 중지
+        this.stopPulseAnimation();
+        
         // 처치 효과
         scene.tweens.add({
             targets: this.enemy,
@@ -201,22 +202,22 @@ export const Enemy = {
         // 보스 여부 확인
         this.isBoss = GameState.isBossStage();
         
+        // 보스 여부에 따라 이미지 변경
+        if (this.isBoss) {
+            this.enemy.setTexture('stage_enemy_1_boss');
+        } else {
+            this.enemy.setTexture('stage_enemy_1');
+        }
+        
         // 스테이지별 새로운 HP 설정
         this.maxHp = GameState.getEnemyHp();
         this.hp = this.maxHp;
         this.isDefeated = false;
-        
-        // 보스면 색상 변경, 아니면 원래 색상
-        if (this.isBoss) {
-            this.enemy.setTint(0xff4444);
-        } else {
-            this.enemy.clearTint();
-        }
-        
+
         // 적 복귀 애니메이션
         const scale = Responsive.getScale(scene);
-        const baseScale = 0.75 * scale.uniform;
-        const finalScale = this.isBoss ? baseScale * 2 : baseScale;
+        const baseScale = 0.13 * scale.uniform;
+        const finalScale = this.isBoss ? baseScale * 1.02 : baseScale;
         
         this.enemy.setAlpha(0);
         this.enemy.setScale(0);
@@ -226,7 +227,11 @@ export const Enemy = {
             scaleX: finalScale,
             scaleY: finalScale,
             duration: 300,
-            ease: 'Back.easeOut'
+            ease: 'Back.easeOut',
+            onComplete: () => {
+                // 리스폰 애니메이션 완료 후 펄스 애니메이션 시작
+                this.startPulseAnimation(scene);
+            }
         });
         
         // HP 바 업데이트
@@ -235,6 +240,40 @@ export const Enemy = {
         // 보스 스테이지면 타이머 시작 (GameScene에서 처리)
         if (this.isBoss && (scene as any).startBossTimer) {
             (scene as any).startBossTimer();
+        }
+    },
+    
+    // 펄스 애니메이션 시작 (현재 크기 기준 1.05배까지 커졌다 작아지는 반복)
+    startPulseAnimation(scene: Phaser.Scene): void {
+        if (!this.enemy) return;
+        
+        // 기존 애니메이션 제거
+        if (this.pulseTween) {
+            this.pulseTween.destroy();
+            this.pulseTween = null;
+        }
+        
+        // 현재 스케일 저장
+        const currentScaleX = this.enemy.scaleX;
+        const currentScaleY = this.enemy.scaleY;
+        
+        // 펄스 애니메이션 (1.05배까지 커졌다 작아지는 반복)
+        this.pulseTween = scene.tweens.add({
+            targets: this.enemy,
+            scaleX: currentScaleX * 1.05,
+            scaleY: currentScaleY * 1.05,
+            duration: 1000,
+            yoyo: true,
+            repeat: -1,
+            ease: 'Sine.easeInOut'
+        });
+    },
+    
+    // 펄스 애니메이션 중지
+    stopPulseAnimation(): void {
+        if (this.pulseTween) {
+            this.pulseTween.destroy();
+            this.pulseTween = null;
         }
     }
 };

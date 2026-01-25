@@ -72,7 +72,6 @@ export const ApiClient = {
             }
 
             const result = await response.json();
-            console.log(result);
             
             // 로딩 인디케이터 숨기기
             if (options?.scene) {

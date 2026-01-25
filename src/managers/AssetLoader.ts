@@ -63,6 +63,10 @@ export const AssetLoader = {
         scene.load.image('toon_6', 'assets/toon/toon_6.png');
         scene.load.image('toon_7', 'assets/toon/toon_7.png');
         scene.load.image('toon_8', 'assets/toon/toon_8.png');
+
+        // 스테이지 적 이미지 로드
+        scene.load.image('stage_enemy_1', 'assets/enemy/stage_enemy_1.png');
+        scene.load.image('stage_enemy_1_boss', 'assets/enemy/stage_enemy_1_boss.png');
         
         // 로드 완료 후 프레임 생성 (create 단계에서 처리하도록 변경 필요 시)
         // 프레임 생성을 create 단계로 이동하거나, preload 완료 이벤트에서 처리
