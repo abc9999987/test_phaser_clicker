@@ -53,6 +53,9 @@ export const AssetLoader = {
         
         // 펫 이미지 로드
         scene.load.image('pet_fish_bread_tank', 'assets/character/k_fish_bread_tank.png');
+        
+        // 보옥 이미지 로드
+        scene.load.image('gem', 'assets/gem/gem.png');
 
         // 만화 이미지 로드
         scene.load.image('toon_1', 'assets/toon/toon_1.png');

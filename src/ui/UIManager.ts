@@ -10,6 +10,7 @@ import { DungeonTab, DungeonTabState } from './tabs/DungeonTab';
 import { ArtifactTab, ArtifactTabState } from './tabs/ArtifactTab';
 import { MenuButtonConfigs } from './menu/MenuButtonConfig';
 import { EggGachaPopup, EggGachaPopupState } from './feature/EggGachaPopup';
+import { GemPopup, GemPopupState } from './feature/GemPopup';
 import { FeatureMenuPopup } from './feature/FeatureMenuPopup';
 
 // UI 관리자
@@ -63,7 +64,17 @@ export const UIManager = {
             confirmButton: null,
             descriptionOverlay: null,
             descriptionContainer: null
-        } as EggGachaPopupState
+        } as EggGachaPopupState,
+        gemPopupState: {
+            popupOverlay: null,
+            popupContainer: null,
+            closeButton: null,
+            isOpen: false,
+            gemImage: null,
+            statCards: [],
+            upgradeButton: null,
+            statTexts: []
+        } as GemPopupState
     } as CommonUIState,
     
     tabSystemState: {
@@ -206,6 +217,23 @@ export const UIManager = {
                     label: '알 뽑기',
                     onClick: (scene: Phaser.Scene) => {
                         EggGachaPopup.show(scene, this.commonState.eggGachaPopupState);
+                    }
+                }
+            );
+        }
+        
+        // 이미 보옥 버튼이 추가되어 있는지 확인
+        const hasGemButton = state.buttonConfigs.some(config => config.label === '보옥');
+        
+        if (!hasGemButton) {
+            // 보옥 버튼 추가
+            FeatureMenuPopup.addFeatureButton(
+                state,
+                {
+                    icon: '💎',
+                    label: '보옥',
+                    onClick: (scene: Phaser.Scene) => {
+                        GemPopup.show(scene, this.commonState.gemPopupState);
                     }
                 }
             );

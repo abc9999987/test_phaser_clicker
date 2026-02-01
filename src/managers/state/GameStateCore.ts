@@ -24,6 +24,7 @@ export interface SaveData {
     skillLevels?: Record<string, number>; // 스킬 레벨 (스킬 ID -> 레벨)
     artifactLevels?: Record<number, number>; // 유물 레벨 (유물 ID -> 레벨)
     eggGachaCounts?: Record<number, number>; // 알 뽑기 수량 (알 뽑기 ID -> 수량)
+    gemLevel?: number; // 보옥 레벨 (기본값: 0)
     skipBossStage?: boolean; // 보스 스테이지 스킵 여부
     // 유물 던전 일일 제한 (구조 변경 전 호환용)
     artifactDungeonLastResetDate?: string; // YYYY-MM-DD (한국 시간 기준)
@@ -71,6 +72,7 @@ export const GameStateCore = {
     skillLevels: {} as Record<string, number>,  // 스킬 레벨 (스킬 ID -> 레벨)
     artifactLevels: {} as Record<number, number>,  // 유물 레벨 (유물 ID -> 레벨)
     eggGachaCounts: {} as Record<number, number>,  // 알 뽑기 수량 (알 뽑기 ID -> 수량)
+    gemLevel: 0,  // 보옥 레벨 (기본값: 0)
     skipBossStage: false,  // 보스 스테이지 스킵 여부 (기본값: false)
     // 유물 던전 일일 제한 (구 구조, 마이그레이션용)
     artifactDungeonLastResetDate: null as string | null,  // YYYY-MM-DD (한국 시간 기준)
@@ -115,6 +117,7 @@ export const GameStateCore = {
             artifactDungeonSweepCount: this.artifactDungeonSweepCount,
             dungeonSweepStates: this.dungeonSweepStates,
             eggGachaCounts: this.eggGachaCounts,
+            gemLevel: this.gemLevel,
             skipBossStage: this.skipBossStage,
             saveTime: Date.now(),
             sid: this.sid,
@@ -163,6 +166,7 @@ export const GameStateCore = {
                 this.artifactDungeonSweepCount = data.artifactDungeonSweepCount || 0;
                 this.dungeonSweepStates = data.dungeonSweepStates || {};
                 this.eggGachaCounts = data.eggGachaCounts || {};
+                this.gemLevel = data.gemLevel || 0;
                 this.skipBossStage = data.skipBossStage || false;
                 this.uuid = data.uuid || null;
                 this.sid = data.sid || null;
@@ -223,6 +227,7 @@ export const GameStateCore = {
             this.artifactDungeonSweepCount = saveData.artifactDungeonSweepCount ?? 0;
             this.dungeonSweepStates = saveData.dungeonSweepStates ?? this.dungeonSweepStates ?? {};
             this.eggGachaCounts = saveData.eggGachaCounts ?? this.eggGachaCounts ?? {};
+            this.gemLevel = saveData.gemLevel ?? this.gemLevel ?? 0;
             this.skipBossStage = saveData.skipBossStage ?? this.skipBossStage ?? false;
             this.uuid = saveData.uuid ?? null;
             this.sid = saveData.sid ?? null;
