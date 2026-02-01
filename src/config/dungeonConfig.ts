@@ -133,5 +133,32 @@ export const DungeonConfigs: DungeonConfig[] = [
             return 0;
         },
         timeLimit: 10
+    },
+    {
+        id: 'gem_dungeon',
+        name: '젬 던전',
+        description: '단계: ',
+        sceneKey: 'GemDungeonScene',
+        backgroundColor: 0x2a2a3a,
+        enableSweep: true,
+        dailySweepLimit: 5,
+        sweepMinLevel: 2,
+        bossBaseHp: 1000,
+        bossBaseReward: 0, // 젬은 별도 계산
+        /**
+         * 젬 던전 보스 HP:
+         * - 고기 던전과 동일한 공식 사용 (별도로 수정 가능)
+         * - n층 보스 HP = 유물 던전 보스 5n층 HP
+         * - 유물/골드 던전과 동일한 공식(1000 * 1.5^(level-1))을 사용하되, level을 5n으로 매핑
+         */
+        getBossHp: (level: number) => {
+            const mappedLevel = level * 5; // 유물 던전 5n층 * 2에 해당
+            return Math.floor(1000 * Math.pow(1.5, mappedLevel - 1) * 2);
+        },
+        // 보스 보상은 직접 사용하지 않고, DungeonBossReward에서 젬 보상으로 처리
+        getBossReward: (_level: number) => {
+            return 0;
+        },
+        timeLimit: 10
     }
 ];

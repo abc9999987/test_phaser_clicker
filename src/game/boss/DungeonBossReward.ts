@@ -41,6 +41,9 @@ export const DungeonBossReward = {
         } else if (dungeonConfig.id === 'meat_dungeon') {
             // 고기 던전: meat 보상 지급
             this.giveMeatReward(scene, dungeonLevel, bossX, bossY);
+        } else if (dungeonConfig.id === 'gem_dungeon') {
+            // 젬 던전: 젬 보상 지급
+            this.giveGemReward(scene, dungeonLevel, bossX, bossY);
         } else {
             // 골드 던전 등: 골드 보상 지급
             this.giveGoldReward(scene, dungeonConfig, dungeonLevel, bossX, bossY);
@@ -107,5 +110,25 @@ export const DungeonBossReward = {
 
         // 고기 파티클 효과 (루비 스타일에 텍스트만 변경)
         Effects.createDungeonRewardParticle(scene, bossX, bossY, reward, ' 고기', '#ff6b9d');
+    },
+
+    // 젬 보상 지급
+    giveGemReward(
+        scene: Phaser.Scene,
+        dungeonLevel: number,
+        bossX: number,
+        bossY: number
+    ): void {
+        // 보상 계산: 레벨 * 10
+        const reward = dungeonLevel * 10;
+
+        // 보상 지급
+        GameState.addGems(reward);
+
+        // 즉시 저장
+        GameState.save();
+
+        // 젬 파티클 효과 (보라색 계열)
+        Effects.createDungeonRewardParticle(scene, bossX, bossY, reward, ' 젬', '#9d4edd');
     }
 };

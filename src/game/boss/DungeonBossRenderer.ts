@@ -26,7 +26,12 @@ export const DungeonBossRenderer = {
             // 고기 던전 보스는 전용 이미지 사용
             y = gameHeight * 0.30;
             return this.createMeatBoss(scene, x, y, baseScale);
-        } else {
+        } else if (dungeonConfig.id === 'gem_dungeon') {
+            // 젬 던전 보스는 전용 이미지 사용
+            y = gameHeight * 0.30;
+            return this.createGemBoss(scene, x, y, baseScale);
+        }
+         else {
             return this.createDefaultBoss(scene, x, y, baseScale);
         }
     },
@@ -86,6 +91,35 @@ export const DungeonBossRenderer = {
             ease: 'Sine.easeInOut'
         });
 
+        return boss;
+    },
+
+    // 젬 던전 전용 보스 생성
+    createGemBoss(
+        scene: Phaser.Scene,
+        x: number,
+        y: number,
+        baseScale: number
+    ): Phaser.GameObjects.Image {
+        const boss = scene.add.image(x, y, 'gem_boss');
+
+        // 오른쪽을 보도록 좌우 반전
+        boss.setFlipX(true);
+
+        // 기본 스케일 (사용자가 조정한 값 기준)
+        const base = baseScale * 0.4;
+        boss.setScale(base);
+
+        // 1배 ↔ 1.02배로 천천히 커졌다 작아지는 펄싱 애니메이션
+        scene.tweens.add({
+            targets: boss,
+            scaleX: base * 1.02,
+            scaleY: base * 1.02,
+            duration: 800,
+            yoyo: true,
+            repeat: -1,
+            ease: 'Sine.easeInOut'
+        });
         return boss;
     },
     

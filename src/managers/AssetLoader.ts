@@ -32,6 +32,9 @@ export const AssetLoader = {
         // 먹이 던전(고기 던전) 보스 이미지 로드
         scene.load.image('meat_boss', 'assets/enemy/meat_boss.png');
 
+        // 젬 던전 보스 이미지 로드
+        scene.load.image('gem_boss', 'assets/enemy/gem_boss.png');
+
         // 유물 이미지 로드
         scene.load.image('artifact_01', 'assets/artifact/artifact_01.png');
         scene.load.image('artifact_02', 'assets/artifact/artifact_02.png');
