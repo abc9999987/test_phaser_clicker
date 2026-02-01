@@ -50,5 +50,30 @@ export const GemManager = {
     getNextLevelCritDamage(): number {
         const currentLevel = this.getGemLevel();
         return GemConfig.initialStats.critDamage + ((currentLevel + 1) * GemConfig.upgradeIncrements.critDamage);
+    },
+    
+    // 젬 재화 관리
+    getGems(): number {
+        return GameStateCore.gems || 0;
+    },
+    
+    setGems(amount: number): void {
+        GameStateCore.gems = amount;
+        GameStateCore.debouncedSave();
+    },
+    
+    addGems(amount: number): void {
+        GameStateCore.gems = (GameStateCore.gems || 0) + amount;
+        GameStateCore.debouncedSave();
+    },
+    
+    subtractGems(amount: number): boolean {
+        const currentGems = GameStateCore.gems || 0;
+        if (currentGems < amount) {
+            return false; // 젬이 부족함
+        }
+        GameStateCore.gems = currentGems - amount;
+        GameStateCore.debouncedSave();
+        return true; // 성공
     }
 };

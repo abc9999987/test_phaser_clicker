@@ -377,7 +377,7 @@ export const GemPopup = {
     
     // 스탯 업데이트 (팝업이 열려있을 때 호출)
     updateStats(
-        scene: Phaser.Scene,
+        _scene: Phaser.Scene,
         state: GemPopupState
     ): void {
         if (!state.isOpen || state.statTexts.length !== 3) return;

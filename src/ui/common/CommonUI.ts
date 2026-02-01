@@ -13,6 +13,7 @@ export interface CommonUIState {
     coinText: Phaser.GameObjects.Text | null;
     rubyText: Phaser.GameObjects.Text | null;
     meatText: Phaser.GameObjects.Text | null;
+    gemText: Phaser.GameObjects.Text | null;
     stageText: Phaser.GameObjects.Text | null;
     killCountText: Phaser.GameObjects.Text | null;
     bossTimerText: Phaser.GameObjects.Text | null;
@@ -137,6 +138,16 @@ export const CommonUI = {
         });
         state.meatText.setOrigin(0, 0.5);
 
+        state.gemText = scene.add.text(0, baseY, NumberFormatter.formatNumber(Math.floor(GameState.gems)), {
+            fontSize: resourceFontSize,
+            color: '#9d4edd',
+            fontFamily: 'Arial',
+            font: `600 ${resourceFontSize} Arial`,
+            stroke: '#000000',
+            strokeThickness: 2
+        });
+        state.gemText.setOrigin(0, 0.5);
+
         // 아이콘(간단한 벡터) + 텍스트 세로 정렬
         const baseX = gameWidth - marginRight;
 
@@ -154,13 +165,21 @@ export const CommonUI = {
         state.rubyText.y = rubyY;
         state.rubyText.x = baseX + innerSpacing;
 
-        // 고기 (맨 아래)
+        // 고기 (3번째)
         const meatY = baseY + rowSpacing * 2;
         const meatIconX = baseX - iconSize / 2;
         const meatIcon = scene.add.circle(meatIconX, meatY, iconSize / 2, 0xcc4c39);
         meatIcon.setStrokeStyle(2, 0x5a2018, 1);
         state.meatText.y = meatY;
         state.meatText.x = baseX + innerSpacing;
+
+        // 젬 (맨 아래)
+        const gemY = baseY + rowSpacing * 3;
+        const gemIconX = baseX - iconSize / 2;
+        const gemIcon = scene.add.circle(gemIconX, gemY, iconSize / 2, 0x9d4edd);
+        gemIcon.setStrokeStyle(2, 0x5a189a, 1);
+        state.gemText.y = gemY;
+        state.gemText.x = baseX + innerSpacing;
         
         // 보스 타이머 표시 (화면 상단 중앙, 보스 스테이지일 때만 표시)
         const timerFontSize = Responsive.getFontSize(scene, 24);
@@ -270,6 +289,16 @@ export const CommonUI = {
         });
         state.meatText.setOrigin(0, 0.5);
 
+        state.gemText = scene.add.text(0, baseY, NumberFormatter.formatNumber(Math.floor(GameState.gems)), {
+            fontSize: resourceFontSize,
+            color: '#9d4edd',
+            fontFamily: 'Arial',
+            font: `600 ${resourceFontSize} Arial`,
+            stroke: '#000000',
+            strokeThickness: 2
+        });
+        state.gemText.setOrigin(0, 0.5);
+
         const baseX = gameWidth - marginRight;
 
         // 골드 (맨 위)
@@ -286,13 +315,21 @@ export const CommonUI = {
         state.rubyText.y = rubyY;
         state.rubyText.x = baseX + innerSpacing;
 
-        // 고기 (맨 아래)
+        // 고기 (3번째)
         const meatY = baseY + rowSpacing * 2;
         const meatIconX = baseX - iconSize / 2;
         const meatIcon = scene.add.circle(meatIconX, meatY, iconSize / 2, 0xcc4c39);
         meatIcon.setStrokeStyle(2, 0x5a2018, 1);
         state.meatText.y = meatY;
         state.meatText.x = baseX + innerSpacing;
+
+        // 젬 (맨 아래)
+        const gemY = baseY + rowSpacing * 3;
+        const gemIconX = baseX - iconSize / 2;
+        const gemIcon = scene.add.circle(gemIconX, gemY, iconSize / 2, 0x9d4edd);
+        gemIcon.setStrokeStyle(2, 0x5a189a, 1);
+        state.gemText.y = gemY;
+        state.gemText.x = baseX + innerSpacing;
         
         // 보스 타이머 표시는 던전에서는 사용하지 않으므로 null로 설정
         state.bossTimerText = null;
@@ -382,6 +419,11 @@ export const CommonUI = {
         // 고기 텍스트 업데이트
         if (state.meatText && state.meatText.active) {
             state.meatText.setText(NumberFormatter.formatNumber(Math.floor(GameState.meat)));
+        }
+
+        // 젬 텍스트 업데이트
+        if (state.gemText && state.gemText.active) {
+            state.gemText.setText(NumberFormatter.formatNumber(Math.floor(GameState.gems)));
         }
     }
 };

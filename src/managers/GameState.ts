@@ -24,6 +24,8 @@ export const GameState = {
     set rubies(value: number) { GameStateCore.rubies = value; },
     get meat() { return GameStateCore.meat; },
     set meat(value: number) { GameStateCore.meat = value; },
+    get gems() { return GameStateCore.gems || 0; },
+    set gems(value: number) { GameStateCore.gems = value; },
     get attackPower() { return GameStateCore.attackPower; },
     set attackPower(value: number) { GameStateCore.attackPower = value; },
     get attackSpeed() { return GameStateCore.attackSpeed; },
@@ -175,5 +177,11 @@ export const GameState = {
     upgradeGem: () => GemManager.upgradeGem(),
     getGemAttackPower: () => GemManager.getAttackPower(),
     getGemAttackPowerPercent: () => GemManager.getAttackPowerPercent(),
-    getGemCritDamage: () => GemManager.getCritDamage()
+    getGemCritDamage: () => GemManager.getCritDamage(),
+    
+    // 젬 재화 관리
+    getGems: () => GemManager.getGems(),
+    setGems: (amount: number) => GemManager.setGems(amount),
+    addGems: (amount: number) => GemManager.addGems(amount),
+    subtractGems: (amount: number) => GemManager.subtractGems(amount)
 };
