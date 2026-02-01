@@ -433,7 +433,7 @@ export const GemPopup = {
     
     // 업그레이드 버튼 업데이트 (비용 및 활성화 상태)
     updateUpgradeButton(
-        scene: Phaser.Scene,
+        _scene: Phaser.Scene,
         state: GemPopupState
     ): void {
         if (!state.isOpen || !state.upgradeButton || !state.upgradeButtonText || !state.upgradeButtonBg || !state.upgradeClickArea) return;
