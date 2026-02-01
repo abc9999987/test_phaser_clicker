@@ -8,14 +8,16 @@ import { EggGachaConfigs } from '../../config/eggGachaConfig';
 export const StatManager = {
     // 공격력 실제 값 계산 (레벨에 따른 공격력)
     getAttackPowerValue(): number {
-        const baseAttackPower = this.getBaseAttackPower();
+        const gemAttackPower = GameState.getGemAttackPower();
+        const baseAttackPower = this.getBaseAttackPower() + gemAttackPower;
         // ArtifactConfigs[0]은 유물 공격력 %로 증가 (id: 1)
         const artifactMultiplier = ((GameState.getArtifactLevel(1) * ArtifactConfigs[0].value) / 100) + 1;
         const eggAddAttackPower = 1 + (GameState.getEggGachaCount(EggGachaConfigs[1].id) * (EggGachaConfigs[1].value as number) / 100);
         const eggAddAttackPower2 = 1 + (GameState.getEggGachaCount(EggGachaConfigs[2].id) * (EggGachaConfigs[2].value as number) / 100);
         const petAddAttackPower = 1 + (GameState.getEggGachaCount(EggGachaConfigs[0].id) * (EggGachaConfigs[0].value as number) / 100);
+        const gameAttackPower = 1 + (GameState.getGemAttackPowerPercent() / 100);
 
-        return baseAttackPower * (artifactMultiplier === 0 ? 1 : artifactMultiplier) * eggAddAttackPower * eggAddAttackPower2 * petAddAttackPower;
+        return baseAttackPower * (artifactMultiplier === 0 ? 1 : artifactMultiplier) * eggAddAttackPower * eggAddAttackPower2 * petAddAttackPower * gameAttackPower;
     },
 
     getBaseAttackPower(): number {
@@ -47,7 +49,8 @@ export const StatManager = {
 
     getCritDamageValue(): number {
         const eggAddCritDamage = (GameState.getEggGachaCount(EggGachaConfigs[3].id) * (EggGachaConfigs[3].value as number));
-        const critDamage = Math.floor((GameStateCore.critDamage + eggAddCritDamage) * (((GameState.getArtifactLevel(4) * ArtifactConfigs[3].value) / 100) + 1));
+        const gemCritDamage = 1 + (GameState.getGemCritDamage() / 100);
+        const critDamage = Math.floor((GameStateCore.critDamage + eggAddCritDamage) * (((GameState.getArtifactLevel(4) * ArtifactConfigs[3].value) / 100) + 1)) * gemCritDamage;
         return critDamage;
     },
 
@@ -61,8 +64,29 @@ export const StatManager = {
     
     // 공격력 강화 비용 계산
     getAttackPowerUpgradeCost(): number {
+        // upgradeAttackPower()에서 최대치 체크 중 50만
         // 구간별 설정 (임계값, multiplier, 지수) - 큰 값부터 정렬
         const costTiers = [
+            { threshold: 500000, multiplier: 5900, exponent: 6.8 },
+            { threshold: 490000, multiplier: 5800, exponent: 6.7 },
+            { threshold: 480000, multiplier: 5700, exponent: 6.6 },
+            { threshold: 470000, multiplier: 5600, exponent: 6.5 },
+            { threshold: 460000, multiplier: 5500, exponent: 6.4 },
+            { threshold: 450000, multiplier: 5400, exponent: 6.3 },
+            { threshold: 440000, multiplier: 5300, exponent: 6.2 },
+            { threshold: 430000, multiplier: 5200, exponent: 6.1 },
+            { threshold: 420000, multiplier: 5100, exponent: 6 },
+            { threshold: 410000, multiplier: 5000, exponent: 5.9 },
+            { threshold: 400000, multiplier: 4900, exponent: 5.8 },
+            { threshold: 390000, multiplier: 4800, exponent: 5.7 },
+            { threshold: 380000, multiplier: 4700, exponent: 5.6 },
+            { threshold: 370000, multiplier: 4600, exponent: 5.5 },
+            { threshold: 360000, multiplier: 4500, exponent: 5.4 },
+            { threshold: 350000, multiplier: 4400, exponent: 5.3 },
+            { threshold: 340000, multiplier: 4300, exponent: 5.2 },
+            { threshold: 330000, multiplier: 4200, exponent: 5.1 },
+            { threshold: 320000, multiplier: 4100, exponent: 5 },
+            { threshold: 310000, multiplier: 4000, exponent: 4.9 },
             { threshold: 300000, multiplier: 3900, exponent: 4.8 },
             { threshold: 290000, multiplier: 3800, exponent: 4.7 },
             { threshold: 280000, multiplier: 3700, exponent: 4.6 },
@@ -146,6 +170,10 @@ export const StatManager = {
     
     // 공격력 강화 구매
     upgradeAttackPower(): boolean {
+        // 최대치 체크
+        if (GameStateCore.attackPower >= 500000) {
+            return false;
+        }
         const cost = this.getAttackPowerUpgradeCost();
         if (CoinManager.spendCoins(cost)) {
             GameStateCore.attackPower++;

@@ -14,6 +14,9 @@ export interface GemPopupState {
     statCards: Phaser.GameObjects.Container[]; // 3개 스탯 카드
     upgradeButton: Phaser.GameObjects.Container | null;
     statTexts: Phaser.GameObjects.Text[]; // 스탯 값 텍스트 (업데이트용)
+    upgradeButtonText: Phaser.GameObjects.Text | null; // 업그레이드 버튼 텍스트 (업데이트용)
+    upgradeButtonBg: Phaser.GameObjects.Graphics | null; // 업그레이드 버튼 배경 (업데이트용)
+    upgradeClickArea: Phaser.GameObjects.Rectangle | null; // 업그레이드 버튼 클릭 영역
 }
 
 export const GemPopup = {
@@ -179,9 +182,18 @@ export const GemPopup = {
             upgradeButtonY,
             upgradeButtonWidth,
             upgradeButtonHeight,
+            state,
             () => {
-                // 업그레이드 버튼 클릭 (나중에 구현)
-                console.log('Upgrade button clicked');
+                // 업그레이드 버튼 클릭
+                if (GemManager.canUpgradeGem()) {
+                    const success = GemManager.upgradeGem();
+                    if (success) {
+                        // 스탯 업데이트
+                        GemPopup.updateStats(scene, state);
+                        // 업그레이드 버튼 비용 업데이트
+                        GemPopup.updateUpgradeButton(scene, state);
+                    }
+                }
             }
         );
         popupContainer.add(upgradeButton);
@@ -254,6 +266,9 @@ export const GemPopup = {
         state.statCards = [];
         state.statTexts = [];
         state.upgradeButton = null;
+        state.upgradeButtonText = null;
+        state.upgradeButtonBg = null;
+        state.upgradeClickArea = null;
         state.isOpen = false;
     },
     
@@ -321,54 +336,71 @@ export const GemPopup = {
         y: number,
         width: number,
         height: number,
+        state: GemPopupState,
         onClick: () => void
     ): Phaser.GameObjects.Container {
         const buttonContainer = scene.add.container(x, y);
         
         const buttonRadius = 12;
         
+        // 업그레이드 비용 가져오기
+        const cost = GemManager.getCurrentUpgradeCost();
+        const canUpgrade = GemManager.canUpgradeGem();
+        
         // 버튼 배경
         const buttonBg = scene.add.graphics();
-        buttonBg.fillStyle(0x4a4a5a, 1);
+        const buttonColor = canUpgrade ? 0x4a4a5a : 0x333333; // 비활성화 시 더 어두운 색
+        const buttonLineColor = canUpgrade ? 0x6a6a7a : 0x444444;
+        buttonBg.fillStyle(buttonColor, 1);
         buttonBg.fillRoundedRect(-width / 2, -height / 2, width, height, buttonRadius);
-        buttonBg.lineStyle(2, 0x6a6a7a, 1);
+        buttonBg.lineStyle(2, buttonLineColor, 1);
         buttonBg.strokeRoundedRect(-width / 2, -height / 2, width, height, buttonRadius);
         buttonContainer.add(buttonBg);
+        state.upgradeButtonBg = buttonBg;
         
-        // 버튼 텍스트
+        // 버튼 텍스트 (비용 포함)
         const buttonFontSize = Responsive.getFontSize(scene, 16);
-        const buttonText = scene.add.text(0, 0, '업그레이드', {
+        const buttonTextContent = `업그레이드 (${NumberFormatter.formatNumber(cost)} 젬)`;
+        const buttonText = scene.add.text(0, 0, buttonTextContent, {
             fontSize: buttonFontSize,
-            color: '#ffffff',
+            color: canUpgrade ? '#ffffff' : '#888888',
             fontFamily: 'Arial',
             font: `600 ${buttonFontSize} Arial`
         });
         buttonText.setOrigin(0.5);
         buttonContainer.add(buttonText);
+        state.upgradeButtonText = buttonText;
         
         // 클릭 영역
         const clickArea = scene.add.rectangle(0, 0, width, height, 0x000000, 0);
-        clickArea.setInteractive({ useHandCursor: true });
+        if (canUpgrade) {
+            clickArea.setInteractive({ useHandCursor: true });
+        }
+        state.upgradeClickArea = clickArea;
         
         clickArea.on('pointerdown', () => {
-            onClick();
+            if (canUpgrade) {
+                onClick();
+            }
         });
         
-        clickArea.on('pointerover', () => {
-            buttonBg.clear();
-            buttonBg.fillStyle(0x5a5a6a, 1);
-            buttonBg.fillRoundedRect(-width / 2, -height / 2, width, height, buttonRadius);
-            buttonBg.lineStyle(2, 0x7a7a8a, 1);
-            buttonBg.strokeRoundedRect(-width / 2, -height / 2, width, height, buttonRadius);
-        });
-        
-        clickArea.on('pointerout', () => {
-            buttonBg.clear();
-            buttonBg.fillStyle(0x4a4a5a, 1);
-            buttonBg.fillRoundedRect(-width / 2, -height / 2, width, height, buttonRadius);
-            buttonBg.lineStyle(2, 0x6a6a7a, 1);
-            buttonBg.strokeRoundedRect(-width / 2, -height / 2, width, height, buttonRadius);
-        });
+        if (canUpgrade) {
+            clickArea.on('pointerover', () => {
+                buttonBg.clear();
+                buttonBg.fillStyle(0x5a5a6a, 1);
+                buttonBg.fillRoundedRect(-width / 2, -height / 2, width, height, buttonRadius);
+                buttonBg.lineStyle(2, 0x7a7a8a, 1);
+                buttonBg.strokeRoundedRect(-width / 2, -height / 2, width, height, buttonRadius);
+            });
+            
+            clickArea.on('pointerout', () => {
+                buttonBg.clear();
+                buttonBg.fillStyle(0x4a4a5a, 1);
+                buttonBg.fillRoundedRect(-width / 2, -height / 2, width, height, buttonRadius);
+                buttonBg.lineStyle(2, 0x6a6a7a, 1);
+                buttonBg.strokeRoundedRect(-width / 2, -height / 2, width, height, buttonRadius);
+            });
+        }
         
         buttonContainer.add(clickArea);
         
@@ -397,5 +429,40 @@ export const GemPopup = {
                 text.setText(`+${NumberFormatter.formatNumber(statValues[index])}`);
             }
         });
+    },
+    
+    // 업그레이드 버튼 업데이트 (비용 및 활성화 상태)
+    updateUpgradeButton(
+        scene: Phaser.Scene,
+        state: GemPopupState
+    ): void {
+        if (!state.isOpen || !state.upgradeButton || !state.upgradeButtonText || !state.upgradeButtonBg || !state.upgradeClickArea) return;
+        
+        const cost = GemManager.getCurrentUpgradeCost();
+        const canUpgrade = GemManager.canUpgradeGem();
+        const buttonWidth = state.upgradeButton.width || 200;
+        const buttonHeight = state.upgradeButton.height || 50;
+        const buttonRadius = 12;
+        
+        // 버튼 텍스트 업데이트
+        const buttonTextContent = `업그레이드 (${NumberFormatter.formatNumber(cost)} 젬)`;
+        state.upgradeButtonText.setText(buttonTextContent);
+        state.upgradeButtonText.setColor(canUpgrade ? '#ffffff' : '#888888');
+        
+        // 버튼 배경 업데이트
+        state.upgradeButtonBg.clear();
+        const buttonColor = canUpgrade ? 0x4a4a5a : 0x333333;
+        const buttonLineColor = canUpgrade ? 0x6a6a7a : 0x444444;
+        state.upgradeButtonBg.fillStyle(buttonColor, 1);
+        state.upgradeButtonBg.fillRoundedRect(-buttonWidth / 2, -buttonHeight / 2, buttonWidth, buttonHeight, buttonRadius);
+        state.upgradeButtonBg.lineStyle(2, buttonLineColor, 1);
+        state.upgradeButtonBg.strokeRoundedRect(-buttonWidth / 2, -buttonHeight / 2, buttonWidth, buttonHeight, buttonRadius);
+        
+        // 클릭 영역 업데이트
+        if (canUpgrade) {
+            state.upgradeClickArea.setInteractive({ useHandCursor: true });
+        } else {
+            state.upgradeClickArea.removeInteractive();
+        }
     }
 };

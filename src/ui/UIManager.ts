@@ -74,7 +74,10 @@ export const UIManager = {
             gemImage: null,
             statCards: [],
             upgradeButton: null,
-            statTexts: []
+            statTexts: [],
+            upgradeButtonText: null,
+            upgradeButtonBg: null,
+            upgradeClickArea: null
         } as GemPopupState
     } as CommonUIState,
     

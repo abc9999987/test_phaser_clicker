@@ -347,6 +347,7 @@ export const DungeonTab = {
                 let rubyReward = 0;
                 let goldReward = 0;
                 let meatReward = 0;
+                let gemReward = 0;
 
                 if (isArtifactDungeon) {
                     // 유물 던전: (현재 층수 - 1) 루비
@@ -359,9 +360,12 @@ export const DungeonTab = {
                 } else if (isMeatDungeon) {
                     // 고기 던전: 층수 * 10 개의 고기
                     meatReward = level * 10;
+                } else if (dungeonId === 'gem_dungeon') {
+                    // 젬 던전: 레벨 * 10 젬
+                    gemReward = level * 10;
                 }
 
-                const hasReward = rubyReward > 0 || goldReward > 0 || meatReward > 0;
+                const hasReward = rubyReward > 0 || goldReward > 0 || meatReward > 0 || gemReward > 0;
 
                 if (hasReward) {
                     // 보상 지급
@@ -373,6 +377,9 @@ export const DungeonTab = {
                     }
                     if (meatReward > 0) {
                         GameState.addMeat(meatReward);
+                    }
+                    if (gemReward > 0) {
+                        GameState.addGems(gemReward);
                     }
 
                     // 횟수 차감 (공통)
@@ -404,6 +411,9 @@ export const DungeonTab = {
                         if (meatReward > 0) {
                             Effects.createDungeonRewardParticle(scene, sweepButtonX, buttonY, meatReward, ' 고기', '#ff6b9d');
                         }
+                        if (gemReward > 0) {
+                            Effects.createDungeonRewardParticle(scene, sweepButtonX, buttonY, gemReward, ' 젬', '#9d4edd');
+                        }
 
                         // 던전 타입별 보상 팝업
                         if (isArtifactDungeon) {
@@ -415,6 +425,9 @@ export const DungeonTab = {
                         } else if (isMeatDungeon && meatReward > 0) {
                             // 먹이 던전: 고기 소탕 팝업
                             Effects.showMeatSweepCompletePopup(scene, meatReward);
+                        } else if (dungeonId === 'gem_dungeon' && gemReward > 0) {
+                            // 젬 던전: 젬 소탕 팝업
+                            Effects.showGemSweepCompletePopup(scene, gemReward);
                         }
 
                         // 상태 텍스트 업데이트 (공통)

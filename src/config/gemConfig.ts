@@ -13,6 +13,12 @@ export interface GemConfig {
         attackPowerPercent: number;  // 공격력 % 증가량 (레벨당)
         critDamage: number;          // 치명타 데미지 증가량 (레벨당)
     };
+    
+    // 업그레이드 비용 설정
+    upgradeCost: {
+        initialCost: number;         // 초기 비용
+        multiplier: number;          // 레벨당 배수 (3배씩 증가)
+    };
 }
 
 // 보옥 설정
@@ -24,8 +30,13 @@ export const GemConfig: GemConfig = {
     },
     
     upgradeIncrements: {
-        attackPower: 100,            // 공격력 증가량: 레벨당 +100
+        attackPower: 10000,            // 공격력 증가량: 레벨당 +10000
         attackPowerPercent: 10,      // 공격력 % 증가량: 레벨당 +10%
         critDamage: 15               // 치명타 데미지 증가량: 레벨당 +15%
+    },
+    
+    upgradeCost: {
+        initialCost: 100,             // 초기 비용: 100 젬
+        multiplier: 3                 // 레벨당 3배씩 증가
     }
 };
